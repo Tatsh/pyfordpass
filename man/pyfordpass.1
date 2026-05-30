@@ -1,0 +1,2055 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "PYFORDPASS" "1" "May 30, 2026" "0.0.0" "pyfordpass"
+.SH NAME
+pyfordpass \- pyfordpass v0.0.0
+.sp
+FordPass client and CLI.
+.SH INSTALLATION
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pip install pyfordpass
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Or with \fBuv\fP:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+uv tool install pyfordpass
+.EE
+.UNINDENT
+.UNINDENT
+.SH QUICK START
+.sp
+The CLI is the primary surface. The library lives behind it for callers who want to integrate
+against the same protocol the CLI uses.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass auth signin
+pyfordpass vehicle list
+pyfordpass remote start
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+For programmatic use, see \fI\%fordpass.client.AsyncFordPassClient\fP (async HTTP client) and
+\fI\%fordpass.sansio.FordPassClient\fP (sans\-I/O protocol core that builds
+\fI\%fordpass.sansio.RequestDict\fP descriptors).
+.SH COMMAND REFERENCE
+.SS pyfordpass
+.sp
+FordPass CLI.
+.sp
+Usage: \fBford <activity> <action> [args]\fP\&.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-\-version
+Show the version and exit.
+.UNINDENT
+.SS alerts
+.sp
+Show current state and history of vehicle alerts.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass alerts [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS current
+.sp
+Active vehicle alerts.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass alerts current [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS history
+.sp
+Historical alert log.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass alerts history [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS washer
+.sp
+Washer\-fluid status.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass alerts washer [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS auth
+.sp
+Sign in / out, inspect tokens.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass auth [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS login
+.sp
+Interactive PKCE sign\-in via the Ford B2C login page.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass auth login [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.SS logout
+.sp
+Delete saved tokens.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass auth logout [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.SS refresh
+.sp
+Refresh the short\-lived TMC bearer.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass auth refresh [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.SS status
+.sp
+Show saved tokens (truncated).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass auth status [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.SS dealer
+.sp
+Preferred\-dealer info.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass dealer [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS preferred
+.sp
+Get full details of the vehicle\(aqs preferred dealer (two\-step).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass dealer preferred [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS departure
+.sp
+Departure\-time schedules (EV/PHEV only).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass departure [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS next
+.sp
+Show the next\-upcoming departure schedule entry.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass departure next [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS drivers
+.sp
+Secondary\-driver management.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass drivers [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS count
+.sp
+Show the current authorised\-user count.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass drivers count [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS invite
+.sp
+Send a secondary\-driver invite by email.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass drivers invite [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-email <email>
+\fBRequired\fP Invitee\(aqs email.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-name <inviter>
+\fBRequired\fP Inviter\(aqs first name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-vehicle\-name <vehicle_name>
+\fBRequired\fP Display name in the invite email.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS list
+.sp
+List authorised and pending drivers.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass drivers list [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS messages
+.sp
+In\-app message center.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass messages [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS delete
+.sp
+Delete one or more inbox messages by ID.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass messages delete [OPTIONS] MESSAGE_IDS...
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B MESSAGE_IDS
+Required argument(s)
+.UNINDENT
+.SS list
+.sp
+List the message center inbox.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass messages list [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS mark\-read
+.sp
+Mark one or more inbox messages as read by ID.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass messages mark\-read [OPTIONS] MESSAGE_IDS...
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B MESSAGE_IDS
+Required argument(s)
+.UNINDENT
+.SS show
+.sp
+Show the full body of one inbox message by ID.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass messages show [OPTIONS] MESSAGE_ID
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B MESSAGE_ID
+Required argument
+.UNINDENT
+.SS ota
+.sp
+Over\-the\-air updates: status, enable / disable, release notes.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass ota [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS disable
+.sp
+Turn automatic software updates off.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass ota disable [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS enable
+.sp
+Turn automatic software updates on.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass ota enable [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS queue\-refresh
+.sp
+Queue an ASU\-settings read on the server (result arrives via WS).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass ota queue\-refresh [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS release\-notes
+.sp
+Fetch release notes for the pending OTA (two\-step flow).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass ota release\-notes [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS status
+.sp
+Show the current automatic\-software\-update settings.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass ota status [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS profile
+.sp
+User account profile.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass profile [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS show
+.sp
+Get account info.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass profile show [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-groups <groups>
+Comma\-separated section filter.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS update
+.sp
+Partial\-update account info.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass profile update [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-field <field>
+\fIsection.key=value\fP \- e.g. \fIphoneNumbers.mobilePhoneNumber=+15555551234\fP\&.
+.UNINDENT
+.SS remote
+.sp
+Send commands: start, stop, lock, unlock, status, panic.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS extend
+.sp
+Extend an active remote\-start session.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote extend [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS lock
+.sp
+Lock the doors.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote lock [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS panic
+.sp
+Sound horn + flash lights.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote panic [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-duration <duration>
+Seconds to sound horn / flash lights (1\-10).
+.INDENT 7.0
+.TP
+.B Default
+\fB3\fP
+.UNINDENT
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS start
+.sp
+Remote start (also used to extend an active session).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote start [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS status
+.sp
+Force the TCU to push fresh state.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote status [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS stop
+.sp
+Cancel an active remote start.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote stop [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS unlock
+.sp
+Unlock the doors.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass remote unlock [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS roadside
+.sp
+Roadside\-assistance lookups.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass roadside [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS active
+.sp
+Show the active roadside event for the VIN, if any.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass roadside active [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS locations
+.sp
+List supported location types.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass roadside locations [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS predraft
+.sp
+Create a roadside pre\-draft.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass roadside predraft [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-name <name>
+\fBRequired\fP Customer name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-phone <phone>
+Customer phone.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS symptoms
+.sp
+List supported roadside symptoms.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass roadside symptoms [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-bev
+Filter for battery\-EV symptoms.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS schedule
+.sp
+Manage recurring remote\-start schedules.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass schedule [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS add
+.sp
+Add a new recurring remote\-start schedule.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass schedule add [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-start <start>
+\fBRequired\fP When the engine should fire \- ISO 8601 (e.g. 2026\-05\-28T13:50:00\-04:00) or \(dqYYYY\-MM\-DD HH:MM\(dq in the timezone given by \-\-tz.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-tz <tz>
+Timezone for the schedule: IANA name (e.g. America/New_York), an integer Ford zone code, or \(dqlocal\(dq / unset to use the system timezone.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-days <days>
+\fBRequired\fP Days when the schedule fires. Accepts comma\- / space\- / slash\-separated tokens \- full names, abbreviations, or one\-letter shortcuts (e.g. \(dqmon,tue,thu\(dq, \(dqM T Th\(dq, \(dqmwf\(dq).
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS delete
+.sp
+Delete a schedule entry (DELETE with body).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass schedule delete [OPTIONS] SCHEDULE_ID
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-vin <vin>
+\fBRequired\fP Required alongside scheduleId.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B SCHEDULE_ID
+Required argument
+.UNINDENT
+.SS disable
+.sp
+Mark the schedule disabled (\fBstatus = 0\fP).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass schedule disable [OPTIONS] SCHEDULE_ID [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B SCHEDULE_ID
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS enable
+.sp
+Mark the schedule active (\fBstatus = 1\fP).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass schedule enable [OPTIONS] SCHEDULE_ID [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B SCHEDULE_ID
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS list
+.sp
+Show recurring remote\-start schedules for the VIN.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass schedule list [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS service
+.sp
+Service planner: upcoming + completed history.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass service [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS history
+.sp
+List completed service actions.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass service history [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-odometer <odometer>
+Current odometer reading; auto\-fetched from telemetry when omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-uom <uom>
+.INDENT 7.0
+.TP
+.B Default
+\fB\(aqmi\(aq\fP
+.TP
+.B Options
+mi | km
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS history\-detail
+.sp
+Show detail for one completed service event.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass service history\-detail [OPTIONS] SERVICE_EVENT_ID [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-odometer <odometer>
+Current odometer reading; auto\-fetched from telemetry when omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-uom <uom>
+.INDENT 7.0
+.TP
+.B Default
+\fB\(aqmi\(aq\fP
+.TP
+.B Options
+mi | km
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B SERVICE_EVENT_ID
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS upcoming
+.sp
+List upcoming service actions.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass service upcoming [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-odometer <odometer>
+Current odometer reading; auto\-fetched from telemetry when omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-uom <uom>
+.INDENT 7.0
+.TP
+.B Default
+\fB\(aqmi\(aq\fP
+.TP
+.B Options
+mi | km
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS upcoming\-detail
+.sp
+Show detail for one upcoming service action.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass service upcoming\-detail [OPTIONS] SERVICE_ACTION_ID [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-odometer <odometer>
+Current odometer reading; auto\-fetched from telemetry when omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-uom <uom>
+.INDENT 7.0
+.TP
+.B Default
+\fB\(aqmi\(aq\fP
+.TP
+.B Options
+mi | km
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B SERVICE_ACTION_ID
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS telemetry
+.sp
+One\-shot telemetry queries.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS all
+.sp
+Full telemetry snapshot (or restricted via \-\-metrics).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry all [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-m, \-\-metrics <metrics>
+Restrict to these metric names; repeat the option.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS fuel
+.sp
+Fuel level + range.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry fuel [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS odometer
+.sp
+Vehicle odometer reading.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry odometer [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-u, \-\-unit <unit>
+Override the distance unit from \fIconfig.toml\fP for this call.
+.INDENT 7.0
+.TP
+.B Options
+kilometers | kilometres | km | mi | miles
+.UNINDENT
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS oil
+.sp
+Oil life remaining (%).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry oil [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS position
+.sp
+Show the vehicle\(aqs last known GPS position.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry position [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-open\-maps
+Open the coordinates in Google Maps using the default browser.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-maps\-uri
+Print only the Google Maps URI (suitable for shell pipelines).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS tires
+.sp
+Per\-wheel tire pressure.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass telemetry tires [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-u, \-\-unit <unit>
+Override the distance unit from \fIconfig.toml\fP for this call (also selects PSI when \fImi\fP, kPa when \fIkm\fP).
+.INDENT 7.0
+.TP
+.B Options
+kilometers | kilometres | km | mi | miles
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS vehicle
+.sp
+Garage: list, show, update nickname / plate / mileage.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS list
+.sp
+List all vehicles in your garage.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle list [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS mileage
+.sp
+Record a manual odometer reading.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle mileage [OPTIONS] MILES
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V, \-\-vin <vin>
+Target VIN. Falls back to \fI[vehicle] default_vin\fP from \fIconfig.toml\fP\&.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B MILES
+Required argument
+.UNINDENT
+.SS nickname
+.sp
+Set the vehicle nickname.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle nickname [OPTIONS] NAME
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V, \-\-vin <vin>
+Target VIN. Falls back to \fI[vehicle] default_vin\fP from \fIconfig.toml\fP\&.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B NAME
+Required argument
+.UNINDENT
+.SS plate
+.sp
+Set the license plate.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle plate [OPTIONS] PLATE
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-V, \-\-vin <vin>
+Target VIN. Falls back to \fI[vehicle] default_vin\fP from \fIconfig.toml\fP\&.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B PLATE
+Required argument
+.UNINDENT
+.SS ready
+.sp
+Report whether the vehicle is out of Battery Saver mode for remote commands.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle ready [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS show
+.sp
+Show details for one vehicle from your garage.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pyfordpass vehicle show [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SH AUTHOR
+Andrew Udvare <audvare@gmail.com>
+.SH COPYRIGHT
+2026
+.\" Generated by docutils manpage writer.
+.

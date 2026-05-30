@@ -9,9 +9,8 @@ local utils = import 'utils.libjsonnet';
   primary_module: 'fordpass',
   version: '0.0.0',
   want_main: true,
-  want_flatpak: true,
-  publishing+: { flathub: 'sh.tat.pyfordpass' },
-  security_policy_supported_versions: { '0.0.x': ':white_check_mark:' },
+  local top = self,
+  publishing+: { flathub: 'sh.tat.%s' % top.project_name },
   pyproject+: {
     project+: {
       scripts: { ford: 'fordpass.commands:main' },
@@ -30,7 +29,6 @@ local utils = import 'utils.libjsonnet';
           platformdirs: utils.latestPypiPackageVersionCaret('platformdirs'),
           rich: utils.latestPypiPackageVersionCaret('rich'),
         },
-        include+: [],
         group+: {
           tests+: {
             dependencies+: {
