@@ -1,7 +1,8 @@
-"""Sans-I/O Python client for the FordPass API.
+"""
+Sans-I/O Python client for the FordPass API.
 
-"Sans-I/O" means this module never opens a socket. Every operation returns a :class:`RequestDict` —
-a plain ``TypedDict`` carrying ``method``, ``url``, ``headers``, and ``data`` — designed to be
+"Sans-I/O" means this module never opens a socket. Every operation returns a :class:`RequestDict` -
+a plain ``TypedDict`` carrying ``method``, ``url``, ``headers``, and ``data`` - designed to be
 splatted directly into the ``requests``-family of HTTP libraries::
 
     import requests  # or niquests / urllib3.request
@@ -16,7 +17,7 @@ request signature accepts ``method=, url=, headers=, data=`` keyword arguments. 
 rename ``data`` → ``content`` (or post-process) before splatting; its constructor uses ``content``
 for raw bytes.
 
-The class holds NO HTTP state — no sessions, no cookies. Tokens are public attributes so the caller
+The class holds NO HTTP state - no sessions, no cookies. Tokens are public attributes so the caller
 controls refresh logic.
 
 The protocol matches ``docs/openapi.json`` for FordPass APK v6.13.0. See that spec for field-level
@@ -25,44 +26,39 @@ documentation; this module is the executable companion.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, cast
 import json
-import sys
 import urllib.parse
-
-if sys.version_info >= (3, 11):
-    from typing import TypedDict
-else:  # pragma: no cover
-    from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
 
-    from fordpass.typing import DistanceUnit, Secrets
+    from typing_extensions import Unpack
 
-# --- sans-I/O: constants are injected via the constructor ---------------------
-# Nothing in this module reads disk, env, or the network at import time.
-# The :py:class:`FordPassClient` constructor receives a :py:class:`Secrets`
-# bundle which the caller (typically :py:mod:`fordpass.client`) supplies after
-# loading ``~/.config/fordpass/abcdef.toml`` via :py:func:`fordpass.abcdef.load_secrets`.
+    from .typing.common import CountryHeaderCasing, DistanceUnit
+    from .typing.profile import SaveProfileFields
+    from .typing.secrets import Secrets
 
-# --- transport-agnostic data carrier -----------------------------------------
+# Nothing in this module reads disk, env, or the network at import time. The
+# :py:class:`FordPassClient` constructor receives a :py:class:`Secrets` bundle which the caller
+# (typically :py:mod:`fordpass.client`) supplies after loading ``~/.config/pyfordpass/abcdef.toml``
+# via :py:func:`fordpass.abcdef.load_secrets`.
 
 
 class RequestDict(TypedDict):
-    """HTTP request descriptor designed to be splatted into ``requests`` / ``niquests``.
+    """
+    HTTP request descriptor designed to be splatted into ``requests`` / ``niquests``.
 
-    Usage: ``requests.request(**my_request_dict)``. Works the same with
-    ``niquests.request`` (drop-in replacement for requests) and ``urllib3.request``.
+    Usage: ``requests.request(**my_request_dict)``. Works the same with ``niquests.request``
+    (drop-in replacement for requests) and ``urllib3.request``.
 
-    For ``httpx``: rename the ``data`` key to ``content`` before splatting;
-    its constructor uses ``content=`` for the body parameter.
+    For ``httpx``: rename the ``data`` key to ``content`` before splatting; its constructor uses
+    ``content=`` for the body parameter.
 
-    ``data`` is ``str`` (UTF-8) because every body this client produces is
-    text — JSON or URL-encoded form data, both of which the HTTP clients
-    auto-encode on send. It's ``None`` for GETs and the auth-flow URL
-    builders. All four keys are required so static type checkers see
-    the dict as "complete".
+    ``data`` is ``str`` (UTF-8) because every body this client produces is text - JSON or
+    URL-encoded form data, both of which the HTTP clients auto-encode on send. It's ``None`` for
+    GETs and the auth-flow URL builders. All four keys are required so static type checkers see the
+    dict as "complete".
     """
 
     data: str | None
@@ -71,15 +67,13 @@ class RequestDict(TypedDict):
     url: str
 
 
-# --- client ------------------------------------------------------------------
+class FordPassClient:  # noqa: PLR0904
+    """
+    Sans-I/O FordPass protocol client.
 
-
-class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
-    """Sans-I/O FordPass protocol client.
-
-    Stateful only in the sense that it holds tokens + per-user config (country,
-    locale, app id). Every public method either returns a :class:`RequestDict` or
-    parses already-fetched data. No method opens a socket.
+    Stateful only in the sense that it holds tokens + per-user config (country, locale, app id).
+    Every public method either returns a :class:`RequestDict` or parses already-fetched data. No
+    method opens a socket.
     """
     def __init__(self,
                  *,
@@ -96,8 +90,8 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         Parameters
         ----------
         secrets : Secrets
-            API constants (hosts, B2C identifiers, user-agent, roadside
-            ``x-source`` lookup, …) — see :py:func:`fordpass.abcdef.load_secrets`.
+            API constants (hosts, B2C identifiers, user-agent, roadside ``x-source`` lookup, …) -
+            see :py:func:`fordpass.abcdef.load_secrets`.
         cat : str | None
             Ford CAT access token. Sent as ``auth-token`` on ``*.ford.com`` calls.
         cat_refresh : str | None
@@ -116,8 +110,8 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         API constants bundle.
 
-        Private — call sites use it via the convenience helpers below or the
-        public ``application_id`` attribute.
+        Private - call sites use it via the convenience helpers below or the public
+        ``application_id`` attribute.
         """
         self.cat: str | None = cat
         """
@@ -141,8 +135,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """Sub-brand identifier (``'ford'`` / ``'lincoln'``)."""
         self.application_id = secrets['application_id']
         """NGSDN ``application-id`` header value (sourced from the constants bundle)."""
-
-    # ----- header helpers --------------------------------------------------
 
     def _roadside_x_source(self) -> Literal['FORD', 'LINCOLN']:
         """
@@ -170,29 +162,32 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
 
     def _ford_headers(self,
                       *,
-                      country_camel: bool = False,
+                      country_header: CountryHeaderCasing = 'country-code',
                       extra_headers: Mapping[str, str] | None = None) -> dict[str, str]:
         """
         Build the header dictionary for ``*.ford.com`` endpoints.
 
-        Names default to lowercase-hyphenated per HTTP/2 convention. Per RFC 7230 headers
-        are case-insensitive; in practice several Ford microservices declare
-        ``@Header("countryCode")`` (camelCase) on their Retrofit interfaces and the
-        upstream gateway is strict about the spelling — set ``country_camel=True`` for
-        those endpoints (alerts, alert-history, MMOTA dashboard, release-notes, …).
+        Per RFC 7230 HTTP headers are case-insensitive; in practice Ford's gateway is strict about
+        the exact spelling on a per-endpoint basis. Four casings have been observed across the API
+        surface, each used by a different microservice:
+
+        - ``country-code`` (kebab-lowercase, the default) - most endpoints.
+        - ``countryCode`` (camelCase) - alerts, alert-history, MMOTA dashboard, release-notes.
+        - ``countrycode`` (all-lowercase, no dash) - service-planner endpoints.
+        - ``Country-Code`` (Title-Case kebab) - vehicle-details update / delete.
 
         Parameters
         ----------
-        country_camel : bool
-            Use ``countryCode`` (camelCase) instead of the default ``country-code``.
+        country_header : CountryHeaderCasing
+            Exact spelling of the country header to send. Defaults to ``'country-code'``.
         extra_headers : Mapping[str, str] | None
             Additional headers to merge into the result, overriding the defaults.
 
         Returns
         -------
         dict[str, str]
-            Mapping containing ``auth-token``, ``application-id``, country header,
-            ``locale``, ``user-agent``, and any ``extra_headers``.
+            Mapping containing ``auth-token``, ``application-id``, country header, ``locale``,
+            ``user-agent``, and any ``extra_headers``.
 
         Raises
         ------
@@ -200,15 +195,14 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             If :attr:`cat` has not been set (the caller has not signed in yet).
         """
         if self.cat is None:
-            msg = 'FordPassClient.cat is unset — sign in first.'
+            msg = 'FordPassClient.cat is unset - sign in first.'
             raise RuntimeError(msg)
-        country_key = 'countryCode' if country_camel else 'country-code'
         h = {
             'auth-token': self.cat,
             'application-id': self.application_id,
-            country_key: self.country,
+            country_header: self.country,
             'locale': self.locale,
-            'user-agent': self._secrets['user_agent'],
+            'user-agent': self._secrets['user_agent']
         }
         h.update(extra_headers or {})
         return h
@@ -233,7 +227,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             If :attr:`tmc` has not been set (the caller has not exchanged the CAT yet).
         """
         if self.tmc is None:
-            msg = 'FordPassClient.tmc is unset — exchange CAT for TMC first.'
+            msg = 'FordPassClient.tmc is unset - exchange CAT for TMC first.'
             raise RuntimeError(msg)
         h = {'authorization': f'Bearer {self.tmc}', 'user-agent': self._secrets['user_agent']}
         h.update(extras)
@@ -255,8 +249,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             The serialised JSON without whitespace separators.
         """
         return json.dumps(obj, separators=(',', ':'))
-
-    # ----- auth flow -------------------------------------------------------
 
     def b2c_authorize_url(self,
                           *,
@@ -302,9 +294,8 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             'ford_application_id': self.application_id,
             'country_code': country or self.country
         }
-        # Match the Frida-captured official-app encoding: spaces in `scope` are
-        # `%20`, not `+`. Some WAFs (Akamai EdgeSuite) flag form-encoded `+` in
-        # query strings as anomalous for browser-generated requests.
+        # Spaces in `scope` must be `%20`, not `+` - some WAFs (Akamai EdgeSuite) flag form-encoded
+        # `+` in query strings as anomalous for browser-generated requests.
         qs = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         login = self._secrets['hosts']['login']
         return f'{login}/{b2c["tenant_id"]}/{policy}/oauth2/v2.0/authorize?{qs}'
@@ -349,7 +340,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                            url=url,
                            headers={
                                'content-type': 'application/x-www-form-urlencoded',
-                               'user-agent': self._secrets['user_agent'],
+                               'user-agent': self._secrets['user_agent']
                            },
                            data=body)
 
@@ -357,9 +348,8 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the request that mints a Ford CAT from a B2C access token.
 
-        The ``application-id`` header is required (server rejects with HTTP 400
-        ``errorCode 432`` "Invalid ApplicationId" otherwise). The body field is
-        ``idpToken``, not ``ciToken`` — verified against the Frida-captured official-app POST.
+        The ``application-id`` header is required (server rejects with HTTP 400 ``errorCode 432``
+        "Invalid ApplicationId" otherwise). The body field is ``idpToken``, not ``ciToken``.
 
         Parameters
         ----------
@@ -377,7 +367,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             headers={
                 'application-id': self.application_id,
                 'content-type': 'application/json',
-                'user-agent': self._secrets['user_agent'],
+                'user-agent': self._secrets['user_agent']
             },
             data=self._json_body({'idpToken': b2c_access_token}))
 
@@ -385,10 +375,10 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the request that swaps the current CAT refresh token for a fresh CAT pair.
 
-        Mirrors the official ``refreshCustomerAuthTokens`` Retrofit call —
+        Mirrors the official ``refreshCustomerAuthTokens`` call:
         ``POST /api/token/v2/cat-with-refresh-token`` with body
-        ``{"refresh_token": <cat_refresh>}``. The response carries a new
-        ``access_token`` (the CAT) and usually a rotated ``refresh_token``.
+        ``{"refresh_token": <cat_refresh>}``. The response carries a new ``access_token`` (the CAT)
+        and usually a rotated ``refresh_token``.
 
         Returns
         -------
@@ -401,7 +391,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             If :attr:`cat_refresh` is unset.
         """
         if self.cat_refresh is None:
-            msg = 'FordPassClient.cat_refresh is unset — cannot refresh the CAT.'
+            msg = 'FordPassClient.cat_refresh is unset - cannot refresh the CAT.'
             raise RuntimeError(msg)
         return RequestDict(
             method='POST',
@@ -409,7 +399,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             headers={
                 'application-id': self.application_id,
                 'content-type': 'application/json',
-                'user-agent': self._secrets['user_agent'],
+                'user-agent': self._secrets['user_agent']
             },
             data=self._json_body({'refresh_token': self.cat_refresh}))
 
@@ -417,9 +407,8 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the RFC 8693 token-exchange request that mints a TMC bearer from the CAT refresh.
 
-        The official app posts the CAT **refresh** token (``token_type=R``, ~6 month TTL), not
-        the access token. It also includes ``subject_issuer=fordpass`` — both verified against
-        the Frida-captured official-app POST.
+        The official app posts the CAT **refresh** token (``token_type=R``, ~6 month TTL), not the
+        access token. It also includes ``subject_issuer=fordpass``.
 
         Returns
         -------
@@ -432,24 +421,22 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             If :attr:`cat_refresh` is unset.
         """
         if self.cat_refresh is None:
-            msg = 'FordPassClient.cat_refresh is unset — mint a CAT first.'
+            msg = 'FordPassClient.cat_refresh is unset - mint a CAT first.'
             raise RuntimeError(msg)
         body = urllib.parse.urlencode({
             'client_id': self._secrets['auth']['tmc']['client_id'],
             'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
             'subject_issuer': 'fordpass',
             'subject_token': self.cat_refresh,
-            'subject_token_type': 'urn:ietf:params:oauth:token-type:jwt',
+            'subject_token_type': 'urn:ietf:params:oauth:token-type:jwt'
         })
         return RequestDict(method='POST',
                            url=f'{self._secrets["hosts"]["tmc_accounts"]}/v1/auth/oidc/token',
                            headers={
                                'content-type': 'application/x-www-form-urlencoded',
-                               'user-agent': self._secrets['user_agent'],
+                               'user-agent': self._secrets['user_agent']
                            },
                            data=body)
-
-    # ----- TMC commands (stable channel) -----------------------------------
 
     def _tmc_command(self,
                      vin: str,
@@ -534,7 +521,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the request that extends an active remote-start session for ``vin``.
 
-        Wire body is identical to :py:meth:`remote_start` — the server distinguishes start
+        Wire body is identical to :py:meth:`remote_start` - the server distinguishes start
         vs. extend from current vehicle state.
 
         Parameters
@@ -615,8 +602,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         return self._tmc_command(vin, 'startPanicCue', properties={'duration': duration_s})
 
-    # ----- TMC beta channel: OTA settings (ASU) ----------------------------
-
     def get_asu_settings(self, vin: str) -> RequestDict:
         """
         Build the request that reads current Automatic Software Update settings.
@@ -682,8 +667,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                                  },
                                  beta=True,
                                  version='1.0.0')
-
-    # ----- TMC telemetry ---------------------------------------------------
 
     def query_telemetry(self, vin: str, metrics: Iterable[str] | None = None) -> RequestDict:
         """
@@ -812,15 +795,12 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         return self.query_telemetry(vin,
                                     ['xevDepartureSchedules', 'xevNextDepartureTimeScheduleId'])
 
-    # ----- SRSM: scheduled remote start ------------------------------------
-
     def list_remote_start_schedules(self, vin: str) -> RequestDict:
         """
         Build the request that lists the recurring remote-start schedules for ``vin``.
 
         Despite being a read-only fetch the upstream service uses a ``POST`` with a
-        ``{"vin": <vin>}`` JSON body, matching the official app's
-        ``ScheduleRemoteStartService.getSrsV3`` Retrofit call.
+        ``{"vin": <vin>}`` JSON body.
 
         Parameters
         ----------
@@ -898,7 +878,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         This is a ``DELETE`` with a body. Some HTTP transports (older HttpClient, certain
         proxies/CDNs) strip ``DELETE`` bodies; if you see 4xx errors, check that your
         transport preserves them. The VIN is required server-side even though the schedule
-        ID is in the path — the server validates the ``(vin, schedule_id)`` pair.
+        ID is in the path - the server validates the ``(vin, schedule_id)`` pair.
 
         Parameters
         ----------
@@ -948,8 +928,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                            },
                            data=self._json_body(dict(schedule_body)))
 
-    # ----- garage ----------------------------------------------------------
-
     def list_garage(self) -> RequestDict:
         """
         Build the request that lists all vehicles in the user's garage.
@@ -977,8 +955,8 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the request that updates nickname / plate / mileage / preferred dealer.
 
-        Note the wire JSON keys differ from intuitive camelCase: ``licenseplate`` is
-        all-lowercase and ``mileage`` is the wire name for odometer.
+        Note the wire JSON keys differ from intuitive camelCase: ``licenseplate`` is all-lowercase
+        and ``mileage`` is the wire name for odometer.
 
         Parameters
         ----------
@@ -989,8 +967,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         license_plate : str | None
             New licence-plate string, or ``None`` to leave unchanged.
         mileage : int | None
-            New manual odometer reading in the user's display unit, or ``None`` to leave
-            unchanged.
+            New manual odometer reading in the user's display unit, or ``None`` to leave unchanged.
         preferred_dealer : str | None
             New dealer PA code, or ``None`` to leave unchanged.
 
@@ -1008,29 +985,32 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             body['mileage'] = mileage
         if preferred_dealer is not None:
             body['preferredDealer'] = preferred_dealer
+        # The update endpoint lives on the Foundational host, not the vehicle host - despite
+        # living under ``/api/user/garage/...`` (which superficially looks like a vehicle-service
+        # path). Empirically: ``vehicle.ford.com`` returns 404, ``foundational.ford.com`` returns
+        # 200.
         return RequestDict(method='PUT',
-                           url=f'{self._secrets["hosts"]["vehicle"]}/api/user/garage/auth/{vin}',
+                           url=(f'{self._secrets["hosts"]["foundational"]}'
+                                f'/api/user/garage/auth/{vin}'),
                            headers={
-                               **self._ford_headers(), 'content-type': 'application/json'
+                               **self._ford_headers(country_header='Country-Code'), 'content-type':
+                                   'application/json'
                            },
                            data=self._json_body(body))
-
-    # ----- profile (foundational) -----------------------------------------
 
     def get_profile(self, *, profile_groups: str | None = None) -> RequestDict:
         """
         Build the request that fetches user account information.
 
-        The upstream gateway treats ``profileGroups`` as effectively required —
-        omitting it returns HTTP 400 ``ERR-4014`` — and rejects the bareword
-        ``'all'``. Each section name must be listed explicitly. This builder
-        defaults to every known section.
+        The upstream gateway treats ``profileGroups`` as effectively required - omitting it
+        returns HTTP 400 ``ERR-4014`` - and rejects the bareword ``'all'``. Each section name must
+        be listed explicitly. This builder defaults to every known section.
 
         Parameters
         ----------
         profile_groups : str | None
-            Comma-separated subset of profile sections (for example
-            ``'names,address'``). Defaults to the full known section list.
+            Comma-separated subset of profile sections (for example ``'names,address'``). Defaults
+            to the full known section list.
 
         Returns
         -------
@@ -1045,17 +1025,16 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             headers=self._ford_headers(),
             data=None)
 
-    def save_profile(self, **fields: Any) -> RequestDict:
+    def save_profile(self, **fields: Unpack[SaveProfileFields]) -> RequestDict:
         """
         Build the request that PATCHes user account information.
 
-        Pass any subset of: ``names``, ``namesExtensions``, ``address``, ``country``,
-        ``phoneNumbers``, ``emails``, ``languages``, ``unitsOfMeasure``. See the OpenAPI
+        Pass any subset of the :py:class:`SaveProfileFields` keys. See the OpenAPI
         ``UpdateUserProfileV2Request`` schema for full sub-shapes.
 
         Parameters
         ----------
-        **fields : Any
+        **fields : Unpack[SaveProfileFields]
             Profile section objects keyed by section name.
 
         Returns
@@ -1069,9 +1048,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             headers={
                 **self._ford_headers(), 'content-type': 'application/json'
             },
-            data=self._json_body(fields))
-
-    # ----- messages --------------------------------------------------------
+            data=self._json_body(dict(fields)))
 
     def get_messages(self) -> RequestDict:
         """
@@ -1092,15 +1069,12 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the request that bulk-deletes message-centre entries.
 
-        Mirrors :py:meth:`InterfaceC15173zKN.markSelectedMessagesDeleted` —
-        ``DELETE /api/messagecenter/v3/user/messages`` with body
-        ``{"messageIds": [<int>, ...]}`` per the ``EditMessagesRequest`` Gson model.
+        ``DELETE /api/messagecenter/v3/user/messages`` with body ``{"messageIds": [<int>, ...]}``.
 
         Parameters
         ----------
         message_ids : Iterable[int]
-            Numeric IDs from the inbox ``messageId`` field. String values are
-            accepted and coerced.
+            Numeric IDs from the inbox ``messageId`` field. String values are accepted and coerced.
 
         Returns
         -------
@@ -1112,8 +1086,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             method='DELETE',
             url=f'{self._secrets["hosts"]["foundational"]}/api/messagecenter/v3/user/messages',
             headers={
-                **self._ford_headers(),
-                'content-type': 'application/json',
+                **self._ford_headers(), 'content-type': 'application/json'
             },
             data=self._json_body({'messageIds': ids}))
 
@@ -1121,15 +1094,13 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         """
         Build the request that bulk-marks message-centre entries as read.
 
-        Mirrors :py:meth:`InterfaceC15173zKN.markSelectedMessagesRead` — same
-        ``EditMessagesRequest`` body shape as :py:meth:`delete_messages`, but
-        delivered with ``PUT`` against ``/messages/read``.
+        Same body shape as :py:meth:`delete_messages`, but delivered with ``PUT`` against
+        ``/messages/read``.
 
         Parameters
         ----------
         message_ids : Iterable[int]
-            Numeric IDs from the inbox ``messageId`` field. String values are
-            accepted and coerced.
+            Numeric IDs from the inbox ``messageId`` field. String values are accepted and coerced.
 
         Returns
         -------
@@ -1141,19 +1112,16 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             method='PUT',
             url=f'{self._secrets["hosts"]["foundational"]}/api/messagecenter/v3/user/messages/read',
             headers={
-                **self._ford_headers(),
-                'content-type': 'application/json',
+                **self._ford_headers(), 'content-type': 'application/json'
             },
             data=self._json_body({'messageIds': ids}))
-
-    # ----- vehicle alerts (current state) ----------------------------------
 
     def get_alerts(self, vin: str, *, trace_id: str | None = None) -> RequestDict:
         """
         Build the request that fetches current vehicle alerts.
 
-        ``trace_id`` is an OkHttp-style UUID; if omitted the caller should supply one (kept
-        as caller responsibility because UUID generation is mild I/O).
+        ``trace_id`` is a UUID; if omitted the caller should supply one (kept as caller
+        responsibility because UUID generation is mild I/O).
 
         Parameters
         ----------
@@ -1170,11 +1138,10 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         extras: dict[str, str] = {}
         if trace_id is not None:
             extras['Trace-id'] = trace_id
-        # The xapi-alerts service is strict about header field-name casing — the
-        # Retrofit interface declares ``@Header("countryCode")`` (camelCase) rather
-        # than the kebab-case ``country-code`` used elsewhere. Mismatched names cause
-        # the gateway to return 404 on the otherwise-valid POST.
-        base = self._ford_headers(country_camel=True, extra_headers=extras)
+        # The xapi-alerts service is strict about header field-name casing - it requires
+        # ``countryCode`` (camelCase) rather than the kebab-case ``country-code`` used elsewhere.
+        # Mismatched names cause the gateway to return 404 on the otherwise-valid POST.
+        base = self._ford_headers(country_header='countryCode', extra_headers=extras)
         return RequestDict(
             method='POST',
             url=f'{self._secrets["hosts"]["vehicle"]}/api/expvehiclealerts/v3/details',
@@ -1182,8 +1149,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                 **base, 'content-type': 'application/json'
             },
             data=self._json_body({'VIN': vin}))
-
-    # ----- alert history (subject/body fully hydrated) ---------------------
 
     def get_alert_history(self, vin: str, *, brand: str | None = None) -> RequestDict:
         """
@@ -1202,60 +1167,74 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             Descriptor for the ``GET /vehicle-alert-history/v1/getAlertHistory`` call.
         """
         params = {'brand': brand or self.brand, 'vin': vin}
-        # Retrofit declares ``@Header("countryCode")`` on getAlertHistory — strict
-        # spelling required, otherwise the gateway returns 404.
+        # getAlertHistory requires ``countryCode`` (camelCase); other casings return 404.
         host = self._secrets['hosts']['vehicle']
         return RequestDict(
             method='GET',
             url=f'{host}/vehicle-alert-history/v1/getAlertHistory?{urllib.parse.urlencode(params)}',
-            headers=self._ford_headers(country_camel=True),
+            headers=self._ford_headers(country_header='countryCode'),
             data=None)
 
-    # ----- service planner ------------------------------------------------
-
-    def _service_planner(self, path: str, *, odometer: int, uom: DistanceUnit) -> RequestDict:
+    def _service_planner(self, path: str, *, vin: str, odometer: int | None,
+                         uom: DistanceUnit) -> RequestDict:
         """
-        Build a service-planner GET request to ``path`` with shared query parameters.
+        Build a service-planner ``GET`` request to ``path`` with the canonical wire shape.
+
+        The service-planner endpoints share an unusual contract: the VIN goes in a ``vin`` header
+        (not the URL or query), the country header is the all-lowercase ``countrycode`` (not the
+        conventional ``country-code`` or camelCase ``countryCode``), and ``odometer`` is a
+        *nullable* query parameter - the server tolerates its absence.
 
         Parameters
         ----------
         path : str
-            Service-planner endpoint path under :data:`self._secrets['hosts']['vehicle']`.
-        odometer : int
-            Current odometer reading in ``uom``.
-        uom : str
-            Unit of measure (``'mi'`` or ``'km'``).
+            Service-planner endpoint path under
+            :data:`self._secrets['hosts']['vehicle']`.
+        vin : str
+            VIN of the target vehicle (sent as the ``vin`` request header).
+        odometer : int | None
+            Current odometer reading in ``uom``. Pass ``None`` to omit the query
+            parameter - the upstream endpoint accepts the call without it.
+        uom : DistanceUnit
+            Unit of measure (``'mi'`` or ``'km'``) for ``odometer``.
 
         Returns
         -------
         RequestDict
             Descriptor for the configured ``GET`` call.
         """
-        params = {
-            'odometer': odometer,
+        params: dict[str, str | int] = {
             'locale': self.locale.lower(),
             'uom': uom,
             'brand': self.brand
         }
-        return RequestDict(
-            method='GET',
-            url=f'{self._secrets["hosts"]["vehicle"]}{path}?{urllib.parse.urlencode(params)}',
-            headers=self._ford_headers(),
-            data=None)
+        if odometer is not None:
+            params['odometer'] = odometer
+        return RequestDict(method='GET',
+                           url=(f'{self._secrets["hosts"]["vehicle"]}{path}'
+                                f'?{urllib.parse.urlencode(params)}'),
+                           headers=self._ford_headers(country_header='countrycode',
+                                                      extra_headers={'vin': vin}),
+                           data=None)
 
     def get_service_planner_upcoming(self,
                                      *,
-                                     odometer: int,
+                                     vin: str,
+                                     odometer: int | None = None,
                                      uom: DistanceUnit = 'mi') -> RequestDict:
         """
-        Build the request that fetches upcoming scheduled service actions.
+        Build the request that fetches the upcoming-services planner summary.
 
         Parameters
         ----------
-        odometer : int
-            Current odometer reading in ``uom``.
-        uom : str
-            Unit of measure (``'mi'`` or ``'km'``).
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``. ``None`` omits the query parameter;
+            the server will still compute the summary but cannot enrich rows with
+            "miles since" / "due in" context.
+        uom : DistanceUnit
+            Unit of measure for ``odometer`` (``'mi'`` or ``'km'``).
 
         Returns
         -------
@@ -1263,34 +1242,104 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             Descriptor for the planner-summary call.
         """
         return self._service_planner('/fpcpl-service-planner/service-actions/planner-summary',
+                                     vin=vin,
                                      odometer=odometer,
                                      uom=uom)
 
     def get_service_planner_history(self,
                                     *,
-                                    odometer: int,
+                                    vin: str,
+                                    odometer: int | None = None,
                                     uom: DistanceUnit = 'mi') -> RequestDict:
         """
-        Build the request that fetches completed service actions.
+        Build the request that fetches the completed-services planner summary.
 
         Parameters
         ----------
-        odometer : int
-            Current odometer reading in ``uom``.
-        uom : str
-            Unit of measure (``'mi'`` or ``'km'``).
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``. ``None`` omits the query parameter;
+            the completed-summary endpoint is unlikely to need it (the official app
+            sends it for parity with the upcoming endpoint).
+        uom : DistanceUnit
+            Unit of measure for ``odometer`` (``'mi'`` or ``'km'``).
 
         Returns
         -------
         RequestDict
-            Descriptor for the completed-service-actions call.
+            Descriptor for the completed-service-actions summary call.
         """
         return self._service_planner(
             '/fpcpl-service-planner/v1/completed-service-actions/planner-summary',
+            vin=vin,
             odometer=odometer,
             uom=uom)
 
-    # ----- release notes (two-step) ---------------------------------------
+    def get_service_action_detail(self,
+                                  service_action_id: str,
+                                  *,
+                                  vin: str,
+                                  odometer: int | None = None,
+                                  uom: DistanceUnit = 'mi') -> RequestDict:
+        """
+        Build the request that fetches detail for one upcoming service action.
+
+        Parameters
+        ----------
+        service_action_id : str
+            Identifier of the upcoming service action (returned by
+            :py:meth:`get_service_planner_upcoming`).
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``.
+        uom : DistanceUnit
+            Unit of measure for ``odometer``.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the upcoming-service-action detail call.
+        """
+        return self._service_planner(
+            f'/fpcpl-service-planner/service-actions/{urllib.parse.quote(service_action_id)}',
+            vin=vin,
+            odometer=odometer,
+            uom=uom)
+
+    def get_completed_service_action_detail(self,
+                                            service_event_id: str,
+                                            *,
+                                            vin: str,
+                                            odometer: int | None = None,
+                                            uom: DistanceUnit = 'mi') -> RequestDict:
+        """
+        Build the request that fetches detail for one completed service event.
+
+        Parameters
+        ----------
+        service_event_id : str
+            Identifier of the completed service event (returned by
+            :py:meth:`get_service_planner_history`).
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``.
+        uom : DistanceUnit
+            Unit of measure for ``odometer``.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the completed-service-action detail call.
+        """
+        return self._service_planner(
+            f'/fpcpl-service-planner/v1/completed-service-actions/'
+            f'{urllib.parse.quote(service_event_id)}',
+            vin=vin,
+            odometer=odometer,
+            uom=uom)
 
     def get_mmota_details(self, vin: str) -> RequestDict:
         """
@@ -1313,7 +1362,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         host = self._secrets['hosts']['vehicle']
         return RequestDict(method='GET',
                            url=f'{host}/api/mmota/v2/details?vin={urllib.parse.quote(vin)}',
-                           headers=self._ford_headers(country_camel=True),
+                           headers=self._ford_headers(country_header='countryCode'),
                            data=None)
 
     def get_release_notes(self, release_notes_url: str) -> RequestDict:
@@ -1321,7 +1370,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         Build the request for step 2 of the release-notes fetch.
 
         Fetches the notes through Ford's proxy. The URL goes into a ``release-notes-url``
-        header (not a query parameter — this is unusual and easy to miss).
+        header (not a query parameter - this is unusual and easy to miss).
 
         Parameters
         ----------
@@ -1338,11 +1387,9 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         return RequestDict(
             method='GET',
             url=f'{self._secrets["hosts"]["vehicle"]}/api/expvsureleasenotes/v2/details',
-            headers=self._ford_headers(country_camel=True,
+            headers=self._ford_headers(country_header='countryCode',
                                        extra_headers={'releaseNotesUrl': release_notes_url}),
             data=None)
-
-    # ----- dealer (preferred-dealer step 2) -------------------------------
 
     def get_dealer_by_pa_code(self, pa_code: str, *, brand: str | None = None) -> RequestDict:
         """
@@ -1360,12 +1407,10 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
         RequestDict
             Descriptor for the ``POST /api/dealersearch/v2/dealer`` call.
         """
-        # ``SingleDealerSearchRequest`` declares every field with a snake_case
-        # ``@SerializedName`` (Gson) — the gateway rejects camelCase variants
-        # with HTTP 400. ``countrycode`` (all lowercase) is intentional, not a
-        # typo, per the Gson annotation. The ``language`` field needs the
-        # ISO 639-1 two-letter form (``'en'``); the full BCP-47 ``'en-US'``
-        # triggers ``2412400 invalid or missing languagecode``.
+        # The dealer-search endpoint requires every field name in snake_case; the gateway rejects
+        # camelCase variants with HTTP 400. ``countrycode`` (all lowercase) is intentional, not a
+        # typo. The ``language`` field needs the ISO 639-1 two-letter form (``'en'``); the full
+        # BCP-47 ``'en-US'`` triggers ``2412400 invalid or missing languagecode``.
         body = {
             'brand': brand or self.brand,
             'countrycode': self.country,
@@ -1374,7 +1419,7 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
             'device': {},
             'input_echo': True,
             'language': self.locale.split('-', 1)[0],
-            'pa_code': pa_code,
+            'pa_code': pa_code
         }
         return RequestDict(method='POST',
                            url=f'{self._secrets["hosts"]["vehicle"]}/api/dealersearch/v2/dealer',
@@ -1382,8 +1427,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                                **self._ford_headers(), 'content-type': 'application/json'
                            },
                            data=self._json_body(body))
-
-    # ----- roadside -------------------------------------------------------
 
     def get_roadside_symptoms(self, *, is_bev: bool = False) -> RequestDict:
         """
@@ -1483,8 +1526,6 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                 }
             }))
 
-    # ----- secondary drivers -----------------------------------------------
-
     def list_drivers(self, vin: str) -> RequestDict:
         """
         Build the request that lists secondary drivers (both authorised and pending).
@@ -1571,7 +1612,3 @@ class FordPassClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
                                **self._ford_headers(), 'content-type': 'application/json'
                            },
                            data=self._json_body(body))
-
-    # ===== response parsing helpers =======================================
-    # All response parsers are static — pass them response.body or pre-decoded
-    # dicts. They never raise on missing fields; callers should validate.

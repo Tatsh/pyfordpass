@@ -27,7 +27,8 @@ __all__ = ('ford', 'main')
 @click.group(context_settings={'help_option_names': ('-h', '--help')})
 @click.version_option(prog_name='ford')
 def ford() -> None:
-    """FordPass CLI.
+    """
+    FordPass CLI.
 
     Usage: ``ford <activity> <action> [args]``.
     """
@@ -62,5 +63,5 @@ async def _amain() -> None:
 
 
 def main() -> None:
-    """Sync entry point — enters async on its first line."""
+    """Sync entry point - enters async on its first line."""
     asyncio.run(_amain())

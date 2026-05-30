@@ -1,7 +1,8 @@
-"""Loader for the user's CLI configuration file.
+"""
+Loader for the user's CLI configuration file.
 
-Reads ``~/.config/fordpass/config.toml`` (via :mod:`platformdirs`) and fills in
-locale-derived defaults so callers can dereference any configured key directly.
+Reads ``~/.config/pyfordpass/config.toml`` (via :mod:`platformdirs`) and fills in locale-derived
+defaults so callers can dereference any configured key directly.
 """
 from __future__ import annotations
 
@@ -13,20 +14,13 @@ from platformdirs import user_config_dir
 import tomlkit
 
 if TYPE_CHECKING:
-    from fordpass.typing import (
-        Config,
-        DistanceUnit,
-        OutputConfig,
-        OutputFormat,
-        TemperatureUnit,
-        UnitsConfig,
-        VehicleConfig,
-    )
+    from .typing.common import DistanceUnit, TemperatureUnit
+    from .typing.config import Config, OutputConfig, OutputFormat, UnitsConfig, VehicleConfig
 
 __all__ = ('CONFIG_DIR', 'CONFIG_FILE', 'KM_PER_MILE', 'KM_TO_MI', 'KPA_PER_PSI', 'KPA_TO_PSI',
            'OUTPUT_ENV_VAR', 'load_config', 'resolve_output_format')
 
-OUTPUT_ENV_VAR = 'FORDPASS_OUTPUT'
+OUTPUT_ENV_VAR = 'PYFORDPASS_OUTPUT'
 """Name of the environment variable that overrides the configured output format.
 
 Accepted values are ``'json'`` and ``'pretty'`` (case-insensitive).
@@ -34,8 +28,8 @@ Accepted values are ``'json'`` and ``'pretty'`` (case-insensitive).
 :meta hide-value:
 """
 
-CONFIG_DIR = Path(user_config_dir(appname='fordpass', appauthor=False))
-"""Directory holding the user configuration file (``~/.config/fordpass`` on Linux).
+CONFIG_DIR = Path(user_config_dir(appname='pyfordpass', appauthor=False))
+"""Directory holding the user configuration file (``~/.config/pyfordpass`` on Linux).
 
 :meta hide-value:
 """
@@ -98,8 +92,8 @@ def _normalise_locale(raw: str) -> str:
     Returns
     -------
     str
-        The leading language-region pair, lower-cased, with underscore
-        rewritten to hyphen, and codeset stripped.
+        The leading language-region pair, lower-cased, with underscore rewritten to hyphen, and
+        codeset stripped.
     """
     return raw.split('.', 1)[0].replace('_', '-').lower()
 
@@ -108,21 +102,20 @@ def _default_distance_unit(locale: str | None = None) -> DistanceUnit:
     """
     Derive the default distance unit from a locale tag.
 
-    The supplied ``locale`` (typically :attr:`fordpass.client.FordPassNiquestsClient.locale`)
-    takes precedence; when it is ``None`` the active POSIX locale environment
-    variables are inspected instead.
+    The supplied ``locale`` (typically :attr:`fordpass.client.AsyncFordPassClient.locale`) takes
+    precedence; when it is ``None`` the active POSIX locale environment variables are inspected
+    instead.
 
     Parameters
     ----------
     locale : str | None
-        Explicit locale tag (BCP-47, e.g. ``'en-US'``). When ``None`` the
-        ``LC_ALL`` / ``LC_MEASUREMENT`` / ``LANG`` env vars are consulted.
+        Explicit locale tag (BCP-47, e.g. ``'en-US'``). When ``None`` the ``LC_ALL`` /
+        ``LC_MEASUREMENT`` / ``LANG`` env vars are consulted.
 
     Returns
     -------
     DistanceUnit
-        ``'mi'`` when the resolved locale is ``en-US`` or ``en-GB``;
-        ``'km'`` otherwise.
+        ``'mi'`` when the resolved locale is ``en-US`` or ``en-GB``; ``'km'`` otherwise.
     """
     raw = locale or (os.environ.get('LC_ALL') or os.environ.get('LC_MEASUREMENT')
                      or os.environ.get('LANG') or '')
@@ -136,14 +129,14 @@ def _default_temperature_unit(locale: str | None = None) -> TemperatureUnit:
     Parameters
     ----------
     locale : str | None
-        Explicit locale tag (e.g. ``'en-US'``). When ``None`` the
-        ``LC_ALL`` / ``LC_MEASUREMENT`` / ``LANG`` env vars are consulted.
+        Explicit locale tag (e.g. ``'en-US'``). When ``None`` the ``LC_ALL`` / ``LC_MEASUREMENT`` /
+        ``LANG`` env vars are consulted.
 
     Returns
     -------
     TemperatureUnit
-        ``'F'`` when the resolved locale is ``en-US``; ``'C'`` otherwise
-        (including ``en-GB``, which uses Celsius despite using miles).
+        ``'F'`` when the resolved locale is ``en-US``; ``'C'`` otherwise (including ``en-GB``,
+        which uses Celsius despite using miles).
     """
     raw = locale or (os.environ.get('LC_ALL') or os.environ.get('LC_MEASUREMENT')
                      or os.environ.get('LANG') or '')
@@ -157,15 +150,14 @@ def load_config(*, locale: str | None = None) -> Config:
     Parameters
     ----------
     locale : str | None
-        Optional explicit locale (e.g. ``client.locale``, ``'en-US'``) used to
-        seed the default distance unit. When ``None`` the OS locale env vars
-        are inspected as a fallback.
+        Optional explicit locale (e.g. ``client.locale``, ``'en-US'``) used to seed the default
+        distance unit. When ``None`` the OS locale env vars are inspected as a fallback.
 
     Returns
     -------
     Config
-        The merged configuration. Missing keys are populated so callers can
-        dereference ``load_config()['units']['distance']`` unconditionally.
+        The merged configuration. Missing keys are populated so callers can dereference
+        ``load_config()['units']['distance']`` unconditionally.
     """
     raw: dict[str, Any] = {}
     if CONFIG_FILE.exists():
@@ -200,9 +192,8 @@ def resolve_output_format(*, cli_json: bool = False) -> OutputFormat:
     """
     Resolve the effective output format for a command.
 
-    Precedence (highest first): the ``--json`` CLI flag, the ``FORDPASS_OUTPUT``
-    environment variable, ``[output] format`` in ``config.toml``, then the
-    built-in default of ``'pretty'``.
+    Precedence (highest first): the ``--json`` CLI flag, the ``PYFORDPASS_OUTPUT`` environment
+    variable, ``[output] format`` in ``config.toml``, then the built-in default of ``'pretty'``.
 
     Parameters
     ----------

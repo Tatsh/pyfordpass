@@ -1,13 +1,4 @@
-"""Loader for FordPass API constants.
-
-The file lives at :data:`SECRETS_FILE` (``~/.config/fordpass/abcdef.toml`` on
-Linux). When it is missing or malformed, :py:func:`load_secrets` raises a :py:class:`RuntimeError`
-with the path so the operator knows where to put it.
-
-The Python module is named ``abcdef`` rather than the more descriptive
-``secrets`` because the latter shadows the standard-library :py:mod:`secrets`
-module (which is transitively imported by ``urllib3_future``).
-"""
+"""Loader for FordPass API constants."""
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -18,7 +9,7 @@ from fordpass.config import CONFIG_DIR
 import tomlkit
 
 if TYPE_CHECKING:
-    from fordpass.typing import Secrets
+    from .typing.secrets import Secrets
 
 __all__ = ('SECRETS_FILE', 'load_secrets')
 
@@ -90,20 +81,20 @@ def load_secrets() -> Secrets:
             'login': cast('str', _require(raw, ('hosts', 'login'))),
             'tmc': cast('str', _require(raw, ('hosts', 'tmc'))),
             'tmc_accounts': cast('str', _require(raw, ('hosts', 'tmc_accounts'))),
-            'vehicle': cast('str', _require(raw, ('hosts', 'vehicle'))),
+            'vehicle': cast('str', _require(raw, ('hosts', 'vehicle')))
         },
         'auth': {
             'b2c': {
                 'client_id': cast('str', _require(raw, ('auth', 'b2c', 'client_id'))),
                 'policy_template': cast('str', _require(raw, ('auth', 'b2c', 'policy_template'))),
                 'redirect_uri': cast('str', _require(raw, ('auth', 'b2c', 'redirect_uri'))),
-                'tenant_id': cast('str', _require(raw, ('auth', 'b2c', 'tenant_id'))),
+                'tenant_id': cast('str', _require(raw, ('auth', 'b2c', 'tenant_id')))
             },
             'tmc': {
-                'client_id': cast('str', _require(raw, ('auth', 'tmc', 'client_id'))),
-            },
+                'client_id': cast('str', _require(raw, ('auth', 'tmc', 'client_id')))
+            }
         },
         'roadside': {
-            'x_source': cast('dict[str, str]', _require(raw, ('roadside', 'x_source'))),
-        },
+            'x_source': cast('dict[str, str]', _require(raw, ('roadside', 'x_source')))
+        }
     }

@@ -1,6 +1,7 @@
 """One-shot telemetry queries (fuel, odometer, oil, tires)."""
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, cast
 import json
 import re
@@ -8,15 +9,23 @@ import urllib.parse
 import webbrowser
 
 from fordpass.config import KM_TO_MI, KPA_TO_PSI, load_config
+from fordpass.utils import is_list_like
 from rich.table import Table
 import click
 
-from .utils import console, dump_json, json_option, should_emit_json, vin_argument, with_client
+from .utils import (
+    console,
+    debug_option,
+    dump_json,
+    format_iso_datetime,
+    json_option,
+    should_emit_json,
+    vin_argument,
+    with_client,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from fordpass.client import FordPassNiquestsClient
+    from fordpass.client import AsyncFordPassClient
 
 
 @click.group()
@@ -25,10 +34,11 @@ def telemetry() -> None:
 
 
 @telemetry.command('fuel')
+@debug_option
 @vin_argument
 @json_option
 @with_client
-async def telemetry_fuel(client: FordPassNiquestsClient, _ctx: click.Context, vin: str, *,
+async def telemetry_fuel(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                          as_json: bool) -> None:
     """Fuel level + range."""
     pct, rng = await client.get_fuel_level(vin)
@@ -44,7 +54,7 @@ _DISTANCE_UNIT_ALIASES = {
     'kilometers': 'km',
     'kilometres': 'km',
     'mi': 'mi',
-    'miles': 'mi',
+    'miles': 'mi'
 }
 """Map of accepted ``--unit`` values to the canonical short form.
 
@@ -53,6 +63,7 @@ _DISTANCE_UNIT_ALIASES = {
 
 
 @telemetry.command('odometer')
+@debug_option
 @vin_argument
 @click.option('-u',
               '--unit',
@@ -60,7 +71,7 @@ _DISTANCE_UNIT_ALIASES = {
               default=None,
               help='Override the distance unit from `config.toml` for this call.')
 @with_client
-async def telemetry_odometer(client: FordPassNiquestsClient, _ctx: click.Context, vin: str,
+async def telemetry_odometer(client: AsyncFordPassClient, _ctx: click.Context, vin: str,
                              unit: str | None) -> None:
     """Vehicle odometer reading."""
     km = await client.get_odometer(vin)
@@ -76,9 +87,10 @@ async def telemetry_odometer(client: FordPassNiquestsClient, _ctx: click.Context
 
 
 @telemetry.command('oil')
+@debug_option
 @vin_argument
 @with_client
-async def telemetry_oil(client: FordPassNiquestsClient, _ctx: click.Context, vin: str) -> None:
+async def telemetry_oil(client: AsyncFordPassClient, _ctx: click.Context, vin: str) -> None:
     """Oil life remaining (%)."""
     pct = await client.get_oil_life(vin)
     click.echo('unknown' if pct is None else f'{pct}%')
@@ -111,6 +123,7 @@ _JSON_CELL_MAX = 60
 
 
 @telemetry.command('tires')
+@debug_option
 @vin_argument
 @click.option('-u',
               '--unit',
@@ -120,7 +133,7 @@ _JSON_CELL_MAX = 60
               '(also selects PSI when `mi`, kPa when `km`).')
 @json_option
 @with_client
-async def telemetry_tires(client: FordPassNiquestsClient, _ctx: click.Context, vin: str,
+async def telemetry_tires(client: AsyncFordPassClient, _ctx: click.Context, vin: str,
                           unit: str | None, *, as_json: bool) -> None:
     """Per-wheel tire pressure."""
     entries = await client.get_tire_pressure(vin)
@@ -128,7 +141,7 @@ async def telemetry_tires(client: FordPassNiquestsClient, _ctx: click.Context, v
         dump_json(entries)
         return
     if not entries:
-        click.echo('(no tire pressure data)')
+        click.echo('No tire pressure data is available.')
         return
     pref = (_DISTANCE_UNIT_ALIASES[unit.lower()] if unit is not None else load_config(
         locale=client.locale)['units']['distance'])
@@ -164,27 +177,31 @@ async def telemetry_tires(client: FordPassNiquestsClient, _ctx: click.Context, v
     console.print(table)
 
 
-_METRIC_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ('Powertrain', ('engineSpeed', 'engineCoolantTemp', 'engineOilTemp', 'oilLifeRemaining',
-                    'fuelLevel', 'fuelRange', 'gearLeverPosition', 'ignitionStatus',
-                    'stopStartModeStatus', 'speed', 'odometer')),
-    ('Motion', ('position', 'heading', 'compassDirection', 'yawRate', 'acceleration',
-                'acceleratorPedalPosition', 'brakePedalStatus', 'brakeTorque',
-                'torqueAtTransmission', 'wheelTorqueStatus')),
-    ('Battery', ('batteryLoadStatus', 'batteryStateOfCharge', 'batteryVoltage')),
-    ('Environment', ('ambientTemp', 'outsideTemperature')),
-    ('Security & Status', ('alarmStatus', 'panicAlarmStatus', 'parkingBrakeStatus',
-                           'vehicleLifeCycleMode', 'remoteStartCountdownTimer')),
-    ('Tires', ('tirePressure', 'tirePressureStatus', 'tirePressureSystemStatus')),
-    ('Doors & Body', ('doorStatus', 'doorLockStatus', 'hoodStatus')),
-    ('Seats', ('seatBeltStatus', 'seatOccupancyStatus')),
-    ('Display', ('displaySystemOfMeasure',)),
-)
+_METRIC_GROUPS: tuple[tuple[str, tuple[str, ...]],
+                      ...] = (('Powertrain',
+                               ('engineSpeed', 'engineCoolantTemp', 'engineOilTemp',
+                                'oilLifeRemaining', 'fuelLevel', 'fuelRange', 'gearLeverPosition',
+                                'ignitionStatus', 'stopStartModeStatus', 'speed', 'odometer')),
+                              ('Motion',
+                               ('position', 'heading', 'compassDirection', 'yawRate',
+                                'acceleration', 'acceleratorPedalPosition', 'brakePedalStatus',
+                                'brakeTorque', 'torqueAtTransmission', 'wheelTorqueStatus')),
+                              ('Battery', ('batteryLoadStatus', 'batteryStateOfCharge',
+                                           'batteryVoltage')),
+                              ('Environment', ('ambientTemp', 'outsideTemperature')),
+                              ('Security & Status',
+                               ('alarmStatus', 'panicAlarmStatus', 'parkingBrakeStatus',
+                                'vehicleLifeCycleMode', 'remoteStartCountdownTimer')),
+                              ('Tires', ('tirePressure', 'tirePressureStatus',
+                                         'tirePressureSystemStatus')),
+                              ('Doors & Body', ('doorStatus', 'doorLockStatus', 'hoodStatus')),
+                              ('Seats', ('seatBeltStatus',
+                                         'seatOccupancyStatus')), ('Display',
+                                                                   ('displaySystemOfMeasure',)))
 """Display grouping for :command:`telemetry all` pretty output.
 
-Each entry is ``(group_title, ordered_metric_keys)``. Metrics not listed in any
-group fall into an automatic ``Other`` table so new upstream fields surface
-rather than silently disappear.
+Each entry is ``(group_title, ordered_metric_keys)``. Metrics not listed in any group fall into an
+automatic ``Other`` table so new upstream fields surface rather than silently disappear.
 
 :meta hide-value:
 """
@@ -220,7 +237,7 @@ _UNIT_SUFFIXES = {
 }
 """Static unit suffix appended after the scalar value of these metrics.
 
-Temperature metrics deliberately omitted — they go through :py:func:`_format_temperature` which
+Temperature metrics deliberately omitted - they go through :py:func:`_format_temperature` which
 honours :py:data:`UnitsConfig.temperature`.
 
 :meta hide-value:
@@ -368,7 +385,7 @@ def _format_numeric(key: str, value: float, pref_distance: str, pref_temperature
     return f'{numeric:.1f}{suffix}'
 
 
-def _format_nested(key: str, value: dict[str, Any]) -> str | None:
+def _format_nested(key: str, value: Mapping[str, Any]) -> str | None:
     """
     Render the value-dict shape of a known nested-metric (e.g. position, acceleration).
 
@@ -392,7 +409,7 @@ def _format_nested(key: str, value: dict[str, Any]) -> str | None:
         parts = [f'{lat:.4f}, {lon:.4f}']
         if alt is not None:
             parts.append(f'alt {alt:.0f} m')
-        return '  '.join(parts)
+        return ' '.join(parts)
     if key == 'heading':
         h = value.get('heading')
         return f'{float(h):.0f}°' if h is not None else None
@@ -402,7 +419,7 @@ def _format_nested(key: str, value: dict[str, Any]) -> str | None:
     return None
 
 
-def _format_list_metric(key: str, entries: list[dict[str, Any]], pref_distance: str) -> str:
+def _format_list_metric(key: str, entries: Sequence[Mapping[str, Any]], pref_distance: str) -> str:
     """
     Summarise a list-shaped metric (tires, doors, locks, seats) on a single line.
 
@@ -456,7 +473,7 @@ def _format_list_metric(key: str, entries: list[dict[str, Any]], pref_distance: 
     if key in {'seatBeltStatus', 'seatOccupancyStatus'}:
         return ', '.join(f'{_humanize_enum(str(e.get("vehicleOccupantRole") or "?"))}: '
                          f'{_humanize_enum(str(e.get("value") or "?"))}' for e in entries)
-    # Fallback: list length only — better than dumping raw JSON.
+    # Fallback: list length only - better than dumping raw JSON.
     return f'{len(entries)} entries'
 
 
@@ -482,42 +499,43 @@ def _format_metric_value(key: str, entry: Any, pref_distance: str, pref_temperat
     """
     if entry is None:
         return '-'
-    if isinstance(entry, list):
+    if is_list_like(entry):
         return _format_list_metric(key, entry, pref_distance)
-    if not isinstance(entry, dict):
+    if not isinstance(entry, Mapping):
         return str(entry)
     value = entry.get('value', entry)
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         rendered = _format_nested(key, value)
         if rendered is not None:
             return rendered
         text = json.dumps(value, default=str)
         return text if len(text) <= _JSON_CELL_MAX else text[:_JSON_CELL_MAX - 3] + '...'
-    if isinstance(value, list):
+    if is_list_like(value):
         return _format_list_metric(key, value, pref_distance)
     return _format_scalar(key, value, pref_distance, pref_temperature)
 
 
 def _format_metric_updated(entry: Any) -> str:
     """
-    Extract and shorten the ``updateTime`` of a metric entry.
+    Extract and locale-format the ``updateTime`` of a metric entry.
 
     Returns
     -------
     str
-        The shortened timestamp, or an empty string when none is present.
+        The system-local ``YYYY-MM-DD HH:MM`` rendering, or an empty string when no timestamp is
+        present.
     """
-    if isinstance(entry, dict):
+    ts: object = None
+    if isinstance(entry, Mapping):
         ts = entry.get('updateTime')
-        if not ts and isinstance(entry.get('value'), dict):
+        if not ts and isinstance(entry.get('value'), Mapping):
             ts = entry['value'].get('updateTime')
-        return str(ts).replace('T', ' ').replace('Z', '').split('.', 1)[0] if ts else ''
-    if isinstance(entry, list) and entry:
-        first = entry[0]
-        if isinstance(first, dict):
-            ts = first.get('updateTime')
-            return (str(ts).replace('T', ' ').replace('Z', '').split('.', 1)[0] if ts else '')
-    return ''
+    elif is_list_like(entry) and entry and isinstance(entry[0], Mapping):
+        ts = entry[0].get('updateTime')
+    if not ts:
+        return ''
+    rendered = format_iso_datetime(ts)
+    return '' if rendered == '-' else rendered
 
 
 def _telemetry_table(title: str, metrics: Mapping[str, object], keys: tuple[str, ...],
@@ -562,8 +580,8 @@ def _indicators_table(entry: Any) -> Table | None:
     """
     Render the ``indicators`` metric as a table of currently-active warnings.
 
-    The metric is a dict of per-warning ``{value: bool}`` entries; only the
-    indicators whose value is truthy are shown.
+    The metric is a dict of per-warning ``{value: bool}`` entries; only the indicators whose value
+    is truthy are shown.
 
     Parameters
     ----------
@@ -573,16 +591,16 @@ def _indicators_table(entry: Any) -> Table | None:
     Returns
     -------
     Table | None
-        A table of active indicators, or ``None`` when the metric is missing
-        or its inner ``value`` block is absent.
+        A table of active indicators, or ``None`` when the metric is missing or its inner ``value``
+        block is absent.
     """
-    if not isinstance(entry, dict):
+    if not isinstance(entry, Mapping):
         return None
     inner = entry.get('value')
-    if not isinstance(inner, dict) or not inner:
+    if not isinstance(inner, Mapping) or not inner:
         return None
     active = sorted(
-        (name for name, sub in inner.items() if isinstance(sub, dict) and sub.get('value')),
+        (name for name, sub in inner.items() if isinstance(sub, Mapping) and sub.get('value')),
         key=_humanize_key)
     table = Table(title='Indicators', title_style='bold cyan')
     table.add_column('Indicator', style='cyan')
@@ -597,7 +615,7 @@ def _indicators_table(entry: Any) -> Table | None:
 
 def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str) -> Table | None:
     """
-    Render the ``configurations`` metric — a dict of vehicle settings — as a table.
+    Render the ``configurations`` metric - a dict of vehicle settings - as a table.
 
     Parameters
     ----------
@@ -611,13 +629,13 @@ def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str)
     Returns
     -------
     Table | None
-        A table of configuration settings, or ``None`` when the metric is missing
-        or its inner ``value`` block is absent.
+        A table of configuration settings, or ``None`` when the metric is missing or its inner
+        ``value`` block is absent.
     """
-    if not isinstance(entry, dict):
+    if not isinstance(entry, Mapping):
         return None
     inner_raw = entry.get('value')
-    if not isinstance(inner_raw, dict) or not inner_raw:
+    if not isinstance(inner_raw, Mapping) or not inner_raw:
         return None
     inner = cast('dict[str, Any]', inner_raw)
     table = Table(title='Configurations', title_style='bold cyan')
@@ -626,14 +644,14 @@ def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str)
     table.add_column('Updated', style='dim')
     for name in sorted(inner, key=_humanize_key):
         sub = inner[name]
-        if not isinstance(sub, dict):
+        if not isinstance(sub, Mapping):
             table.add_row(_humanize_key(name), str(sub), '')
             continue
         if 'error' in sub:
             err = sub['error']
             err_text = (f'[red]error: {err.get("errorName", "?")} '
                         f'({err.get("errorSource", "?")})[/red]'
-                        if isinstance(err, dict) else '[red]error[/red]')
+                        if isinstance(err, Mapping) else '[red]error[/red]')
             table.add_row(_humanize_key(name), err_text, _format_metric_updated(sub))
             continue
         value = sub.get('value')
@@ -647,6 +665,7 @@ def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str)
 
 
 @telemetry.command('all')
+@debug_option
 @vin_argument
 @click.option('--metrics',
               '-m',
@@ -654,20 +673,20 @@ def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str)
               help='Restrict to these metric names; repeat the option.')
 @json_option
 @with_client
-async def telemetry_all(client: FordPassNiquestsClient, _ctx: click.Context, vin: str,
+async def telemetry_all(client: AsyncFordPassClient, _ctx: click.Context, vin: str,
                         metrics: tuple[str, ...], *, as_json: bool) -> None:
     """Full telemetry snapshot (or restricted via --metrics)."""
     resp = await client.query_telemetry(vin, metrics=list(metrics) or None)
     if should_emit_json(as_json):
         dump_json(resp)
         return
-    metrics_block = (resp.get('metrics') if isinstance(resp, dict) else None) or {}
+    metrics_block = (resp.get('metrics') if isinstance(resp, Mapping) else None) or {}
     if not metrics_block:
-        console.print('[dim](no telemetry returned)[/dim]')
+        console.print('[dim]No telemetry was returned.[/dim]')
         return
-    update_time = (resp.get('updateTime') if isinstance(resp, dict) else None) or ''
-    console.print(f'[bold cyan]Telemetry[/bold cyan] — {vin}' +
-                  (f'  [dim](updated {update_time})[/dim]' if update_time else ''))
+    update_time = format_iso_datetime(resp.get('updateTime') if isinstance(resp, Mapping) else None)
+    console.print(f'[bold cyan]Telemetry[/bold cyan] - {vin}' +
+                  (f'  [dim]updated {update_time}[/dim]' if update_time != '-' else ''))
     units = load_config(locale=client.locale)['units']
     pref_distance = units['distance']
     pref_temperature = units['temperature']
@@ -711,6 +730,7 @@ def _google_maps_url(lat: float, lon: float) -> str:
 
 
 @telemetry.command('position')
+@debug_option
 @vin_argument
 @click.option('--open-maps',
               is_flag=True,
@@ -722,7 +742,7 @@ def _google_maps_url(lat: float, lon: float) -> str:
               help='Print only the Google Maps URI (suitable for shell pipelines).')
 @json_option
 @with_client
-async def telemetry_position(client: FordPassNiquestsClient, _ctx: click.Context, vin: str, *,
+async def telemetry_position(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                              open_maps: bool, maps_uri: bool, as_json: bool) -> None:
     """Show the vehicle's last known GPS position."""  # noqa: DOC501
     position = await client.get_position(vin)
@@ -736,11 +756,11 @@ async def telemetry_position(client: FordPassNiquestsClient, _ctx: click.Context
         dump_json(position)
         return
     if position is None:
-        console.print('[dim](no position reported)[/dim]')
+        console.print('[dim]No position is reported.[/dim]')
         return
     lat, lon = position['lat'], position['lon']
     maps_url = _google_maps_url(lat, lon)
-    table = Table(title=f'Position — {vin}', title_style='bold cyan')
+    table = Table(title=f'Position - {vin}', title_style='bold cyan')
     table.add_column('Field', style='cyan')
     table.add_column('Value')
     table.add_row('Latitude', f'{lat:.6f}')
@@ -752,8 +772,7 @@ async def telemetry_position(client: FordPassNiquestsClient, _ctx: click.Context
     if (compass := position.get('compass')) is not None:
         table.add_row('Compass', _humanize_enum(compass))
     if (update_time := position.get('update_time')) is not None:
-        table.add_row('Updated',
-                      str(update_time).replace('T', ' ').replace('Z', '').split('.', 1)[0])
+        table.add_row('Updated', format_iso_datetime(update_time))
     table.add_row('Google Maps', f'[link={maps_url}]{maps_url}[/link]')
     console.print(table)
     if open_maps:

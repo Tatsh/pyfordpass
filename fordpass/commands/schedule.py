@@ -4,14 +4,27 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, cast
 
+from fordpass.utils import is_list_like
 from rich.table import Table
 import click
 
-from .utils import console, dump_json, json_option, should_emit_json, vin_argument, with_client
+from .utils import (
+    console,
+    debug_option,
+    dump_json,
+    format_ford_request_date,
+    json_option,
+    parse_user_datetime,
+    parse_user_days,
+    parse_user_timezone,
+    should_emit_json,
+    vin_argument,
+    with_client,
+)
 
 if TYPE_CHECKING:
-    from fordpass.client import FordPassNiquestsClient
-    from fordpass.typing import ScheduleEntry
+    from fordpass.client import AsyncFordPassClient
+    from fordpass.typing.schedule import ScheduleEntry
 
 _DAY_FIELDS = ('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
 
@@ -22,10 +35,11 @@ def schedule() -> None:
 
 
 @schedule.command('list')
+@debug_option
 @vin_argument
 @json_option
 @with_client
-async def schedule_list(client: FordPassNiquestsClient, _ctx: click.Context, vin: str, *,
+async def schedule_list(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                         as_json: bool) -> None:
     """Show recurring remote-start schedules for the VIN."""
     resp = await client.list_remote_start_schedules(vin)
@@ -34,9 +48,9 @@ async def schedule_list(client: FordPassNiquestsClient, _ctx: click.Context, vin
         return
     schedules = _extract_schedules(resp)
     if not schedules:
-        console.print('[dim](no schedules)[/dim]')
+        console.print('[dim]No remote-start schedules are configured.[/dim]')
         return
-    table = Table(title=f'Remote-start schedules — {vin}', title_style='bold cyan')
+    table = Table(title=f'Remote-start schedules - {vin}', title_style='bold cyan')
     table.add_column('ID', justify='right', style='cyan')
     table.add_column('Name')
     table.add_column('Time')
@@ -58,89 +72,146 @@ def _extract_schedules(resp: Any) -> list[ScheduleEntry]:
     """
     Pull the schedule list out of the upstream response envelope.
 
-    The Ford SRSM backend marshals schedules with the .NET Newtonsoft.Json
-    array sentinel — ``{"startSchedule": {"$values": [...]}, "status": 200}``.
-    Older firmware variants use ``{"schedules": [...]}`` or a bare list, so this
-    helper accepts any of those shapes.
+    The Ford SRSM backend marshals schedules with the .NET Newtonsoft.Json array sentinel -
+    ``{"startSchedule": {"$values": [...]}, "status": 200}``. Older firmware variants use
+    ``{"schedules": [...]}`` or a bare list, so this helper accepts any of those shapes.
 
     Parameters
     ----------
     resp : Any
         Decoded JSON body returned by
-        :py:meth:`fordpass.client.FordPassNiquestsClient.list_remote_start_schedules`.
+        :py:meth:`fordpass.client.AsyncFordPassClient.list_remote_start_schedules`.
 
     Returns
     -------
     list[ScheduleEntry]
         The flat list of schedule entries; empty if the payload is unrecognised.
     """
-    if isinstance(resp, list):
-        return resp
+    if is_list_like(resp):
+        return list(resp)
     if not isinstance(resp, Mapping):
         return []
     container = resp.get('startSchedule')
     if isinstance(container, Mapping):
         values = container.get('$values')
-        if isinstance(values, list):
-            return values
-    if isinstance(container, list):
-        return container
+        if is_list_like(values):
+            return list(values)
+    if is_list_like(container):
+        return list(container)
     fallback = resp.get('schedules')
-    if isinstance(fallback, list):
-        return fallback
+    if is_list_like(fallback):
+        return list(fallback)
     return []
 
 
 @schedule.command('add')
+@debug_option
 @vin_argument
-@click.option('--time', 'start_time', required=True, help='HH:MM (24h)')
-@click.option('--date',
-              'request_date',
+@click.option('--start',
+              'start',
               required=True,
-              help='M-D-YYYY h:mm:ss AM/PM, e.g. "5-28-2026 1:50:00 PM"')
-@click.option('--tz',
-              'time_zone',
-              type=int,
-              required=True,
-              help='Ford internal zone code (e.g. 85 = US Eastern)')
-@click.option('--days', required=True, help='Comma-separated day flags, e.g. "mon,tue,thu"')
+              help='When the engine should fire - ISO 8601 (e.g. 2026-05-28T13:50:00-04:00) or '
+              '"YYYY-MM-DD HH:MM" in the timezone given by --tz.')
+@click.option(
+    '--tz',
+    'tz',
+    default=None,
+    help='Timezone for the schedule: IANA name (e.g. America/New_York), an integer Ford zone '
+    'code, or "local" / unset to use the system timezone.')
+@click.option(
+    '--days',
+    required=True,
+    help='Days when the schedule fires. Accepts comma- / space- / slash-separated tokens - full '
+    'names, abbreviations, or one-letter shortcuts (e.g. "mon,tue,thu", "M T Th", "mwf").')
 @with_client
-async def schedule_add(client: FordPassNiquestsClient, _ctx: click.Context, vin: str,
-                       start_time: str, request_date: str, time_zone: int, days: str) -> None:
-    """Add a new recurring schedule."""
-    enabled = {d.strip().lower(): 1 for d in days.split(',') if d.strip()}
-    dump_json(await client.add_remote_start_schedule(vin,
-                                                     start_time=start_time,
-                                                     request_start_date=request_date,
-                                                     time_zone=time_zone,
-                                                     days=enabled))
+async def schedule_add(client: AsyncFordPassClient, _ctx: click.Context, vin: str, start: str,
+                       tz: str | None, days: str) -> None:
+    """Add a new recurring remote-start schedule."""
+    dt = parse_user_datetime(start)
+    ford_tz_code = parse_user_timezone(tz)
+    enabled_days = parse_user_days(days)
+    dump_json(await
+              client.add_remote_start_schedule(vin,
+                                               start_time=dt.strftime('%H:%M'),
+                                               request_start_date=format_ford_request_date(dt),
+                                               time_zone=ford_tz_code,
+                                               days=enabled_days))
 
 
 @schedule.command('delete')
+@debug_option
 @click.argument('schedule_id', type=int)
 @click.option('--vin', required=True, help='Required alongside scheduleId.')
 @with_client
-async def schedule_delete(client: FordPassNiquestsClient, _ctx: click.Context, schedule_id: int,
+async def schedule_delete(client: AsyncFordPassClient, _ctx: click.Context, schedule_id: int,
                           vin: str) -> None:
     """Delete a schedule entry (DELETE with body)."""
     dump_json(await client.delete_remote_start_schedule(schedule_id, vin=vin))
 
 
-async def _set_schedule_status(client: FordPassNiquestsClient, vin: str, schedule_id: int, *,
-                               status: str) -> ScheduleEntry:
+def _as_int(value: Any, *, default: int = 0) -> int:
+    """
+    Coerce upstream string-or-int fields like ``status='1'`` or ``timeZone=85`` to ``int``.
+
+    Parameters
+    ----------
+    value : Any
+        Anything; non-int / non-digit-string inputs return ``default``.
+    default : int
+        Fallback when coercion is not possible.
+
+    Returns
+    -------
+    int
+        The coerced integer, or ``default`` when coercion failed.
+    """
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().lstrip('-').isdigit():
+        return int(value)
+    return default
+
+
+def _as_str(value: Any, *, default: str = '') -> str:
+    """
+    Coerce an upstream string field to ``str``, falling back to ``default`` on missing.
+
+    Parameters
+    ----------
+    value : Any
+        Anything; ``None`` returns ``default``, all other values stringify.
+    default : str
+        Fallback when ``value`` is ``None``.
+
+    Returns
+    -------
+    str
+        The coerced string.
+    """
+    if isinstance(value, str):
+        return value
+    if value is None:
+        return default
+    return str(value)
+
+
+async def _set_schedule_status(client: AsyncFordPassClient, vin: str, schedule_id: int, *,
+                               status: int) -> ScheduleEntry:
     """
     Fetch ``schedule_id`` for ``vin``, flip its ``status`` field, and PUT it back.
 
     Parameters
     ----------
-    client : FordPassNiquestsClient
+    client : AsyncFordPassClient
         The signed-in client.
     vin : str
         Vehicle VIN that owns the schedule.
     schedule_id : int
         Server-assigned schedule identifier.
-    status : str
-        New status — ``'1'`` to enable, ``'0'`` to disable.
+    status : int
+        New status - ``1`` to enable, ``0`` to disable.
 
     Returns
     -------
@@ -160,25 +231,45 @@ async def _set_schedule_status(client: FordPassNiquestsClient, vin: str, schedul
     if target is None:
         msg = f'Schedule {schedule_id} not found for VIN {vin}.'
         raise click.ClickException(msg)
-    body = cast('Mapping[str, str | int | None]', {**target, 'status': status})
-    return await client.toggle_remote_start_schedule(schedule_id, schedule_body=body)
+    # The PUT endpoint mirrors the *add* shape - int status / day flags, the original
+    # ``requestStartDate`` field name (read side calls it ``requestDateTime``), and a mandatory
+    # ``vin``. Spreading the raw read response sends the wrong field names, the wrong types
+    # (strings instead of ints), and Newtonsoft sentinels ($id, $type), all of which the gateway
+    # rejects as 400.
+    body: dict[str, str | int | None] = {
+        'vin': vin,
+        'requestStartDate': (_as_str(target.get('requestStartDate'))
+                             or _as_str(target.get('requestDateTime'))),
+        'startTime': _as_str(target.get('startTime')),
+        'timeZone': _as_int(target.get('timeZone')),
+        'status': status,
+        **{
+            d: _as_int(target.get(d))
+            for d in _DAY_FIELDS
+        }
+    }
+    return await client.toggle_remote_start_schedule(schedule_id,
+                                                     schedule_body=cast(
+                                                         'Mapping[str, str | int | None]', body))
 
 
 @schedule.command('enable')
+@debug_option
 @click.argument('schedule_id', type=int)
 @vin_argument
 @with_client
-async def schedule_enable(client: FordPassNiquestsClient, _ctx: click.Context, schedule_id: int,
+async def schedule_enable(client: AsyncFordPassClient, _ctx: click.Context, schedule_id: int,
                           vin: str) -> None:
     """Mark the schedule active (``status = 1``)."""
-    dump_json(await _set_schedule_status(client, vin, schedule_id, status='1'))
+    dump_json(await _set_schedule_status(client, vin, schedule_id, status=1))
 
 
 @schedule.command('disable')
+@debug_option
 @click.argument('schedule_id', type=int)
 @vin_argument
 @with_client
-async def schedule_disable(client: FordPassNiquestsClient, _ctx: click.Context, schedule_id: int,
+async def schedule_disable(client: AsyncFordPassClient, _ctx: click.Context, schedule_id: int,
                            vin: str) -> None:
     """Mark the schedule disabled (``status = 0``)."""
-    dump_json(await _set_schedule_status(client, vin, schedule_id, status='0'))
+    dump_json(await _set_schedule_status(client, vin, schedule_id, status=0))

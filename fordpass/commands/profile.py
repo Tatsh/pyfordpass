@@ -4,13 +4,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, cast
 
+from fordpass.utils import is_list_like
 from rich.table import Table
 import click
 
-from .utils import ack, console, dump_json, json_option, should_emit_json, with_client
+from .utils import ack, console, debug_option, dump_json, json_option, should_emit_json, with_client
 
 if TYPE_CHECKING:
-    from fordpass.client import FordPassNiquestsClient
+    from fordpass.client import AsyncFordPassClient
+    from fordpass.typing.profile import SaveProfileFields
 
 
 @click.group()
@@ -19,10 +21,11 @@ def profile() -> None:
 
 
 @profile.command('show')
+@debug_option
 @click.option('--groups', help='Comma-separated section filter.')
 @json_option
 @with_client
-async def profile_show(client: FordPassNiquestsClient, _ctx: click.Context, groups: str | None, *,
+async def profile_show(client: AsyncFordPassClient, _ctx: click.Context, groups: str | None, *,
                        as_json: bool) -> None:
     """Get account info."""
     resp = await client.get_profile(profile_groups=groups)
@@ -30,7 +33,7 @@ async def profile_show(client: FordPassNiquestsClient, _ctx: click.Context, grou
         dump_json(resp)
         return
     if not resp:
-        console.print('[dim](no profile data)[/dim]')
+        console.print('[dim]No profile data was returned.[/dim]')
         return
     table = Table(title='Profile', title_style='bold cyan', show_lines=True)
     table.add_column('Section', style='cyan')
@@ -56,7 +59,7 @@ def _flatten_section(block: Any) -> list[tuple[str, str]]:
     Parameters
     ----------
     block : Any
-        The raw section payload — typically a ``dict`` (most sections) or a
+        The raw section payload - typically a ``dict`` (most sections) or a
         ``list`` of ``{"fieldName": ..., "value": ...}`` entries
         (``namesExtensions``).
 
@@ -68,7 +71,7 @@ def _flatten_section(block: Any) -> list[tuple[str, str]]:
     if isinstance(block, Mapping):
         items = cast('Mapping[str, Any]', block).items()
         return [(k, '' if v is None else str(v)) for k, v in sorted(items)]
-    if isinstance(block, list):
+    if is_list_like(block):
         rows: list[tuple[str, str]] = []
         for item in block:
             if isinstance(item, Mapping) and 'fieldName' in item:
@@ -81,12 +84,13 @@ def _flatten_section(block: Any) -> list[tuple[str, str]]:
 
 
 @profile.command('update')
+@debug_option
 @click.option('--field',
               '-f',
               multiple=True,
-              help='`section.key=value` — e.g. `phoneNumbers.mobilePhoneNumber=+15555551234`.')
+              help='`section.key=value` - e.g. `phoneNumbers.mobilePhoneNumber=+15555551234`.')
 @with_client
-async def profile_update(client: FordPassNiquestsClient, _ctx: click.Context,
+async def profile_update(client: AsyncFordPassClient, _ctx: click.Context,
                          field: tuple[str, ...]) -> None:
     """Partial-update account info."""  # noqa: DOC501
     payload: dict[str, dict[str, Any]] = {}
@@ -97,4 +101,4 @@ async def profile_update(client: FordPassNiquestsClient, _ctx: click.Context,
             msg = f'Bad --field syntax: {f!r}. Use section.key=value.'
             raise click.ClickException(msg)
         payload.setdefault(section, {})[leaf] = val
-    ack(await client.save_profile(**payload), 'PATCH profile')
+    ack(await client.save_profile(**cast('SaveProfileFields', payload)), 'PATCH profile')

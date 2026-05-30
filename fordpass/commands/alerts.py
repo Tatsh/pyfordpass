@@ -8,10 +8,18 @@ import sys
 from rich.table import Table
 import click
 
-from .utils import console, dump_json, json_option, should_emit_json, vin_argument, with_client
+from .utils import (
+    console,
+    debug_option,
+    dump_json,
+    json_option,
+    should_emit_json,
+    vin_argument,
+    with_client,
+)
 
 if TYPE_CHECKING:
-    from fordpass.client import FordPassNiquestsClient
+    from fordpass.client import AsyncFordPassClient
 
 
 @click.group()
@@ -20,21 +28,22 @@ def alerts() -> None:
 
 
 @alerts.command('current')
+@debug_option
 @vin_argument
 @json_option
 @with_client
-async def alerts_current(client: FordPassNiquestsClient, _ctx: click.Context, vin: str, *,
+async def alerts_current(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                          as_json: bool) -> None:
-    """Active vehicle alerts (dashboard tiles)."""
+    """Active vehicle alerts."""
     resp = await client.get_alerts(vin)
     if should_emit_json(as_json):
         dump_json(resp)
         return
     items = (resp.get('alerts') if isinstance(resp, Mapping) else None) or []
     if not items:
-        console.print('[dim](no active alerts)[/dim]')
+        console.print('[dim]No active alerts.[/dim]')
         return
-    table = Table(title=f'Active alerts — {vin}', title_style='bold cyan')
+    table = Table(title=f'Active alerts - {vin}', title_style='bold cyan')
     table.add_column('When', style='dim')
     table.add_column('Type')
     table.add_column('Urgency')
@@ -52,10 +61,11 @@ async def alerts_current(client: FordPassNiquestsClient, _ctx: click.Context, vi
 
 
 @alerts.command('history')
+@debug_option
 @vin_argument
 @json_option
 @with_client
-async def alerts_history(client: FordPassNiquestsClient, _ctx: click.Context, vin: str, *,
+async def alerts_history(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                          as_json: bool) -> None:
     """Historical alert log."""
     resp = await client.get_alert_history(vin)
@@ -64,9 +74,9 @@ async def alerts_history(client: FordPassNiquestsClient, _ctx: click.Context, vi
         return
     items = (resp.get('messages') if isinstance(resp, Mapping) else None) or []
     if not items:
-        console.print('[dim](no alert history)[/dim]')
+        console.print('[dim]No alert history is recorded.[/dim]')
         return
-    table = Table(title=f'Alert history — {vin}', title_style='bold cyan')
+    table = Table(title=f'Alert history - {vin}', title_style='bold cyan')
     table.add_column('When', style='dim')
     table.add_column('Type')
     table.add_column('Subject')
@@ -78,10 +88,11 @@ async def alerts_history(client: FordPassNiquestsClient, _ctx: click.Context, vi
 
 
 @alerts.command('washer')
+@debug_option
 @vin_argument
 @with_client
-async def alerts_washer(client: FordPassNiquestsClient, _ctx: click.Context, vin: str) -> None:
-    """Washer-fluid low? (alertIdentifier == "E19-374-43")."""
+async def alerts_washer(client: AsyncFordPassClient, _ctx: click.Context, vin: str) -> None:
+    """Washer-fluid status."""
     low = await client.is_washer_fluid_low(vin)
     click.echo('low' if low else 'ok')
     if low:

@@ -5,6 +5,7 @@ import click
 
 from .utils import (
     TOKEN_FILE,
+    debug_option,
     ensure_signed_in,
     interactive_signin,
     load_tokens,
@@ -20,6 +21,7 @@ def auth() -> None:
 
 
 @auth.command('login')
+@debug_option
 def auth_login() -> None:
     """Interactive PKCE sign-in via the Ford B2C login page."""
     async def _impl() -> None:
@@ -30,6 +32,7 @@ def auth_login() -> None:
 
 
 @auth.command('refresh')
+@debug_option
 def auth_refresh() -> None:
     """Refresh the short-lived TMC bearer."""
     async def _impl() -> None:
@@ -44,6 +47,7 @@ def auth_refresh() -> None:
 
 
 @auth.command('status')
+@debug_option
 def auth_status() -> None:
     """Show saved tokens (truncated)."""
     tokens = load_tokens()
@@ -58,6 +62,7 @@ def auth_status() -> None:
 
 
 @auth.command('logout')
+@debug_option
 def auth_logout() -> None:
     """Delete saved tokens."""
     if TOKEN_FILE.exists():

@@ -1,4 +1,5 @@
-"""FordPass async client.
+"""
+FordPass async client.
 
 Wraps :class:`fordpass.sansio.FordPassClient` and dispatches each
 :class:`fordpass.sansio.RequestDict` through one of two transports:
@@ -7,12 +8,12 @@ Wraps :class:`fordpass.sansio.FordPassClient` and dispatches each
   fingerprint) for the OAuth/token endpoints. These hosts sit behind a fingerprinting CDN that
   RST_STREAMs non-browser HTTP/2 clients (the symptom: ``Stream 1 was reset by remote peer. Reason:
   0x2.``).
-- :class:`niquests.AsyncSession` for everything else — data-plane endpoints
+- :class:`niquests.AsyncSession` for everything else - data-plane endpoints
   that authenticate via Bearer/CAT and don't fingerprint.
 
 Usage::
 
-    async with FordPassNiquestsClient(cat=..., tmc=...) as client:
+    async with AsyncFordPassClient(cat=..., tmc=...) as client:
         pct, _ = await client.get_fuel_level('VIN1234')
         await client.remote_start('VIN1234')
 """
@@ -20,7 +21,7 @@ Usage::
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, cast
 import contextlib
 import json as _json
 import uuid
@@ -44,43 +45,31 @@ from .utils import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
 
+    from typing_extensions import Unpack
+
     from .sansio import RequestDict
-    from .typing import (
-        AckResponse,
-        AlertHistoryResponse,
-        AlertsResponse,
-        B2CTokenResponse,
-        CATTokenResponse,
-        DealerResponse,
-        DistanceUnit,
-        DriversCountResponse,
-        DriversListResponse,
-        GPSPosition,
-        GarageVehicle,
-        IDNameListResponse,
-        InviteResponse,
-        MessagesResponse,
-        ProfileResponse,
-        ReleaseNotesResponse,
-        RoadsideActiveResponse,
-        ScheduleEntry,
-        SchedulesResponse,
-        Secrets,
+    from .typing.alerts import AlertHistoryResponse, AlertsResponse
+    from .typing.auth import B2CTokenResponse, CATTokenResponse, TMCTokenResponse
+    from .typing.commands import AckResponse
+    from .typing.common import DistanceUnit, GPSPosition
+    from .typing.dealer import DealerResponse
+    from .typing.drivers import DriversCountResponse, DriversListResponse, InviteResponse
+    from .typing.messages import MessagesResponse
+    from .typing.profile import ProfileResponse, SaveProfileFields
+    from .typing.release import ReleaseNotesResponse
+    from .typing.roadside import IDNameListResponse, RoadsideActiveResponse
+    from .typing.schedule import ScheduleEntry, SchedulesResponse
+    from .typing.secrets import Secrets
+    from .typing.service import (
+        CompletedServiceActionDetail,
+        ServiceActionDetail,
         ServicePlannerResponse,
-        TMCTokenResponse,
-        TelemetryResponse,
-        TirePressureEntry,
     )
-
-_AUTH_IMPERSONATE: Literal['chrome'] = 'chrome'
-"""
-curl-cffi browser-impersonation profile used for the OAuth/token endpoints.
-
-:meta hide-value:
-"""
+    from .typing.telemetry import TelemetryResponse, TirePressureEntry
+    from .typing.vehicle import GarageVehicle
 
 
-class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints by design
+class AsyncFordPassClient:  # noqa: PLR0904
     """Async FordPass client (niquests for data, curl-cffi for auth)."""
     def __init__(self,
                  *,
@@ -99,10 +88,9 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Parameters
         ----------
         secrets : Secrets | None
-            API constants bundle (hosts, B2C identifiers,
-            user-agent, …). When ``None`` (the default), the bundle is loaded
-            via :py:func:`fordpass.abcdef.load_secrets` — this is the only
-            place in the package that performs that I/O.
+            API constants bundle (hosts, B2C identifiers, user-agent, …). When ``None`` (the
+            default), the bundle is loaded via :py:func:`fordpass.abcdef.load_secrets` - this is
+            the only place in the package that performs that I/O.
         cat : str | None
             Ford CAT access token forwarded to the underlying
             :py:class:`fordpass.sansio.FordPassClient`.
@@ -131,11 +119,14 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
                                    locale=locale,
                                    brand=brand)
         self.session = session or niquests.AsyncSession()
-        self.auth_session = auth_session or CurlAsyncSession(impersonate=_AUTH_IMPERSONATE)
+        # Versioned chrome profile (``chromeNNN``) pins a specific Chrome release's
+        # JA3/JA4 + HTTP-2 SETTINGS fingerprint - the unversioned ``chrome`` alias
+        # drifts between curl-cffi releases.
+        from fordpass.config import load_config  # noqa: PLC0415
+        impersonate = (load_config().get('http') or {}).get('impersonate') or 'chrome146'
+        self.auth_session = auth_session or CurlAsyncSession(impersonate=cast('Any', impersonate))
         self._owns_session = session is None
         self._owns_auth_session = auth_session is None
-
-    # ----- token convenience -----------------------------------------------
 
     @property
     def cat(self) -> str | None:
@@ -165,8 +156,7 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Returns
         -------
         str | None
-            The token used as the ``Authorization: Bearer`` header on
-            TMC-plane calls.
+            The token used as the ``Authorization: Bearer`` header on TMC-plane calls.
         """
         return self.core.tmc
 
@@ -185,16 +175,13 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         """ISO 3166-1 alpha-2 country code (e.g. ``'USA'`` / ``'GBR'``)."""
         return self.core.country
 
-    # ----- internal --------------------------------------------------------
-
     async def _send(self, req: RequestDict) -> niquests.Response:
         """
         Send a sans-I/O request descriptor via niquests and raise on 4xx/5xx.
 
         Fires the request, and on a single HTTP 401 hands off to
-        :py:meth:`_refresh_credentials_for` to rotate whichever credential the
-        original request was carrying — then replays the request once. Any
-        further failure propagates.
+        :py:meth:`_refresh_credentials_for` to rotate whichever credential the original request was
+        carrying - then replays the request once. Any further failure propagates.
 
         Parameters
         ----------
@@ -217,21 +204,20 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Refresh whichever credential ``req`` was carrying and rewrite its header.
 
         * ``authorization: Bearer …`` (TMC plane) → :py:meth:`exchange_cat_for_tmc`.
-        * ``auth-token: <CAT>`` (Ford plane) → :py:meth:`refresh_cat`; the
-          dependent TMC bearer is also rotated as best-effort so a subsequent
-          TMC-plane call in the same command reuses a matching pair.
+        * ``auth-token: <CAT>`` (Ford plane) → :py:meth:`refresh_cat`; the dependent TMC bearer is
+          also rotated as best-effort so a subsequent TMC-plane call in the same command reuses a
+          matching pair.
 
         Parameters
         ----------
         req : RequestDict
-            The descriptor whose ``headers`` will be mutated in place.
+            The descriptor whose ``headers`` are mutated in place.
 
         Returns
         -------
         bool
-            ``True`` when a refresh ran and the request is ready to retry;
-            ``False`` when no refresh path applies (so the original 401 should
-            propagate).
+            ``True`` when a refresh ran and the request is ready to retry; ``False`` when no
+            refresh path applies (so the original 401 should propagate).
         """
         if self.cat_refresh is None:
             return False
@@ -294,24 +280,19 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         url = req['url']
         headers = req['headers']
         data = req['data']
-        r = await self.auth_session.request(
-            method=cast('Any', method),
-            url=url,
-            headers=headers,
-            data=data,
-        )
+        r = await self.auth_session.request(method=cast('Any', method),
+                                            url=url,
+                                            headers=headers,
+                                            data=data)
         if r.status_code >= HTTPStatus.BAD_REQUEST:
             msg = f'auth request failed: {method} {url} -> HTTP {r.status_code}: {r.text[:300]}'
             raise RuntimeError(msg)
-        # curl-cffi returns bytes; decode then JSON-parse.
         body = r.content.decode('utf-8') if isinstance(r.content, (bytes, bytearray)) else r.text
         return _json.loads(body)
 
-    # ----- auth flow -------------------------------------------------------
-
     def b2c_authorize_url(self, **kwargs: Any) -> str:
         """
-        Build the B2C ``/authorize`` URL synchronously (no I/O — just URL building).
+        Build the B2C ``/authorize`` URL synchronously (no I/O - just URL building).
 
         Parameters
         ----------
@@ -330,7 +311,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
                                 code: str,
                                 code_verifier: str,
                                 policy: str | None = None) -> B2CTokenResponse:
-        # Auth endpoint — routed through curl-cffi to bypass TLS/HTTP-2 fingerprinting.
         """
         Exchange a B2C authorisation code for an access token.
 
@@ -342,8 +322,7 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         code_verifier : str
             The PKCE code verifier paired with the original ``code_challenge``.
         policy : str | None
-            B2C user-flow / custom-policy name; defaults to
-            ``B2C_1A_SignInSignUp_<locale>``.
+            B2C user-flow / custom-policy name; defaults to ``B2C_1A_SignInSignUp_<locale>``.
 
         Returns
         -------
@@ -355,7 +334,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
                 self.core.exchange_b2c_code(code=code, code_verifier=code_verifier, policy=policy)))
 
     async def mint_cat_from_b2c(self, *, b2c_access_token: str) -> CATTokenResponse:
-        # Auth endpoint — routed through curl-cffi.
         """
         Mint a Ford CAT from a B2C access token and stash the resulting tokens.
 
@@ -383,12 +361,10 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return data
 
     async def refresh_cat(self) -> CATTokenResponse:
-        # Auth endpoint — routed through curl-cffi.
         """
         Swap the stored CAT refresh token for a fresh CAT pair.
 
-        Updates :attr:`cat` (and :attr:`cat_refresh` when the response rotates it)
-        in place.
+        Updates :attr:`cat` (and :attr:`cat_refresh` when the response rotates it) in place.
 
         Returns
         -------
@@ -405,7 +381,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return data
 
     async def exchange_cat_for_tmc(self) -> TMCTokenResponse:
-        # Auth endpoint — routed through curl-cffi.
         """
         Exchange the CAT refresh token for a TMC bearer and stash it.
 
@@ -422,8 +397,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         if isinstance(token, str):
             self.tmc = token
         return data
-
-    # ----- TMC commands ----------------------------------------------------
 
     async def remote_start(self, vin: str) -> niquests.Response:
         """
@@ -539,8 +512,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         """
         return await self._send(self.core.panic_alarm(vin, duration_s))
 
-    # ----- ASU -------------------------------------------------------------
-
     async def get_asu_settings(self, vin: str) -> niquests.Response:
         """
         Read current Automatic Software Update settings for ``vin``.
@@ -598,8 +569,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
             self.core.set_asu_schedule(vin,
                                        day_schedules=day_schedules,
                                        activation_setting=activation_setting))
-
-    # ----- telemetry -------------------------------------------------------
 
     async def query_telemetry(self,
                               vin: str,
@@ -668,9 +637,8 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Returns
         -------
         GPSPosition | None
-            A dict with ``lat``, ``lon`` (always present), plus optional
-            ``alt``, ``heading``, ``compass``, and ``update_time`` fields;
-            ``None`` when no position is reported.
+            A dict with ``lat``, ``lon`` (always present), plus optional ``alt``, ``heading``,
+            ``compass``, and ``update_time`` fields; ``None`` when no position is reported.
         """
         data = await self._send_json(self.core.get_position(vin))
         return extract_position(data.get('metrics') or {})
@@ -725,8 +693,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         """
         data = await self._send_json(self.core.get_next_departure(vin))
         return find_next_departure(data.get('metrics') or {})
-
-    # ----- SRSM ------------------------------------------------------------
 
     async def list_remote_start_schedules(self, vin: str) -> SchedulesResponse:
         """
@@ -796,8 +762,7 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         schedule_id : int
             Server-assigned identifier of the schedule entry.
         schedule_body : Mapping[str, Any]
-            Full body as returned by the read-side ``getschedules`` call, with ``status``
-            toggled.
+            Full body as returned by the read-side ``getschedules`` call, with ``status`` toggled.
 
         Returns
         -------
@@ -827,8 +792,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return cast(
             'AckResponse', await self._send_json(
                 self.core.delete_remote_start_schedule(schedule_id, vin=vin)))
-
-    # ----- garage ----------------------------------------------------------
 
     async def list_garage(self) -> list[GarageVehicle]:
         """
@@ -860,8 +823,7 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         license_plate : str | None
             New licence-plate string, or ``None`` to leave unchanged.
         mileage : int | None
-            New manual odometer reading in the user's display unit, or ``None`` to leave
-            unchanged.
+            New manual odometer reading in the user's display unit, or ``None`` to leave unchanged.
         preferred_dealer : str | None
             New dealer PA code, or ``None`` to leave unchanged.
 
@@ -877,8 +839,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
                                                  license_plate=license_plate,
                                                  mileage=mileage,
                                                  preferred_dealer=preferred_dealer)))
-
-    # ----- profile ---------------------------------------------------------
 
     async def get_profile(self, *, profile_groups: str | None = None) -> ProfileResponse:
         """
@@ -897,13 +857,13 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return cast('ProfileResponse', await self._send_json(
             self.core.get_profile(profile_groups=profile_groups)))
 
-    async def save_profile(self, **fields: Any) -> niquests.Response:
+    async def save_profile(self, **fields: Unpack[SaveProfileFields]) -> niquests.Response:
         """
         PATCH the signed-in user's account profile.
 
         Parameters
         ----------
-        **fields : Any
+        **fields : Unpack[SaveProfileFields]
             Profile section objects keyed by section name (``names``, ``address``, etc.).
 
         Returns
@@ -912,8 +872,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
             The raw HTTP response from the profile-management endpoint.
         """
         return await self._send(self.core.save_profile(**fields))
-
-    # ----- messages --------------------------------------------------------
 
     async def get_messages(self) -> MessagesResponse:
         """
@@ -960,8 +918,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return cast('AckResponse | None', await self._send_json(
             self.core.mark_messages_read(message_ids)))
 
-    # ----- alerts ----------------------------------------------------------
-
     async def get_alerts(self, vin: str, *, trace_id: str | None = None) -> AlertsResponse:
         """
         Fetch the active alerts for ``vin``.
@@ -999,8 +955,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         alerts = await self.get_alerts(vin)
         return is_washer_fluid_low(alerts)
 
-    # ----- alert history ---------------------------------------------------
-
     async def get_alert_history(self,
                                 vin: str,
                                 *,
@@ -1023,21 +977,22 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return cast('AlertHistoryResponse', await self._send_json(
             self.core.get_alert_history(vin, brand=brand)))
 
-    # ----- service planner ------------------------------------------------
-
     async def get_service_planner_upcoming(self,
+                                           vin: str,
                                            *,
-                                           odometer: int,
+                                           odometer: int | None = None,
                                            uom: DistanceUnit = 'mi') -> ServicePlannerResponse:
         """
-        Fetch upcoming scheduled service actions.
+        Fetch the upcoming-services planner summary for ``vin``.
 
         Parameters
         ----------
-        odometer : int
-            Current odometer reading in ``uom``.
-        uom : str
-            Unit of measure (``'mi'`` or ``'km'``).
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``; ``None`` omits the query parameter.
+        uom : DistanceUnit
+            Unit of measure for ``odometer`` (``'mi'`` or ``'km'``).
 
         Returns
         -------
@@ -1046,21 +1001,24 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         """
         return cast(
             'ServicePlannerResponse', await self._send_json(
-                self.core.get_service_planner_upcoming(odometer=odometer, uom=uom)))
+                self.core.get_service_planner_upcoming(vin=vin, odometer=odometer, uom=uom)))
 
     async def get_service_planner_history(self,
+                                          vin: str,
                                           *,
-                                          odometer: int,
+                                          odometer: int | None = None,
                                           uom: DistanceUnit = 'mi') -> ServicePlannerResponse:
         """
-        Fetch completed service actions.
+        Fetch the completed-services planner summary for ``vin``.
 
         Parameters
         ----------
-        odometer : int
-            Current odometer reading in ``uom``.
-        uom : str
-            Unit of measure (``'mi'`` or ``'km'``).
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``; ``None`` omits the query parameter.
+        uom : DistanceUnit
+            Unit of measure for ``odometer``.
 
         Returns
         -------
@@ -1069,16 +1027,78 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         """
         return cast(
             'ServicePlannerResponse', await self._send_json(
-                self.core.get_service_planner_history(odometer=odometer, uom=uom)))
+                self.core.get_service_planner_history(vin=vin, odometer=odometer, uom=uom)))
 
-    # ----- release notes (two-step) ---------------------------------------
+    async def get_service_action_detail(self,
+                                        service_action_id: str,
+                                        *,
+                                        vin: str,
+                                        odometer: int | None = None,
+                                        uom: DistanceUnit = 'mi') -> ServiceActionDetail:
+        """
+        Fetch detail for one upcoming service action.
+
+        Parameters
+        ----------
+        service_action_id : str
+            Identifier of the upcoming service action.
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``.
+        uom : DistanceUnit
+            Unit of measure for ``odometer``.
+
+        Returns
+        -------
+        ServiceActionDetail
+            The parsed upcoming-service-action detail (polymorphic by ``serviceType``).
+        """
+        return cast(
+            'ServiceActionDetail', await self._send_json(
+                self.core.get_service_action_detail(service_action_id,
+                                                    vin=vin,
+                                                    odometer=odometer,
+                                                    uom=uom)))
+
+    async def get_completed_service_action_detail(
+            self,
+            service_event_id: str,
+            *,
+            vin: str,
+            odometer: int | None = None,
+            uom: DistanceUnit = 'mi') -> CompletedServiceActionDetail:
+        """
+        Fetch detail for one completed service event.
+
+        Parameters
+        ----------
+        service_event_id : str
+            Identifier of the completed service event.
+        vin : str
+            VIN of the target vehicle.
+        odometer : int | None
+            Current odometer reading in ``uom``.
+        uom : DistanceUnit
+            Unit of measure for ``odometer``.
+
+        Returns
+        -------
+        CompletedServiceActionDetail
+            The parsed completed-service-event detail response.
+        """
+        return cast(
+            'CompletedServiceActionDetail', await self._send_json(
+                self.core.get_completed_service_action_detail(service_event_id,
+                                                              vin=vin,
+                                                              odometer=odometer,
+                                                              uom=uom)))
 
     async def get_release_notes(self, vin: str) -> ReleaseNotesResponse | None:
         """
         Run the two-step release-notes fetch for ``vin``.
 
-        Calls ``mmota/details`` first, then follows the ``releaseNotesUrl`` through Ford's
-        proxy.
+        Calls ``mmota/details`` first, then follows the ``releaseNotesUrl`` through Ford's proxy.
 
         Parameters
         ----------
@@ -1088,8 +1108,7 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Returns
         -------
         ReleaseNotesResponse | None
-            The parsed release-notes response, or ``None`` if no MMOTA alert / URL is
-            available.
+            The parsed release-notes response, or ``None`` if no MMOTA alert / URL is available.
         """
         mmota = await self._send_json(self.core.get_mmota_details(vin))
         details = mmota.get('mmotaAlertsDetails') or []
@@ -1101,12 +1120,10 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         return cast('ReleaseNotesResponse | None', await self._send_json(
             self.core.get_release_notes(url)))
 
-    # ----- dealer ----------------------------------------------------------
-
     async def get_dealer_by_pa_code(self,
                                     pa_code: str,
                                     *,
-                                    brand: str | None = None) -> DealerResponse:
+                                    brand: str | None = None) -> DealerResponse | None:
         """
         Hydrate a dealer PA code into a full dealer object.
 
@@ -1119,10 +1136,11 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
 
         Returns
         -------
-        DealerResponse
-            The parsed dealer-search response.
+        DealerResponse | None
+            The parsed dealer-search response, or ``None`` when the upstream returns HTTP 204 (no
+            hydrated dealer data on file for ``pa_code``).
         """
-        return cast('DealerResponse', await self._send_json(
+        return cast('DealerResponse | None', await self._send_json(
             self.core.get_dealer_by_pa_code(pa_code, brand=brand)))
 
     async def get_preferred_dealer(self, vin: str) -> DealerResponse | None:
@@ -1130,7 +1148,9 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Fetch and hydrate the preferred dealer for ``vin``.
 
         Looks up the garage, plucks ``preferredDealer``, then calls
-        :py:meth:`get_dealer_by_pa_code`.
+        :py:meth:`get_dealer_by_pa_code`. When the dealer-search call returns no body (HTTP 204),
+        still surfaces the PA code rather than reporting "no dealer" - the dealer *is* set, the
+        upstream service just couldn't hydrate it.
 
         Parameters
         ----------
@@ -1140,15 +1160,18 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
         Returns
         -------
         DealerResponse | None
-            The parsed dealer-search response, or ``None`` if no preferred dealer is set.
+            The parsed dealer-search response, or ``None`` if no preferred dealer is set on the
+            garage entry. When the PA code exists but cannot be hydrated, returns a minimal
+            envelope ``{'paCode': <code>}``.
         """
         garage = await self.list_garage()
         pa_code = find_preferred_dealer_code(garage, vin)
         if not pa_code:
             return None
-        return await self.get_dealer_by_pa_code(pa_code)
-
-    # ----- roadside --------------------------------------------------------
+        hydrated = await self.get_dealer_by_pa_code(pa_code)
+        if hydrated is None:
+            return cast('DealerResponse', {'paCode': pa_code})
+        return hydrated
 
     async def get_roadside_symptoms(self, *, is_bev: bool = False) -> IDNameListResponse:
         """
@@ -1225,8 +1248,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
                                                   customer_name=customer_name,
                                                   customer_phone=customer_phone)))
 
-    # ----- drivers ---------------------------------------------------------
-
     async def list_drivers(self, vin: str) -> DriversListResponse:
         """
         List secondary drivers (both authorised and pending) for ``vin``.
@@ -1295,8 +1316,6 @@ class FordPassNiquestsClient:  # noqa: PLR0904  # API mirror — 50+ endpoints b
                                         inviter_first_name=inviter_first_name,
                                         vehicle_display_name=vehicle_display_name,
                                         brand=brand)))
-
-    # ----- session management ---------------------------------------------
 
     async def aclose(self) -> None:
         """Release both the niquests session and the curl-cffi auth session."""
