@@ -10,6 +10,7 @@ from fordpass.config import (
     KPA_PER_PSI,
     KPA_TO_PSI,
     OUTPUT_ENV_VAR,
+    effective_config,
     load_config,
     resolve_output_format,
 )
@@ -193,3 +194,30 @@ def test_resolve_output_format_default_pretty(tmp_path: Path,
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', tmp_path / 'missing.toml')
     monkeypatch.delenv(OUTPUT_ENV_VAR, raising=False)
     assert resolve_output_format() == 'pretty'
+
+
+def test_load_config_reads_impersonate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    config_path = tmp_path / 'config.toml'
+    config_path.write_text("[http]\nimpersonate = 'firefox144'\n")
+    monkeypatch.setattr('fordpass.config.CONFIG_FILE', config_path)
+    config = load_config(locale='en-US')
+    assert config['http']['impersonate'] == 'firefox144'
+
+
+def test_load_config_skips_c_measurement_locale(tmp_path: Path,
+                                                monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr('fordpass.config.CONFIG_FILE', tmp_path / 'missing.toml')
+    monkeypatch.delenv('LC_ALL', raising=False)
+    monkeypatch.setenv('LC_MEASUREMENT', 'C')
+    monkeypatch.setenv('LANG', 'en_GB.UTF-8')
+    config = load_config()
+    assert config['units']['distance'] == 'mi'
+
+
+def test_effective_config_fills_injected_defaults(tmp_path: Path,
+                                                  monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr('fordpass.config.CONFIG_FILE', tmp_path / 'missing.toml')
+    config = effective_config(locale='en-US')
+    assert config['output']['format'] == 'pretty'
+    assert config['http']['impersonate'] == 'chrome146'
+    assert config['units']['distance'] == 'mi'

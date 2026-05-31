@@ -70,6 +70,8 @@ def isolate_platform_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr('fordpass.config.CONFIG_DIR', config_dir)
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', config_dir / 'config.toml')
     monkeypatch.setattr('fordpass.api_config.API_CONFIG_FILE', config_dir / 'api.toml')
+    monkeypatch.setattr('fordpass.commands.config.CONFIG_FILE', config_dir / 'config.toml')
+    monkeypatch.setattr('fordpass.commands.api_config.API_CONFIG_FILE', config_dir / 'api.toml')
     monkeypatch.setattr('fordpass.commands.utils.STATE_DIR', state_dir)
     monkeypatch.setattr('fordpass.commands.utils.TOKEN_FILE', state_dir / 'tokens.json')
     monkeypatch.setattr('fordpass.commands.auth.TOKEN_FILE', state_dir / 'tokens.json')

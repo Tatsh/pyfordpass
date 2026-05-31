@@ -6,7 +6,9 @@ import asyncio
 import click
 
 from .commands.alerts import alerts
+from .commands.api_config import api_config
 from .commands.auth import auth
+from .commands.config import config
 from .commands.dealer import dealer
 from .commands.departure import departure
 from .commands.drivers import drivers
@@ -31,7 +33,9 @@ def fordpass() -> None:
 
 
 fordpass.add_command(alerts)
+fordpass.add_command(api_config)
 fordpass.add_command(auth)
+fordpass.add_command(config)
 fordpass.add_command(dealer)
 fordpass.add_command(departure)
 fordpass.add_command(drivers)

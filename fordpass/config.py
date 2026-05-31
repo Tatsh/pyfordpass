@@ -15,10 +15,34 @@ import tomlkit
 
 if TYPE_CHECKING:
     from .typing.common import DistanceUnit, TemperatureUnit
-    from .typing.config import Config, OutputConfig, OutputFormat, UnitsConfig, VehicleConfig
+    from .typing.config import (
+        Config,
+        HTTPConfig,
+        OutputConfig,
+        OutputFormat,
+        UnitsConfig,
+        VehicleConfig,
+    )
 
-__all__ = ('CONFIG_DIR', 'CONFIG_FILE', 'KM_PER_MILE', 'KM_TO_MI', 'KPA_PER_PSI', 'KPA_TO_PSI',
-           'OUTPUT_ENV_VAR', 'load_config', 'resolve_output_format')
+__all__ = ('CONFIG_DIR', 'CONFIG_FILE', 'DEFAULT_IMPERSONATE', 'DEFAULT_OUTPUT_FORMAT',
+           'KM_PER_MILE', 'KM_TO_MI', 'KPA_PER_PSI', 'KPA_TO_PSI', 'OUTPUT_ENV_VAR',
+           'effective_config', 'load_config', 'resolve_output_format')
+
+DEFAULT_IMPERSONATE = 'chrome146'
+"""
+curl-cffi browser-impersonation profile used for the auth endpoints when ``[http] impersonate`` is
+unset.
+
+:meta hide-value:
+"""
+
+DEFAULT_OUTPUT_FORMAT: OutputFormat = 'pretty'
+"""
+Output format used when neither the CLI flag, the environment variable, nor ``[output] format`` is
+set.
+
+:meta hide-value:
+"""
 
 OUTPUT_ENV_VAR = 'PYFORDPASS_OUTPUT'
 """
@@ -107,6 +131,26 @@ def _normalise_locale(raw: str) -> str:
     return raw.split('.', 1)[0].replace('_', '-').lower()
 
 
+def _env_locale() -> str:
+    """
+    Return the first meaningful locale from the standard POSIX environment variables.
+
+    ``LC_ALL``, ``LC_MEASUREMENT``, and ``LANG`` are consulted in that order. Empty values and the
+    portable ``C`` / ``POSIX`` locales are skipped, since they express no regional preference and
+    would otherwise mask a real language locale such as ``LANG``.
+
+    Returns
+    -------
+    str
+        The first meaningful locale string, or an empty string when none is set.
+    """
+    for var in ('LC_ALL', 'LC_MEASUREMENT', 'LANG'):
+        value = os.environ.get(var, '')
+        if value and _normalise_locale(value) not in {'c', 'posix'}:
+            return value
+    return ''
+
+
 def _default_distance_unit(locale: str | None = None) -> DistanceUnit:
     """
     Derive the default distance unit from a locale tag.
@@ -126,8 +170,7 @@ def _default_distance_unit(locale: str | None = None) -> DistanceUnit:
     DistanceUnit
         ``'mi'`` when the resolved locale is ``en-US`` or ``en-GB``; ``'km'`` otherwise.
     """
-    raw = locale or (os.environ.get('LC_ALL') or os.environ.get('LC_MEASUREMENT')
-                     or os.environ.get('LANG') or '')
+    raw = locale or _env_locale()
     return 'mi' if _normalise_locale(raw) in _MILES_LOCALES else 'km'
 
 
@@ -147,8 +190,7 @@ def _default_temperature_unit(locale: str | None = None) -> TemperatureUnit:
         ``'F'`` when the resolved locale is ``en-US``; ``'C'`` otherwise (including ``en-GB``,
         which uses Celsius despite using miles).
     """
-    raw = locale or (os.environ.get('LC_ALL') or os.environ.get('LC_MEASUREMENT')
-                     or os.environ.get('LANG') or '')
+    raw = locale or _env_locale()
     return 'F' if _normalise_locale(raw) in _FAHRENHEIT_LOCALES else 'C'
 
 
@@ -194,7 +236,12 @@ def load_config(*, locale: str | None = None) -> Config:
     fmt = output_raw.get('format')
     if fmt in {'json', 'pretty'}:
         output['format'] = fmt
-    return {'output': output, 'units': units, 'vehicle': vehicle}
+    http_raw = raw.get('http') or {}
+    http: HTTPConfig = {}
+    impersonate = http_raw.get('impersonate')
+    if isinstance(impersonate, str) and impersonate:
+        http['impersonate'] = impersonate
+    return {'http': http, 'output': output, 'units': units, 'vehicle': vehicle}
 
 
 def resolve_output_format(*, cli_json: bool = False) -> OutputFormat:
@@ -222,4 +269,38 @@ def resolve_output_format(*, cli_json: bool = False) -> OutputFormat:
     cfg_fmt = (load_config().get('output') or {}).get('format')
     if cfg_fmt in {'json', 'pretty'}:
         return cfg_fmt
-    return 'pretty'
+    return DEFAULT_OUTPUT_FORMAT
+
+
+def effective_config(*, locale: str | None = None) -> Config:
+    """
+    Return the fully-resolved configuration, including injected defaults.
+
+    Unlike :py:func:`load_config`, every optional section is populated: the output format defaults
+    to :data:`DEFAULT_OUTPUT_FORMAT` and the impersonation profile to :data:`DEFAULT_IMPERSONATE`.
+    This is what ``fordpass config dump`` shows.
+
+    Parameters
+    ----------
+    locale : str | None
+        Optional explicit locale used to seed the default units. When ``None`` the OS locale env
+        vars are inspected.
+
+    Returns
+    -------
+    Config
+        The configuration a command would actually act on.
+    """
+    cfg = load_config(locale=locale)
+    output: OutputConfig = {
+        'format': (cfg.get('output') or {}).get('format') or DEFAULT_OUTPUT_FORMAT
+    }
+    http: HTTPConfig = {
+        'impersonate': (cfg.get('http') or {}).get('impersonate') or DEFAULT_IMPERSONATE
+    }
+    return {
+        'http': http,
+        'output': output,
+        'units': cfg['units'],
+        'vehicle': cfg.get('vehicle') or {}
+    }

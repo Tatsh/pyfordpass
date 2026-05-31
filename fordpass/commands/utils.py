@@ -30,6 +30,7 @@ from fordpass.utils import scalar_metric_value, walk_mapping
 from platformdirs import user_state_dir
 from rich.console import Console
 import click
+import tomlkit
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Coroutine, Iterable
@@ -39,11 +40,12 @@ if TYPE_CHECKING:
     import niquests
 
 __all__ = ('STATE_DIR', 'TOKEN_FILE', 'UOM_CHOICE', 'Readiness', 'ack', 'assert_ready_or_abort',
-           'check_readiness', 'console', 'debug_option', 'dump_json', 'duration_range',
-           'ensure_signed_in', 'force_option', 'format_ford_request_date', 'format_iso_date',
-           'format_iso_datetime', 'format_iso_time', 'install_loop', 'interactive_signin',
-           'json_option', 'load_tokens', 'make_client', 'parse_user_datetime', 'parse_user_days',
-           'parse_user_timezone', 'persist_tokens', 'run_async', 'save_tokens', 'should_emit_json',
+           'check_readiness', 'console', 'debug_option', 'delete_toml_file', 'delete_toml_key',
+           'dump_json', 'duration_range', 'ensure_signed_in', 'force_option',
+           'format_ford_request_date', 'format_iso_date', 'format_iso_datetime', 'format_iso_time',
+           'install_loop', 'interactive_signin', 'json_option', 'load_tokens', 'make_client',
+           'parse_user_datetime', 'parse_user_days', 'parse_user_timezone', 'persist_tokens',
+           'render_config', 'run_async', 'save_tokens', 'set_toml_key', 'should_emit_json',
            'validate_message_ids_exist', 'validate_vin', 'vin_argument', 'vin_option',
            'with_client')
 
@@ -337,6 +339,128 @@ def dump_json(obj: object) -> None:
         Any object accepted by :func:`json.dumps`.
     """
     click.echo(json.dumps(obj, default=str, indent=2, sort_keys=True))
+
+
+def _toml_ordered(data: Mapping[str, Any]) -> dict[str, Any]:
+    """
+    Return ``data`` with scalar keys ordered before nested tables, recursively.
+
+    TOML requires bare key/value pairs to precede ``[table]`` headers at a given level; emitting a
+    plain dictionary whose tables come first would otherwise produce a document that re-parses
+    incorrectly.
+
+    Parameters
+    ----------
+    data : Mapping[str, Any]
+        The mapping to reorder.
+
+    Returns
+    -------
+    dict[str, Any]
+        A new dictionary with scalars first and nested mappings last.
+    """
+    scalars = {k: v for k, v in data.items() if not isinstance(v, Mapping)}
+    tables = {k: _toml_ordered(v) for k, v in data.items() if isinstance(v, Mapping)}
+    return {**scalars, **tables}
+
+
+def render_config(data: Mapping[str, Any], *, as_json: bool) -> None:
+    """
+    Print a configuration mapping as TOML or, when requested, JSON.
+
+    Parameters
+    ----------
+    data : Mapping[str, Any]
+        The configuration to render.
+    as_json : bool
+        Emit JSON instead of TOML.
+    """
+    if should_emit_json(as_json):
+        dump_json(data)
+    else:
+        click.echo(tomlkit.dumps(_toml_ordered(data)).rstrip('\n'))
+
+
+def set_toml_key(path: Path, dotted_key: str, value: str) -> None:
+    """
+    Set ``dotted_key`` to ``value`` in the TOML file at ``path``, creating it if needed.
+
+    The key is a dot-separated path through nested tables (for example ``hosts.login``); missing
+    intermediate tables are created. The value is stored as a string.
+
+    Parameters
+    ----------
+    path : Path
+        The TOML file to edit.
+    dotted_key : str
+        Dot-separated key path.
+    value : str
+        The value to store.
+    """
+    data = tomlkit.loads(path.read_text(encoding='utf-8')).unwrap() if path.exists() else {}
+    *parents, leaf = dotted_key.split('.')
+    cursor = data
+    for part in parents:
+        nxt = cursor.get(part)
+        if not isinstance(nxt, dict):
+            nxt = {}
+            cursor[part] = nxt
+        cursor = nxt
+    cursor[leaf] = value
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(tomlkit.dumps(_toml_ordered(data)), encoding='utf-8')
+
+
+def delete_toml_key(path: Path, dotted_key: str) -> None:
+    """
+    Delete ``dotted_key`` from the TOML file at ``path``.
+
+    Parameters
+    ----------
+    path : Path
+        The TOML file to edit.
+    dotted_key : str
+        Dot-separated key path to remove.
+
+    Raises
+    ------
+    KeyError
+        If the file does not exist or the key is absent.
+    """
+    if not path.exists():
+        raise KeyError(dotted_key)
+    data = tomlkit.loads(path.read_text(encoding='utf-8')).unwrap()
+    *parents, leaf = dotted_key.split('.')
+    cursor = data
+    for part in parents:
+        nxt = cursor.get(part)
+        if not isinstance(nxt, dict):
+            raise KeyError(dotted_key)
+        cursor = nxt
+    if leaf not in cursor:
+        raise KeyError(dotted_key)
+    del cursor[leaf]
+    path.write_text(tomlkit.dumps(_toml_ordered(data)), encoding='utf-8')
+
+
+def delete_toml_file(path: Path) -> bool:
+    """
+    Delete the TOML file at ``path`` if it exists.
+
+    Parameters
+    ----------
+    path : Path
+        The file to remove.
+
+    Returns
+    -------
+    bool
+        ``True`` when a file was removed, ``False`` when there was nothing to delete.
+    """
+    if path.exists():
+        path.unlink()
+        return True
+    return False
 
 
 def with_client(async_impl: Callable[..., Awaitable[Any]]) -> Callable[..., Any]:
