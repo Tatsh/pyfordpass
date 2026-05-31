@@ -10,7 +10,7 @@ import pytest
 if TYPE_CHECKING:
     from fordpass.typing import Secrets
 
-_VIN = '1FA12345678901234'
+_VIN = '1FAHP00000A000000'
 
 
 def test_init_defaults(stub_secrets: Secrets) -> None:
@@ -121,7 +121,7 @@ def test_simple_command_builders(core_client: FordPassClient, method_name: str,
                                  expected_type: str) -> None:
     req = getattr(core_client, method_name)(_VIN)
     assert req['method'] == 'POST'
-    assert '/v1/command/vehicles/1FA12345678901234/commands' in req['url']
+    assert '/v1/command/vehicles/1FAHP00000A000000/commands' in req['url']
     body = json.loads(req['data'] or '{}')
     assert body['type'] == expected_type
     assert body['wakeUp'] is True

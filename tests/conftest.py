@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
+import asyncio
 import json
 import os
 
@@ -147,3 +148,42 @@ def async_client(stub_secrets: Secrets, fake_session: MagicMock,
                                tmc='STUB_TMC',
                                session=fake_session,
                                auth_session=fake_auth_session)
+
+
+@pytest.fixture
+def mock_command_client(mocker: MockerFixture) -> MagicMock:
+    """Patch the Click command harness so tests can drive the CLI without real I/O.
+
+    Returns a `MagicMock(spec=AsyncFordPassClient)` standing in for the real client. Async methods
+    discovered by the spec are converted to `AsyncMock` instances so `await client.X(...)`
+    resolves to whatever `return_value` the test sets per call.
+    """
+    client = MagicMock(spec=AsyncFordPassClient)
+    client.__aenter__ = AsyncMock(return_value=client)
+    client.__aexit__ = AsyncMock(return_value=None)
+    client.cat = 'STUB_CAT'
+    client.cat_refresh = 'STUB_CAT_REFRESH'
+    client.tmc = 'STUB_TMC'
+    client.locale = 'en-US'
+    client.country = 'USA'
+    for name, attr in vars(AsyncFordPassClient).items():
+        if not name.startswith('_') and asyncio.iscoroutinefunction(attr):
+            setattr(client, name, AsyncMock(return_value=None))
+    mocker.patch('fordpass.commands.utils.make_client', return_value=client)
+    mocker.patch('fordpass.commands.utils.ensure_signed_in', new_callable=AsyncMock)
+    mocker.patch('fordpass.commands.utils.persist_tokens')
+    mocker.patch('fordpass.commands.utils.run_async',
+                 side_effect=asyncio.run)
+    command_modules = ('alerts', 'auth', 'dealer', 'departure', 'drivers', 'messages', 'ota',
+                       'profile', 'remote', 'roadside', 'schedule', 'service', 'telemetry',
+                       'vehicle')
+    for mod in command_modules:
+        mocker.patch(f'fordpass.commands.{mod}.make_client', return_value=client, create=True)
+        mocker.patch(f'fordpass.commands.{mod}.ensure_signed_in',
+                     new_callable=AsyncMock,
+                     create=True)
+        mocker.patch(f'fordpass.commands.{mod}.persist_tokens', create=True)
+        mocker.patch(f'fordpass.commands.{mod}.run_async',
+                     side_effect=asyncio.run,
+                     create=True)
+    return client

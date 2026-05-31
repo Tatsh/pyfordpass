@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from fordpass.typing import Secrets
     from pytest_mock import MockerFixture
 
-_VIN = '1FA12345678901234'
+_VIN = '1FAHP00000A000000'
 
 
 def _make_response(*, status_code: int = 200, json_body: Any = None) -> MagicMock:

@@ -101,10 +101,10 @@ def test_load_config_temperature_lowercase_normalises(tmp_path: Path,
 
 def test_load_config_reads_default_vin(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     config_path = tmp_path / 'config.toml'
-    config_path.write_text("[vehicle]\ndefault_vin = '1FA12345678901234'\n")
+    config_path.write_text("[vehicle]\ndefault_vin = '1FAHP00000A000000'\n")
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', config_path)
     config = load_config(locale='en-US')
-    assert config['vehicle']['default_vin'] == '1FA12345678901234'
+    assert config['vehicle']['default_vin'] == '1FAHP00000A000000'
 
 
 def test_load_config_ignores_empty_default_vin(tmp_path: Path,
