@@ -65,3 +65,29 @@ def test_api_config_reset_when_absent(runner: CliRunner) -> None:
     result = runner.invoke(fordpass, ('api-config', 'reset'))
     assert result.exit_code == 0
     assert 'No API configuration file' in result.output
+
+
+def test_api_config_set_into_existing_table(runner: CliRunner, tmp_path: Path) -> None:
+    api_file = tmp_path / 'config' / 'api.toml'
+    api_file.write_text("[hosts]\nlogin = 'a'\n")
+    result = runner.invoke(fordpass, ('api-config', 'set', 'hosts.vehicle', 'https://v.test'))
+    assert result.exit_code == 0
+    content = api_file.read_text()
+    assert 'login = "a"' in content
+    assert 'vehicle = "https://v.test"' in content
+
+
+def test_api_config_delete_through_scalar_parent_fails(runner: CliRunner, tmp_path: Path) -> None:
+    api_file = tmp_path / 'config' / 'api.toml'
+    api_file.write_text("user_agent = 'x'\n")
+    result = runner.invoke(fordpass, ('api-config', 'delete', 'user_agent.sub'))
+    assert result.exit_code != 0
+    assert 'Key not found' in result.output
+
+
+def test_api_config_delete_missing_leaf_in_table_fails(runner: CliRunner, tmp_path: Path) -> None:
+    api_file = tmp_path / 'config' / 'api.toml'
+    api_file.write_text("[hosts]\nlogin = 'a'\n")
+    result = runner.invoke(fordpass, ('api-config', 'delete', 'hosts.missing'))
+    assert result.exit_code != 0
+    assert 'Key not found' in result.output
