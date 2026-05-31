@@ -57,6 +57,24 @@ def clear_module_caches() -> None:
     load_secrets.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def isolate_platform_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Redirect every `platformdirs`-derived path at a per-test tmp_path subtree.
+
+    Prevents tests from reading or writing the real user config or state directories.
+    """
+    config_dir = tmp_path / 'config'
+    state_dir = tmp_path / 'state'
+    config_dir.mkdir()
+    state_dir.mkdir()
+    monkeypatch.setattr('fordpass.config.CONFIG_DIR', config_dir)
+    monkeypatch.setattr('fordpass.config.CONFIG_FILE', config_dir / 'config.toml')
+    monkeypatch.setattr('fordpass.abcdef.SECRETS_FILE', config_dir / 'abcdef.toml')
+    monkeypatch.setattr('fordpass.commands.utils.STATE_DIR', state_dir)
+    monkeypatch.setattr('fordpass.commands.utils.TOKEN_FILE', state_dir / 'tokens.json')
+    monkeypatch.setattr('fordpass.commands.auth.TOKEN_FILE', state_dir / 'tokens.json')
+
+
 @pytest.fixture
 def stub_secrets() -> Secrets:
     return {

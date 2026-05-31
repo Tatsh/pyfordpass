@@ -235,7 +235,7 @@ def _render_maintenance_detail(resp: ServiceActionDetail, odometer_cell: str) ->
 def _render_recall_detail(resp: ServiceActionDetail, odometer_cell: str) -> None:
     """Render the ``recallItem`` branch of the upcoming-detail response."""
     item = resp.get('recallItem') if isinstance(resp.get('recallItem'), Mapping) else {}
-    if not isinstance(item, Mapping):
+    if not isinstance(item, Mapping):  # pragma: no cover
         item = {}
     summary = Table(title=f'Recall - {resp.get("id") or "?"}', title_style='bold red')
     summary.add_column('Field', style='cyan')
