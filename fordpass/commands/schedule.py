@@ -23,8 +23,10 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from fordpass.client import AsyncFordPassClient
-    from fordpass.typing.schedule import ScheduleEntry
+    from fordpass.typing.schedule import ScheduleEntry, SchedulesResponse
 
 _DAY_FIELDS = ('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
 
@@ -68,7 +70,9 @@ async def schedule_list(client: AsyncFordPassClient, _ctx: click.Context, vin: s
     console.print(table)
 
 
-def _extract_schedules(resp: Any) -> list[ScheduleEntry]:
+def _extract_schedules(
+        resp: SchedulesResponse | Sequence[ScheduleEntry]
+        | Mapping[str, object]) -> list[ScheduleEntry]:
     """
     Pull the schedule list out of the upstream response envelope.
 
@@ -78,7 +82,7 @@ def _extract_schedules(resp: Any) -> list[ScheduleEntry]:
 
     Parameters
     ----------
-    resp : Any
+    resp : SchedulesResponse | Sequence[ScheduleEntry] | Mapping[str, object]
         Decoded JSON body returned by
         :py:meth:`fordpass.client.AsyncFordPassClient.list_remote_start_schedules`.
 
@@ -88,19 +92,19 @@ def _extract_schedules(resp: Any) -> list[ScheduleEntry]:
         The flat list of schedule entries; empty if the payload is unrecognised.
     """
     if is_list_like(resp):
-        return list(resp)
+        return list(cast('Sequence[ScheduleEntry]', resp))
     if not isinstance(resp, Mapping):
         return []
-    container = resp.get('startSchedule')
+    container = resp.get('startSchedule')  # ty: ignore[invalid-argument-type]
     if isinstance(container, Mapping):
-        values = container.get('$values')
+        values = container.get('$values')  # ty: ignore[invalid-argument-type]
         if is_list_like(values):
-            return list(values)
+            return list(cast('Sequence[ScheduleEntry]', values))
     if is_list_like(container):
-        return list(container)
-    fallback = resp.get('schedules')
+        return list(cast('Sequence[ScheduleEntry]', container))
+    fallback = resp.get('schedules')  # ty: ignore[invalid-argument-type]
     if is_list_like(fallback):
-        return list(fallback)
+        return list(cast('Sequence[ScheduleEntry]', fallback))
     return []
 
 
