@@ -9,9 +9,13 @@ local utils = import 'utils.libjsonnet';
   primary_module: 'fordpass',
   version: '0.0.0',
   want_main: true,
+  want_flatpak: true,
   local top = self,
   publishing+: { flathub: 'sh.tat.%s' % top.project_name },
   pyproject+: {
+    project+: {
+      scripts: { [top.primary_module]: '%s.main:main' % top.primary_module },
+    },
     tool+: {
       coverage+: {
         report+: {
