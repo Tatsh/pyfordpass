@@ -9,9 +9,9 @@ if TYPE_CHECKING:
 __all__ = ('AlertCategory', 'AlertColorCode', 'AlertEntry', 'AlertHistoryEntry',
            'AlertHistoryResponse', 'AlertPrognostics', 'AlertUrgency', 'AlertsResponse')
 
-AlertUrgency: TypeAlias = Literal['H', 'M', 'N']
+AlertCategory: TypeAlias = Literal['Diagnostics', 'Prognostics']
 """
-Alert urgency code: ``N`` (normal), ``M`` (medium), or ``H`` (high).
+Top-level alert category.
 
 :meta hide-value:
 """
@@ -23,9 +23,9 @@ Display colour code for an alert tile: amber, yellow, or red.
 :meta hide-value:
 """
 
-AlertCategory: TypeAlias = Literal['Diagnostics', 'Prognostics']
+AlertUrgency: TypeAlias = Literal['H', 'M', 'N']
 """
-Top-level alert category.
+Alert urgency code: ``N`` (normal), ``M`` (medium), or ``H`` (high).
 
 :meta hide-value:
 """

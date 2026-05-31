@@ -6,52 +6,10 @@ from typing import Literal, TypeAlias, TypedDict
 __all__ = ('CompassDirection', 'CountryHeaderCasing', 'DistanceUnit', 'EngineType', 'GPSPosition',
            'TemperatureUnit', 'TokenType', 'UserAuthStatus', 'VehicleBrand')
 
-DistanceUnit: TypeAlias = Literal['km', 'mi']
-"""
-Preferred distance unit.
-
-:meta hide-value:
-"""
-
 CompassDirection: TypeAlias = Literal['EAST', 'NORTH', 'NORTHEAST', 'NORTHWEST', 'SOUTH',
                                       'SOUTHEAST', 'SOUTHWEST', 'WEST']
 """
 One of the eight cardinal/intercardinal directions reported by ``compassDirection``.
-
-:meta hide-value:
-"""
-
-UserAuthStatus: TypeAlias = Literal['Authorized', 'Declined', 'Pending']
-"""
-User-authorisation status on a vehicle.
-
-:meta hide-value:
-"""
-
-EngineType: TypeAlias = Literal['BEV', 'FCV', 'HEV', 'ICE', 'PHEV']
-"""
-Powertrain category: internal-combustion, battery EV, plug-in hybrid, etc.
-
-:meta hide-value:
-"""
-
-VehicleBrand: TypeAlias = Literal['Ford', 'Lincoln']
-"""
-Marketing brand of a vehicle.
-
-:meta hide-value:
-"""
-
-TokenType: TypeAlias = Literal['Bearer']
-"""
-OAuth-style ``token_type`` echoed in token responses.
-
-:meta hide-value:
-"""
-
-TemperatureUnit: TypeAlias = Literal['C', 'F']
-"""
-Preferred temperature unit (Celsius / Fahrenheit).
 
 :meta hide-value:
 """
@@ -65,6 +23,48 @@ The Ford gateway is strict about per-endpoint casing despite RFC 7230 calling he
 names case-insensitive. Four casings appear across the API surface, each used by a
 different microservice; see :py:meth:`fordpass.sansio.FordPassClient._ford_headers`
 for which endpoints consume which casing.
+
+:meta hide-value:
+"""
+
+DistanceUnit: TypeAlias = Literal['km', 'mi']
+"""
+Preferred distance unit.
+
+:meta hide-value:
+"""
+
+EngineType: TypeAlias = Literal['BEV', 'FCV', 'HEV', 'ICE', 'PHEV']
+"""
+Powertrain category: internal-combustion, battery EV, plug-in hybrid, etc.
+
+:meta hide-value:
+"""
+
+TemperatureUnit: TypeAlias = Literal['C', 'F']
+"""
+Preferred temperature unit (Celsius / Fahrenheit).
+
+:meta hide-value:
+"""
+
+TokenType: TypeAlias = Literal['Bearer']
+"""
+OAuth-style ``token_type`` echoed in token responses.
+
+:meta hide-value:
+"""
+
+UserAuthStatus: TypeAlias = Literal['Authorized', 'Declined', 'Pending']
+"""
+User-authorisation status on a vehicle.
+
+:meta hide-value:
+"""
+
+VehicleBrand: TypeAlias = Literal['Ford', 'Lincoln']
+"""
+Marketing brand of a vehicle.
 
 :meta hide-value:
 """

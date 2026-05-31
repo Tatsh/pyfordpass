@@ -16,6 +16,37 @@ Preferred output format for multi-value command responses.
 """
 
 
+class Config(TypedDict, total=False):
+    """Persistent CLI configuration loaded from ``~/.config/pyfordpass/config.toml``."""
+
+    http: HTTPConfig
+    """HTTP-transport preferences."""
+    output: OutputConfig
+    """Output-format preferences."""
+    units: UnitsConfig
+    """Display-unit preferences."""
+    vehicle: VehicleConfig
+    """Vehicle-related defaults (such as the fallback VIN)."""
+
+
+class HTTPConfig(TypedDict, total=False):
+    """HTTP-transport preferences read from ``[http]``."""
+
+    impersonate: str
+    """
+    curl-cffi browser-impersonation profile used for the OAuth/token endpoints
+    (e.g. ``'chrome146'``, ``'firefox144'``, ``'safari180'``). Defaults to
+    ``'chrome146'`` when unset.
+    """
+
+
+class OutputConfig(TypedDict, total=False):
+    """Output-format preferences read from ``[output]``."""
+
+    format: OutputFormat
+    """``'pretty'`` (Rich tables; default) or ``'json'`` (machine-readable)."""
+
+
 class UnitsConfig(TypedDict, total=False):
     """Unit preferences read from the user's ``config.toml``."""
 
@@ -30,34 +61,3 @@ class VehicleConfig(TypedDict, total=False):
 
     default_vin: str
     """Fallback VIN used when the CLI ``VIN`` argument is omitted."""
-
-
-class OutputConfig(TypedDict, total=False):
-    """Output-format preferences read from ``[output]``."""
-
-    format: OutputFormat
-    """``'pretty'`` (Rich tables; default) or ``'json'`` (machine-readable)."""
-
-
-class HTTPConfig(TypedDict, total=False):
-    """HTTP-transport preferences read from ``[http]``."""
-
-    impersonate: str
-    """
-    curl-cffi browser-impersonation profile used for the OAuth/token endpoints
-    (e.g. ``'chrome146'``, ``'firefox144'``, ``'safari180'``). Defaults to
-    ``'chrome146'`` when unset.
-    """
-
-
-class Config(TypedDict, total=False):
-    """Persistent CLI configuration loaded from ``~/.config/pyfordpass/config.toml``."""
-
-    http: HTTPConfig
-    """HTTP-transport preferences."""
-    output: OutputConfig
-    """Output-format preferences."""
-    units: UnitsConfig
-    """Display-unit preferences."""
-    vehicle: VehicleConfig
-    """Vehicle-related defaults (such as the fallback VIN)."""

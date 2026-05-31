@@ -9,77 +9,29 @@ if TYPE_CHECKING:
 __all__ = ('GarageVehicle', 'VehicleCapabilities', 'VehicleProfile', 'VehicleUserRoles')
 
 
-class VehicleProfile(TypedDict, total=False):
-    """Static vehicle-profile block on a garage entry (~34 fields)."""
+class GarageVehicle(TypedDict, total=False):
+    """One vehicle entry in the user-garage response."""
 
-    activationType: str | None
-    """How the vehicle was activated (``'HMI'``, ``'CUSTOMER'`` …)."""
-    bodyStyle: str | None
-    """Body style (``'SUV'``, ``'TRUCK'`` …); often ``None`` for cars."""
-    cabinCargoUnlock: str | None
-    """Cabin cargo-unlock capability marker."""
-    canopyOnboardingComplete: bool | None
-    """Whether the canopy onboarding flow has been completed (truck-only)."""
-    digitalKey: str | None
-    """Digital-key enrolment state."""
-    digitalKeyType: str | None
-    """Digital-key technology (``'PAAK'``, ``'NFC'`` …)."""
-    displayRecommendedTirePressure: bool
-    """Whether the HMI shows the recommended-pressure placard."""
-    doubleLocking: bool
-    """Whether the vehicle supports double-locking."""
-    driverHeatedSeat: str
-    """Driver-seat heating capability (``'Heat with Vent'`` …)."""
-    engineType: EngineType
-    """Powertrain category."""
-    externalSecurityCameras: str
-    """External-security-camera capability (``'On'`` / ``'Unavailable'`` / …)."""
-    frontCargoArea: str
-    """Front-cargo configuration (``'None'``, ``'Frunk'`` …)."""
-    globalChargeSettings: str
-    """Global charge-settings capability marker."""
-    heatedSteeringWheel: bool
-    """Whether the vehicle has a heated steering wheel."""
-    highVoltageBatteryPackType: str
-    """HV battery pack identifier (``'None'`` for ICE)."""
-    iapIdentifier: str | None
-    """In-app-purchase identifier; usually ``None``."""
-    isFordPassActivated: str
-    """``'On'`` when FordPass services are activated on the vehicle."""
-    make: VehicleBrand
-    """Vehicle make (``'Ford'`` / ``'Lincoln'``)."""
-    model: str
-    """Vehicle model (``'Mustang'``, ``'F-150'`` …)."""
-    nonRecallCount: int
-    """Outstanding non-recall service item count."""
-    numberOfLightingZones: int
-    """Number of programmable lighting zones."""
-    numberOfTires: str
-    """Tire count as a word (``'Four'``, ``'Six'``)."""
-    paakPairingType: str
-    """Phone-as-a-key pairing flow (``'PinCode'`` …)."""
-    paintDescription: str
-    """Manufacturer paint description."""
-    proPowerWattage: str
-    """ProPower-OnBoard wattage tier (``'None'``, ``'2.4kW'`` …)."""
-    productType: str
-    """Internal product-type code."""
-    rearCargoArea: str
-    """Rear-cargo configuration (``'None'``, ``'Bed'`` …)."""
-    rearCargoClosureType: str
-    """Rear-cargo closure mechanism (``'None'``, ``'Tailgate'`` …)."""
-    recallCount: int
-    """Outstanding recall count."""
-    sdn: str
-    """Service Delivery Network code (``'TMC'``, …)."""
-    supportsStatusRefresh: bool
-    """Whether on-demand status-refresh commands are supported."""
-    transmissionIndicator: str
-    """Transmission type code (``'A'``, ``'M'``, ``'E'``)."""
-    vehicleImage: str
-    """URL of the marketing vehicle image."""
-    year: int
-    """Model year."""
+    capabilities: VehicleCapabilities
+    """Per-feature capability map."""
+    color: str
+    """Marketing colour name."""
+    licensePlate: str | None
+    """User-supplied licence plate; ``None`` when unset."""
+    nickName: str
+    """User-supplied display name."""
+    preferredDealer: str
+    """PA code of the user's preferred dealer."""
+    profile: VehicleProfile
+    """Static vehicle profile (year, model, make, …)."""
+    sourceOfPreferredDealer: str
+    """How the preferred dealer was set (``'Customer'``, ``'OEM'``, …)."""
+    userAuthStatus: UserAuthStatus
+    """User's authorisation status on the vehicle (``'Authorized'`` / ``'Pending'`` / …)."""
+    userRoles: VehicleUserRoles
+    """User-role metadata."""
+    vin: str
+    """VIN of the vehicle."""
 
 
 class VehicleCapabilities(TypedDict, total=False):
@@ -169,33 +121,81 @@ class VehicleCapabilities(TypedDict, total=False):
     """Zone-lighting feature (selected trucks)."""
 
 
+class VehicleProfile(TypedDict, total=False):
+    """Static vehicle-profile block on a garage entry (~34 fields)."""
+
+    activationType: str | None
+    """How the vehicle was activated (``'HMI'``, ``'CUSTOMER'`` …)."""
+    bodyStyle: str | None
+    """Body style (``'SUV'``, ``'TRUCK'`` …); often ``None`` for cars."""
+    cabinCargoUnlock: str | None
+    """Cabin cargo-unlock capability marker."""
+    canopyOnboardingComplete: bool | None
+    """Whether the canopy onboarding flow has been completed (truck-only)."""
+    digitalKey: str | None
+    """Digital-key enrolment state."""
+    digitalKeyType: str | None
+    """Digital-key technology (``'PAAK'``, ``'NFC'`` …)."""
+    displayRecommendedTirePressure: bool
+    """Whether the HMI shows the recommended-pressure placard."""
+    doubleLocking: bool
+    """Whether the vehicle supports double-locking."""
+    driverHeatedSeat: str
+    """Driver-seat heating capability (``'Heat with Vent'`` …)."""
+    engineType: EngineType
+    """Powertrain category."""
+    externalSecurityCameras: str
+    """External-security-camera capability (``'On'`` / ``'Unavailable'`` / …)."""
+    frontCargoArea: str
+    """Front-cargo configuration (``'None'``, ``'Frunk'`` …)."""
+    globalChargeSettings: str
+    """Global charge-settings capability marker."""
+    heatedSteeringWheel: bool
+    """Whether the vehicle has a heated steering wheel."""
+    highVoltageBatteryPackType: str
+    """HV battery pack identifier (``'None'`` for ICE)."""
+    iapIdentifier: str | None
+    """In-app-purchase identifier; usually ``None``."""
+    isFordPassActivated: str
+    """``'On'`` when FordPass services are activated on the vehicle."""
+    make: VehicleBrand
+    """Vehicle make (``'Ford'`` / ``'Lincoln'``)."""
+    model: str
+    """Vehicle model (``'Mustang'``, ``'F-150'`` …)."""
+    nonRecallCount: int
+    """Outstanding non-recall service item count."""
+    numberOfLightingZones: int
+    """Number of programmable lighting zones."""
+    numberOfTires: str
+    """Tire count as a word (``'Four'``, ``'Six'``)."""
+    paakPairingType: str
+    """Phone-as-a-key pairing flow (``'PinCode'`` …)."""
+    paintDescription: str
+    """Manufacturer paint description."""
+    proPowerWattage: str
+    """ProPower-OnBoard wattage tier (``'None'``, ``'2.4kW'`` …)."""
+    productType: str
+    """Internal product-type code."""
+    rearCargoArea: str
+    """Rear-cargo configuration (``'None'``, ``'Bed'`` …)."""
+    rearCargoClosureType: str
+    """Rear-cargo closure mechanism (``'None'``, ``'Tailgate'`` …)."""
+    recallCount: int
+    """Outstanding recall count."""
+    sdn: str
+    """Service Delivery Network code (``'TMC'``, …)."""
+    supportsStatusRefresh: bool
+    """Whether on-demand status-refresh commands are supported."""
+    transmissionIndicator: str
+    """Transmission type code (``'A'``, ``'M'``, ``'E'``)."""
+    vehicleImage: str
+    """URL of the marketing vehicle image."""
+    year: int
+    """Model year."""
+
+
 class VehicleUserRoles(TypedDict, total=False):
     """User-role metadata block."""
 
     role: str | None
     """The signed-in user's role on the vehicle (``'PRIMARY'``, …) or ``None``."""
-
-
-class GarageVehicle(TypedDict, total=False):
-    """One vehicle entry in the user-garage response."""
-
-    capabilities: VehicleCapabilities
-    """Per-feature capability map."""
-    color: str
-    """Marketing colour name."""
-    licensePlate: str | None
-    """User-supplied licence plate; ``None`` when unset."""
-    nickName: str
-    """User-supplied display name."""
-    preferredDealer: str
-    """PA code of the user's preferred dealer."""
-    profile: VehicleProfile
-    """Static vehicle profile (year, model, make, …)."""
-    sourceOfPreferredDealer: str
-    """How the preferred dealer was set (``'Customer'``, ``'OEM'``, …)."""
-    userAuthStatus: UserAuthStatus
-    """User's authorisation status on the vehicle (``'Authorized'`` / ``'Pending'`` / …)."""
-    userRoles: VehicleUserRoles
-    """User-role metadata."""
-    vin: str
-    """VIN of the vehicle."""

@@ -8,24 +8,6 @@ if TYPE_CHECKING:
 
 __all__ = ('MetricEntry', 'MetricValue', 'TelemetryResponse', 'TirePressureEntry')
 
-
-class TirePressureEntry(TypedDict, total=False):
-    """One entry in the per-wheel tire-pressure list."""
-
-    oemCorrelationId: str
-    """Upstream correlation id."""
-    updateTime: str
-    """ISO-8601 timestamp of the reading."""
-    value: float
-    """Current pressure in kilopascals."""
-    vehicleWheel: str
-    """Wheel identifier (``'FRONT_LEFT'``, ``'REAR_RIGHT'``, …)."""
-    wheelPlacardFront: float
-    """Manufacturer-recommended front pressure (kPa)."""
-    wheelPlacardRear: float
-    """Manufacturer-recommended rear pressure (kPa)."""
-
-
 MetricValue: TypeAlias = (
     'str | int | float | bool | Mapping[str, "MetricValue"] | Sequence["MetricValue"] | None')
 """
@@ -74,3 +56,20 @@ class TelemetryResponse(TypedDict, total=False):
     """TMC-internal vehicle identifier."""
     vin: str
     """The queried VIN."""
+
+
+class TirePressureEntry(TypedDict, total=False):
+    """One entry in the per-wheel tire-pressure list."""
+
+    oemCorrelationId: str
+    """Upstream correlation id."""
+    updateTime: str
+    """ISO-8601 timestamp of the reading."""
+    value: float
+    """Current pressure in kilopascals."""
+    vehicleWheel: str
+    """Wheel identifier (``'FRONT_LEFT'``, ``'REAR_RIGHT'``, …)."""
+    wheelPlacardFront: float
+    """Manufacturer-recommended front pressure (kPa)."""
+    wheelPlacardRear: float
+    """Manufacturer-recommended rear pressure (kPa)."""

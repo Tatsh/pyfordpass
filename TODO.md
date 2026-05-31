@@ -1,7 +1,5 @@
 # TODO
 
-- Make sure all .py files under typing/ have TypeAliases first (ordered alphabetically
-  case-sensitive), then TypedDicts.
 - Make sure all Returns sections in docstrings match the actual return type.
 - Get the correct return type (a typeddict) for `find_next_departure`
 - Make `_extract_schedules` use a stronger parameter type
