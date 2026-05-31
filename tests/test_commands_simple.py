@@ -61,6 +61,13 @@ def test_alerts_history_empty(runner: CliRunner, mock_command_client: MagicMock)
     assert result.exit_code == 0
 
 
+def test_alerts_history_json(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.get_alert_history.return_value = {'messages': []}
+    result = runner.invoke(ford, ('alerts', 'history', _VIN, '--json'))
+    assert result.exit_code == 0
+    assert '"messages"' in result.output
+
+
 def test_alerts_washer_low_exits_one(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.is_washer_fluid_low.return_value = True
     result = runner.invoke(ford, ('alerts', 'washer', _VIN))
@@ -86,7 +93,11 @@ def test_dealer_preferred_pretty(runner: CliRunner, mock_command_client: MagicMo
     mock_command_client.get_preferred_dealer.return_value = {
         'paCode': 'P00001',
         'dealerName': 'Test Dealer',
-        'phone': '555-1212'
+        'phone': '555-1212',
+        'address': {
+            'street': '1 Lane'
+        },
+        'hours': ['9-5'],
     }
     result = runner.invoke(ford, ('dealer', 'preferred', _VIN))
     assert result.exit_code == 0
@@ -110,7 +121,11 @@ def test_dealer_preferred_json(runner: CliRunner, mock_command_client: MagicMock
 def test_departure_next_pretty(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.get_next_departure.return_value = {
         'scheduleId': 'sched-1',
-        'departureTime': '07:30'
+        'departureTime': '07:30',
+        'nestedConfig': {
+            'k': 'v'
+        },
+        'days': ['MON']
     }
     result = runner.invoke(ford, ('departure', 'next', _VIN))
     assert result.exit_code == 0
@@ -129,6 +144,126 @@ def test_departure_next_json(runner: CliRunner, mock_command_client: MagicMock) 
     result = runner.invoke(ford, ('departure', 'next', _VIN, '--json'))
     assert result.exit_code == 0
     assert '"scheduleId"' in result.output
+
+
+def test_ota_status_empty(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {}
+    result = runner.invoke(ford, ('ota', 'status', _VIN))
+    assert result.exit_code == 0
+    assert 'not reported' in result.output
+
+
+def test_ota_status_from_configurations(runner: CliRunner,
+                                          mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'configurations': {
+                'value': {
+                    'automaticSoftwareUpdateOptInSetting': {
+                        'value': 'ON',
+                        'updateTime': '2026-05-30T00:00:00Z'
+                    },
+                    'automaticSoftwareUpdateScheduleSetting': {
+                        'value': {
+                            'scheduleType': 'AUTOMATIC',
+                            'scheduleExecutor': 'TCU',
+                            'timeZone': '85',
+                            'multipleWeeklySchedules': {
+                                'dayOfWeekAndTime': [{
+                                    'dayOfWeek': 'mon',
+                                    'timeOfDay': '03:00'
+                                }]
+                            }
+                        },
+                        'updateTime': '2026-05-30T00:00:00Z'
+                    }
+                }
+            }
+        }
+    }
+    result = runner.invoke(ford, ('ota', 'status', _VIN))
+    assert result.exit_code == 0
+    assert 'Enabled' in result.output
+
+
+def test_ota_status_disabled(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'configurations': {
+                'value': {
+                    'automaticSoftwareUpdateOptInSetting': {
+                        'value': 'OFF'
+                    }
+                }
+            }
+        }
+    }
+    result = runner.invoke(ford, ('ota', 'status', _VIN))
+    assert result.exit_code == 0
+    assert 'Disabled' in result.output
+
+
+def test_ota_status_from_event_fallback(runner: CliRunner,
+                                          mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'events': {
+            'automaticSoftwareUpdateUserSettingsEvent': {
+                'value': {
+                    'optIn': 'ON',
+                    'schedule': {
+                        'error': 'failed to parse'
+                    }
+                },
+                'updateTime': '2026-05-30T00:00:00Z'
+            }
+        }
+    }
+    result = runner.invoke(ford, ('ota', 'status', _VIN))
+    assert result.exit_code == 0
+
+
+def test_ota_status_schedule_error(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'configurations': {
+                'value': {
+                    'automaticSoftwareUpdateOptInSetting': {
+                        'value': 'ON'
+                    },
+                    'automaticSoftwareUpdateScheduleSetting': {
+                        'error': 'unsupported',
+                    }
+                }
+            }
+        }
+    }
+    result = runner.invoke(ford, ('ota', 'status', _VIN))
+    assert result.exit_code == 0
+    assert 'unsupported' in result.output
+
+
+def test_ota_status_unknown_optin(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'configurations': {
+                'value': {
+                    'automaticSoftwareUpdateOptInSetting': {
+                        'value': 'WEIRD'
+                    }
+                }
+            }
+        }
+    }
+    result = runner.invoke(ford, ('ota', 'status', _VIN))
+    assert result.exit_code == 0
+    assert 'Unknown' in result.output
+
+
+def test_ota_status_json(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {}
+    result = runner.invoke(ford, ('ota', 'status', _VIN, '--json'))
+    assert result.exit_code == 0
+    assert '"optIn"' in result.output
 
 
 @pytest.mark.parametrize('subcommand', ['enable', 'disable', 'queue-refresh'])

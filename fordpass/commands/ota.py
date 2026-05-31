@@ -70,7 +70,7 @@ async def ota_status(client: AsyncFordPassClient, _ctx: click.Context, vin: str,
                   '[yellow]Disabled[/yellow]' if state_raw == 'OFF' else '[dim]Unknown[/dim]')
     schedule_value = (schedule_entry.get('value')
                       if isinstance(schedule_entry.get('value'), Mapping) else {})
-    if not isinstance(schedule_value, Mapping):
+    if not isinstance(schedule_value, Mapping):  # pragma: no cover
         schedule_value = {}
     table = Table(title=f'OTA - {vin}', title_style='bold cyan')
     table.add_column('Field', style='cyan')
