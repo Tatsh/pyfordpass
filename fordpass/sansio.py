@@ -19,9 +19,6 @@ for raw bytes.
 
 The class holds NO HTTP state - no sessions, no cookies. Tokens are public attributes so the caller
 controls refresh logic.
-
-The protocol matches ``docs/openapi.json`` for FordPass APK v6.13.0. See that spec for field-level
-documentation; this module is the executable companion.
 """
 
 from __future__ import annotations
@@ -1029,8 +1026,8 @@ class FordPassClient:  # noqa: PLR0904
         """
         Build the request that PATCHes user account information.
 
-        Pass any subset of the :py:class:`SaveProfileFields` keys. See the OpenAPI
-        ``UpdateUserProfileV2Request`` schema for full sub-shapes.
+        Pass any subset of the :py:class:`SaveProfileFields` keys; each maps to a profile-section
+        object.
 
         Parameters
         ----------
