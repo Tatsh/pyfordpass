@@ -21,35 +21,35 @@ from .commands.telemetry import telemetry
 from .commands.utils import install_loop
 from .commands.vehicle import vehicle
 
-__all__ = ('ford', 'main')
+__all__ = ('fordpass', 'main')
 
 
 @click.group(context_settings={'help_option_names': ('-h', '--help')})
 @click.version_option()
-def ford() -> None:
+def fordpass() -> None:
     """FordPass CLI."""
 
 
-ford.add_command(alerts)
-ford.add_command(auth)
-ford.add_command(dealer)
-ford.add_command(departure)
-ford.add_command(drivers)
-ford.add_command(messages)
-ford.add_command(ota)
-ford.add_command(profile)
-ford.add_command(remote)
-ford.add_command(roadside)
-ford.add_command(schedule)
-ford.add_command(service)
-ford.add_command(telemetry)
-ford.add_command(vehicle)
+fordpass.add_command(alerts)
+fordpass.add_command(auth)
+fordpass.add_command(dealer)
+fordpass.add_command(departure)
+fordpass.add_command(drivers)
+fordpass.add_command(messages)
+fordpass.add_command(ota)
+fordpass.add_command(profile)
+fordpass.add_command(remote)
+fordpass.add_command(roadside)
+fordpass.add_command(schedule)
+fordpass.add_command(service)
+fordpass.add_command(telemetry)
+fordpass.add_command(vehicle)
 
 
 async def _amain() -> None:
     loop = asyncio.get_running_loop()
     install_loop(loop)
-    await loop.run_in_executor(None, ford.main)
+    await loop.run_in_executor(None, fordpass.main)
 
 
 def main() -> None:
