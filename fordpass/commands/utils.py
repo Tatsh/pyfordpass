@@ -38,42 +38,14 @@ if TYPE_CHECKING:
     from click.decorators import FC
     import niquests
 
-__all__ = (
-    'STATE_DIR',
-    'TOKEN_FILE',
-    'UOM_CHOICE',
-    'Readiness',
-    'ack',
-    'assert_ready_or_abort',
-    'check_readiness',
-    'console',
-    'debug_option',
-    'dump_json',
-    'duration_range',
-    'ensure_signed_in',
-    'force_option',
-    'format_ford_request_date',
-    'format_iso_date',
-    'format_iso_datetime',
-    'format_iso_time',
-    'install_loop',
-    'interactive_signin',
-    'json_option',
-    'load_tokens',
-    'make_client',
-    'parse_user_datetime',
-    'parse_user_days',
-    'parse_user_timezone',
-    'persist_tokens',
-    'run_async',
-    'save_tokens',
-    'should_emit_json',
-    'validate_message_ids_exist',
-    'validate_vin',
-    'vin_argument',
-    'vin_option',
-    'with_client',
-)
+__all__ = ('STATE_DIR', 'TOKEN_FILE', 'UOM_CHOICE', 'Readiness', 'ack', 'assert_ready_or_abort',
+           'check_readiness', 'console', 'debug_option', 'dump_json', 'duration_range',
+           'ensure_signed_in', 'force_option', 'format_ford_request_date', 'format_iso_date',
+           'format_iso_datetime', 'format_iso_time', 'install_loop', 'interactive_signin',
+           'json_option', 'load_tokens', 'make_client', 'parse_user_datetime', 'parse_user_days',
+           'parse_user_timezone', 'persist_tokens', 'run_async', 'save_tokens', 'should_emit_json',
+           'validate_message_ids_exist', 'validate_vin', 'vin_argument', 'vin_option',
+           'with_client')
 
 _LOGGERS: dict[str, _LoggerConfiguration] = {
     'curl_cffi': {},
@@ -419,8 +391,7 @@ _VIN_TRANSLITERATE: dict[str, int] = {
     **{
         c: i
         for i, c in enumerate(string.digits)
-    },
-    'A': 1,
+    }, 'A': 1,
     'B': 2,
     'C': 3,
     'D': 4,
@@ -442,7 +413,7 @@ _VIN_TRANSLITERATE: dict[str, int] = {
     'W': 6,
     'X': 7,
     'Y': 8,
-    'Z': 9,
+    'Z': 9
 }
 """
 ISO 3779 VIN-character-to-digit table for the check-digit algorithm.
@@ -807,7 +778,7 @@ _DAY_NAMES: dict[str, str] = {
     'friday': 'fri',
     'sa': 'sat',
     'sat': 'sat',
-    'saturday': 'sat',
+    'saturday': 'sat'
 }
 """
 Tolerant English-day-name aliases recognised by :py:func:`parse_user_days`.
@@ -971,18 +942,21 @@ def format_ford_request_date(dt: datetime) -> str:
     return f'{dt.month}-{dt.day}-{dt.year} {hour_12}:{dt.minute:02d}:{dt.second:02d} {suffix}'
 
 
-_PRECLUSION_CAUSES: tuple[tuple[str, str, str], ...] = (
-    ('deepSleepCommandPreclusionState', 'COMMANDS_PRECLUDED_BY_DEEP_SLEEP',
-     'Battery Saver mode (deep sleep)'),
-    ('firmwareUpgradeCommandPreclusionState', 'COMMANDS_PRECLUDED_BY_FIRMWARE_UPDATE',
-     'Firmware update in progress'),
-    ('regulatoryCommandPreclusionState', 'COMMANDS_PRECLUDED_BY_REGULATORY_COMMAND',
-     'Regulatory block'),
-    ('temperatureThresholdCommandPreclusionState', 'COMMANDS_PRECLUDED_BY_TEMPERATURE_THRESHOLD',
-     'Temperature threshold exceeded'),
-    ('carrierRegistrationCommandPreclusionState', 'COMMANDS_PRECLUDED_BY_CARRIER_REGISTRATION',
-     'Carrier registration pending'),
-)
+_PRECLUSION_CAUSES: tuple[tuple[str, str, str],
+                          ...] = (('deepSleepCommandPreclusionState',
+                                   'COMMANDS_PRECLUDED_BY_DEEP_SLEEP',
+                                   'Battery Saver mode (deep sleep)'),
+                                  ('firmwareUpgradeCommandPreclusionState',
+                                   'COMMANDS_PRECLUDED_BY_FIRMWARE_UPDATE',
+                                   'Firmware update in progress'),
+                                  ('regulatoryCommandPreclusionState',
+                                   'COMMANDS_PRECLUDED_BY_REGULATORY_COMMAND', 'Regulatory block'),
+                                  ('temperatureThresholdCommandPreclusionState',
+                                   'COMMANDS_PRECLUDED_BY_TEMPERATURE_THRESHOLD',
+                                   'Temperature threshold exceeded'),
+                                  ('carrierRegistrationCommandPreclusionState',
+                                   'COMMANDS_PRECLUDED_BY_CARRIER_REGISTRATION',
+                                   'Carrier registration pending'))
 """
 The five ``commandPreclusionCauses`` enums the FordPass app inspects, paired with the sentinel
 value that marks them active and a short user-facing label.
