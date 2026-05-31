@@ -111,7 +111,7 @@ defaults, so only the changed keys are required:
    fordpass api-config dump
    fordpass api-config reset
 
-Values for other regions and for Lincoln can be copied from the `ha-fordpass const.py
+Values for other regions and for Lincoln can be copied from `ha-fordpass const.py
 <https://github.com/marq24/ha-fordpass/blob/main/custom_components/fordpass/const.py>`_.
 
 Command reference
