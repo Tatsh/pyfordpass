@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
+from fordpass.utils import is_list_like
 from rich.table import Table
 import click
 
@@ -86,7 +87,14 @@ async def roadside_active(client: AsyncFordPassClient, _ctx: click.Context, vin:
     if resp is None or resp == {}:
         console.print('[dim]No active roadside event is in progress.[/dim]')
         return
-    dump_json(resp)
+    table = Table(title=f'Active roadside event - {vin}', title_style='bold cyan', show_header=True)
+    table.add_column('Field', style='cyan')
+    table.add_column('Value')
+    for key, value in resp.items():
+        if isinstance(value, Mapping) or is_list_like(value):
+            continue
+        table.add_row(str(key), '-' if value is None else str(value))
+    console.print(table)
 
 
 @roadside.command('predraft')
@@ -94,8 +102,13 @@ async def roadside_active(client: AsyncFordPassClient, _ctx: click.Context, vin:
 @vin_argument
 @click.option('--name', required=True, help='Customer name.')
 @click.option('--phone', default='', help='Customer phone.')
+@json_option
 @with_client
 async def roadside_predraft(client: AsyncFordPassClient, _ctx: click.Context, vin: str, name: str,
-                            phone: str) -> None:
+                            phone: str, *, as_json: bool) -> None:
     """Create a roadside pre-draft."""
-    dump_json(await client.predraft_roadside_event(vin, customer_name=name, customer_phone=phone))
+    resp = await client.predraft_roadside_event(vin, customer_name=name, customer_phone=phone)
+    if should_emit_json(as_json):
+        dump_json(resp)
+        return
+    console.print(f'[green]Roadside pre-draft created for {vin} ({name!r}).[/green]')

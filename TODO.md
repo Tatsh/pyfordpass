@@ -1,6 +1,5 @@
 # TODO
 
-- Make sure all leaf commands have pretty output by default.
 - Make sure all leaf commands have --json, if it is applicable.
 - Make sure leaf command's tables do not have JSON (or Python objects, or machine-readable output)
   in rows.

@@ -130,12 +130,12 @@ async def schedule_add(client: AsyncFordPassClient, _ctx: click.Context, vin: st
     dt = parse_user_datetime(start)
     ford_tz_code = parse_user_timezone(tz)
     enabled_days = parse_user_days(days)
-    dump_json(await
-              client.add_remote_start_schedule(vin,
-                                               start_time=dt.strftime('%H:%M'),
-                                               request_start_date=format_ford_request_date(dt),
-                                               time_zone=ford_tz_code,
-                                               days=enabled_days))
+    await client.add_remote_start_schedule(vin,
+                                           start_time=dt.strftime('%H:%M'),
+                                           request_start_date=format_ford_request_date(dt),
+                                           time_zone=ford_tz_code,
+                                           days=enabled_days)
+    console.print(f'[green]Schedule added for {vin} at {dt.strftime("%H:%M")}.[/green]')
 
 
 @schedule.command('delete')
@@ -146,7 +146,8 @@ async def schedule_add(client: AsyncFordPassClient, _ctx: click.Context, vin: st
 async def schedule_delete(client: AsyncFordPassClient, _ctx: click.Context, schedule_id: int,
                           vin: str) -> None:
     """Delete a schedule entry (DELETE with body)."""
-    dump_json(await client.delete_remote_start_schedule(schedule_id, vin=vin))
+    await client.delete_remote_start_schedule(schedule_id, vin=vin)
+    console.print(f'[green]Schedule {schedule_id} deleted.[/green]')
 
 
 def _as_int(value: Any, *, default: int = 0) -> int:
@@ -261,7 +262,8 @@ async def _set_schedule_status(client: AsyncFordPassClient, vin: str, schedule_i
 async def schedule_enable(client: AsyncFordPassClient, _ctx: click.Context, schedule_id: int,
                           vin: str) -> None:
     """Mark the schedule active (``status = 1``)."""
-    dump_json(await _set_schedule_status(client, vin, schedule_id, status=1))
+    await _set_schedule_status(client, vin, schedule_id, status=1)
+    console.print(f'[green]Schedule {schedule_id} enabled.[/green]')
 
 
 @schedule.command('disable')
@@ -272,4 +274,5 @@ async def schedule_enable(client: AsyncFordPassClient, _ctx: click.Context, sche
 async def schedule_disable(client: AsyncFordPassClient, _ctx: click.Context, schedule_id: int,
                            vin: str) -> None:
     """Mark the schedule disabled (``status = 0``)."""
-    dump_json(await _set_schedule_status(client, vin, schedule_id, status=0))
+    await _set_schedule_status(client, vin, schedule_id, status=0)
+    console.print(f'[green]Schedule {schedule_id} disabled.[/green]')

@@ -314,7 +314,8 @@ async def vehicle_ready(client: AsyncFordPassClient, _ctx: click.Context, vin: s
 async def vehicle_nickname(client: AsyncFordPassClient, _ctx: click.Context, name: str,
                            vin: str) -> None:
     """Set the vehicle nickname."""
-    dump_json(await client.update_vehicle_details(vin, nick_name=name))
+    await client.update_vehicle_details(vin, nick_name=name)
+    console.print(f'[green]Nickname updated to {name!r}.[/green]')
 
 
 @vehicle.command('plate')
@@ -325,7 +326,8 @@ async def vehicle_nickname(client: AsyncFordPassClient, _ctx: click.Context, nam
 async def vehicle_plate(client: AsyncFordPassClient, _ctx: click.Context, plate: str,
                         vin: str) -> None:
     """Set the license plate."""
-    dump_json(await client.update_vehicle_details(vin, license_plate=plate))
+    await client.update_vehicle_details(vin, license_plate=plate)
+    console.print(f'[green]Licence plate updated to {plate!r}.[/green]')
 
 
 @vehicle.command('mileage')
@@ -336,4 +338,5 @@ async def vehicle_plate(client: AsyncFordPassClient, _ctx: click.Context, plate:
 async def vehicle_mileage(client: AsyncFordPassClient, _ctx: click.Context, miles: int,
                           vin: str) -> None:
     """Record a manual odometer reading."""
-    dump_json(await client.update_vehicle_details(vin, mileage=miles))
+    await client.update_vehicle_details(vin, mileage=miles)
+    console.print(f'[green]Mileage recorded: {miles}.[/green]')
