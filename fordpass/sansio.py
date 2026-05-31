@@ -35,14 +35,14 @@ if TYPE_CHECKING:
 
     from typing_extensions import Unpack
 
+    from .typing.api_config import APIConfig
     from .typing.common import CountryHeaderCasing, DistanceUnit
     from .typing.profile import SaveProfileFields
-    from .typing.secrets import Secrets
 
 # Nothing in this module reads disk, env, or the network at import time. The
-# :py:class:`FordPassClient` constructor receives a :py:class:`Secrets` bundle which the caller
-# (typically :py:mod:`fordpass.client`) supplies after loading ``~/.config/pyfordpass/abcdef.toml``
-# via :py:func:`fordpass.abcdef.load_secrets`.
+# :py:class:`FordPassClient` constructor receives a :py:class:`APIConfig` bundle which the caller
+# (typically :py:mod:`fordpass.client`) supplies after loading ``~/.config/pyfordpass/api.toml``
+# via :py:func:`fordpass.api_config.load_api_config`.
 
 
 class RequestDict(TypedDict):
@@ -77,7 +77,7 @@ class FordPassClient:  # noqa: PLR0904
     """
     def __init__(self,
                  *,
-                 secrets: Secrets,
+                 api_config: APIConfig,
                  cat: str | None = None,
                  cat_refresh: str | None = None,
                  tmc: str | None = None,
@@ -89,9 +89,9 @@ class FordPassClient:  # noqa: PLR0904
 
         Parameters
         ----------
-        secrets : Secrets
+        api_config : APIConfig
             API constants (hosts, B2C identifiers, user-agent, roadside ``x-source`` lookup, …) -
-            see :py:func:`fordpass.abcdef.load_secrets`.
+            see :py:func:`fordpass.api_config.load_api_config`.
         cat : str | None
             Ford CAT access token. Sent as ``auth-token`` on ``*.ford.com`` calls.
         cat_refresh : str | None
@@ -106,7 +106,7 @@ class FordPassClient:  # noqa: PLR0904
             Sub-brand identifier (``ford``, ``lincoln``); used in query strings of multi-brand
             endpoints.
         """
-        self._secrets: Secrets = secrets
+        self._api_config: APIConfig = api_config
         """
         API constants bundle.
 
@@ -133,7 +133,7 @@ class FordPassClient:  # noqa: PLR0904
         """BCP-47 locale tag (e.g. ``'en-US'``)."""
         self.brand = brand
         """Sub-brand identifier (``'ford'`` / ``'lincoln'``)."""
-        self.application_id = secrets['application_id']
+        self.application_id = api_config['application_id']
         """NGSDN ``application-id`` header value (sourced from the constants bundle)."""
 
     def _roadside_x_source(self) -> Literal['FORD', 'LINCOLN']:
@@ -151,9 +151,9 @@ class FordPassClient:  # noqa: PLR0904
             If :attr:`brand` is not recognised by the roadside service.
         """
         try:
-            value = self._secrets['roadside']['x_source'][self.brand.lower()]
+            value = self._api_config['roadside']['x_source'][self.brand.lower()]
         except KeyError as exc:
-            known = sorted(self._secrets['roadside']['x_source'])
+            known = sorted(self._api_config['roadside']['x_source'])
             msg = (f'Unsupported brand for roadside endpoints: {self.brand!r}. '
                    f'Known brands: {known}.')
             raise RuntimeError(msg) from exc
@@ -202,7 +202,7 @@ class FordPassClient:  # noqa: PLR0904
             'application-id': self.application_id,
             country_header: self.country,
             'locale': self.locale,
-            'user-agent': self._secrets['user_agent']
+            'user-agent': self._api_config['user_agent']
         }
         h.update(extra_headers or {})
         return h
@@ -229,7 +229,7 @@ class FordPassClient:  # noqa: PLR0904
         if self.tmc is None:
             msg = 'FordPassClient.tmc is unset - exchange CAT for TMC first.'
             raise RuntimeError(msg)
-        h = {'authorization': f'Bearer {self.tmc}', 'user-agent': self._secrets['user_agent']}
+        h = {'authorization': f'Bearer {self.tmc}', 'user-agent': self._api_config['user_agent']}
         h.update(extras)
         return h
 
@@ -279,7 +279,7 @@ class FordPassClient:  # noqa: PLR0904
         str
             The fully-formed authorisation URL.
         """
-        b2c = self._secrets['auth']['b2c']
+        b2c = self._api_config['auth']['b2c']
         locale = locale or self.locale
         policy = policy or b2c['policy_template'].format(locale=locale)
         params = {
@@ -297,7 +297,7 @@ class FordPassClient:  # noqa: PLR0904
         # Spaces in `scope` must be `%20`, not `+` - some WAFs (Akamai EdgeSuite) flag form-encoded
         # `+` in query strings as anomalous for browser-generated requests.
         qs = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-        login = self._secrets['hosts']['login']
+        login = self._api_config['hosts']['login']
         return f'{login}/{b2c["tenant_id"]}/{policy}/oauth2/v2.0/authorize?{qs}'
 
     def exchange_b2c_code(self,
@@ -324,8 +324,8 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``POST /oauth2/v2.0/token`` call.
         """
-        b2c = self._secrets['auth']['b2c']
-        login = self._secrets['hosts']['login']
+        b2c = self._api_config['auth']['b2c']
+        login = self._api_config['hosts']['login']
         policy = policy or b2c['policy_template'].format(locale=self.locale)
         url = f'{login}/{b2c["tenant_id"]}/{policy}/oauth2/v2.0/token'
         body = urllib.parse.urlencode({
@@ -340,7 +340,7 @@ class FordPassClient:  # noqa: PLR0904
                            url=url,
                            headers={
                                'content-type': 'application/x-www-form-urlencoded',
-                               'user-agent': self._secrets['user_agent']
+                               'user-agent': self._api_config['user_agent']
                            },
                            data=body)
 
@@ -361,15 +361,15 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``POST /api/token/v2/cat-with-b2c-access-token`` call.
         """
-        return RequestDict(
-            method='POST',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/token/v2/cat-with-b2c-access-token',
-            headers={
-                'application-id': self.application_id,
-                'content-type': 'application/json',
-                'user-agent': self._secrets['user_agent']
-            },
-            data=self._json_body({'idpToken': b2c_access_token}))
+        host = self._api_config['hosts']['foundational']
+        return RequestDict(method='POST',
+                           url=f'{host}/api/token/v2/cat-with-b2c-access-token',
+                           headers={
+                               'application-id': self.application_id,
+                               'content-type': 'application/json',
+                               'user-agent': self._api_config['user_agent']
+                           },
+                           data=self._json_body({'idpToken': b2c_access_token}))
 
     def refresh_cat(self) -> RequestDict:
         """
@@ -395,11 +395,11 @@ class FordPassClient:  # noqa: PLR0904
             raise RuntimeError(msg)
         return RequestDict(
             method='POST',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/token/v2/cat-with-refresh-token',
+            url=f'{self._api_config["hosts"]["foundational"]}/api/token/v2/cat-with-refresh-token',
             headers={
                 'application-id': self.application_id,
                 'content-type': 'application/json',
-                'user-agent': self._secrets['user_agent']
+                'user-agent': self._api_config['user_agent']
             },
             data=self._json_body({'refresh_token': self.cat_refresh}))
 
@@ -424,17 +424,17 @@ class FordPassClient:  # noqa: PLR0904
             msg = 'FordPassClient.cat_refresh is unset - mint a CAT first.'
             raise RuntimeError(msg)
         body = urllib.parse.urlencode({
-            'client_id': self._secrets['auth']['tmc']['client_id'],
+            'client_id': self._api_config['auth']['tmc']['client_id'],
             'grant_type': 'urn:ietf:params:oauth:grant-type:token-exchange',
             'subject_issuer': 'fordpass',
             'subject_token': self.cat_refresh,
             'subject_token_type': 'urn:ietf:params:oauth:token-type:jwt'
         })
         return RequestDict(method='POST',
-                           url=f'{self._secrets["hosts"]["tmc_accounts"]}/v1/auth/oidc/token',
+                           url=f'{self._api_config["hosts"]["tmc_accounts"]}/v1/auth/oidc/token',
                            headers={
                                'content-type': 'application/x-www-form-urlencoded',
-                               'user-agent': self._secrets['user_agent']
+                               'user-agent': self._api_config['user_agent']
                            },
                            data=body)
 
@@ -479,7 +479,7 @@ class FordPassClient:  # noqa: PLR0904
         if version is not None:
             body['version'] = version
         return RequestDict(method='POST',
-                           url=f'{self._secrets["hosts"]["tmc"]}{path}/vehicles/{vin}/commands',
+                           url=f'{self._api_config["hosts"]["tmc"]}{path}/vehicles/{vin}/commands',
                            headers={
                                **self._tmc_headers(), 'content-type': 'application/json'
                            },
@@ -688,7 +688,7 @@ class FordPassClient:  # noqa: PLR0904
         body: dict[str, Any] = {}
         if metrics:
             body['includeMetrics'] = list(metrics)
-        host = self._secrets['hosts']['tmc']
+        host = self._api_config['hosts']['tmc']
         return RequestDict(method='POST',
                            url=f'{host}/v1beta/telemetry/sources/fordpass/vehicles/{vin}:query',
                            headers={
@@ -814,7 +814,7 @@ class FordPassClient:  # noqa: PLR0904
         """
         return RequestDict(
             method='POST',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/srsm/vehicles/v3/getschedules',
+            url=f'{self._api_config["hosts"]["vehicle"]}/api/srsm/vehicles/v3/getschedules',
             headers={
                 **self._ford_headers(), 'content-type': 'application/json'
             },
@@ -865,7 +865,7 @@ class FordPassClient:  # noqa: PLR0904
         }
         return RequestDict(
             method='POST',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/srsm/vehicles/v3/startschedules',
+            url=f'{self._api_config["hosts"]["vehicle"]}/api/srsm/vehicles/v3/startschedules',
             headers={
                 **self._ford_headers(), 'content-type': 'application/json'
             },
@@ -892,7 +892,7 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``DELETE .../startschedules/{schedule_id}`` call.
         """
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(method='DELETE',
                            url=f'{host}/api/srsm/vehicles/v3/startschedules/{schedule_id}',
                            headers={
@@ -920,7 +920,7 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``PUT .../startschedules/{schedule_id}`` call.
         """
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(method='PUT',
                            url=f'{host}/api/srsm/vehicles/v3/startschedules/{schedule_id}',
                            headers={
@@ -939,11 +939,11 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``GET /api/fpcpl-user-garage-service/v1/user/garage`` call.
         """
-        return RequestDict(
-            method='GET',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/fpcpl-user-garage-service/v1/user/garage',
-            headers=self._ford_headers(),
-            data=None)
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='GET',
+                           url=f'{host}/api/fpcpl-user-garage-service/v1/user/garage',
+                           headers=self._ford_headers(),
+                           data=None)
 
     def update_vehicle_details(self,
                                vin: str,
@@ -990,7 +990,7 @@ class FordPassClient:  # noqa: PLR0904
         # path). Empirically: ``vehicle.ford.com`` returns 404, ``foundational.ford.com`` returns
         # 200.
         return RequestDict(method='PUT',
-                           url=(f'{self._secrets["hosts"]["foundational"]}'
+                           url=(f'{self._api_config["hosts"]["foundational"]}'
                                 f'/api/user/garage/auth/{vin}'),
                            headers={
                                **self._ford_headers(country_header='Country-Code'), 'content-type':
@@ -1017,13 +1017,13 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``GET /api/user-profile-lookup/v1/users/me`` call.
         """
-        groups = profile_groups or self._secrets['profile_groups_default']
+        groups = profile_groups or self._api_config['profile_groups_default']
         qs = f'?profileGroups={urllib.parse.quote(groups)}'
-        return RequestDict(
-            method='GET',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/user-profile-lookup/v1/users/me{qs}',
-            headers=self._ford_headers(),
-            data=None)
+        host = self._api_config['hosts']['foundational']
+        return RequestDict(method='GET',
+                           url=f'{host}/api/user-profile-lookup/v1/users/me{qs}',
+                           headers=self._ford_headers(),
+                           data=None)
 
     def save_profile(self, **fields: Unpack[SaveProfileFields]) -> RequestDict:
         """
@@ -1042,13 +1042,13 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``PATCH /api/user-profile-management/v1/users/me`` call.
         """
-        return RequestDict(
-            method='PATCH',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/user-profile-management/v1/users/me',
-            headers={
-                **self._ford_headers(), 'content-type': 'application/json'
-            },
-            data=self._json_body(dict(fields)))
+        host = self._api_config['hosts']['foundational']
+        return RequestDict(method='PATCH',
+                           url=f'{host}/api/user-profile-management/v1/users/me',
+                           headers={
+                               **self._ford_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body(dict(fields)))
 
     def get_messages(self) -> RequestDict:
         """
@@ -1061,7 +1061,7 @@ class FordPassClient:  # noqa: PLR0904
         """
         return RequestDict(
             method='GET',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/messagecenter/v3/messages',
+            url=f'{self._api_config["hosts"]["foundational"]}/api/messagecenter/v3/messages',
             headers=self._ford_headers(),
             data=None)
 
@@ -1084,7 +1084,7 @@ class FordPassClient:  # noqa: PLR0904
         ids = [int(i) for i in message_ids]
         return RequestDict(
             method='DELETE',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/messagecenter/v3/user/messages',
+            url=f'{self._api_config["hosts"]["foundational"]}/api/messagecenter/v3/user/messages',
             headers={
                 **self._ford_headers(), 'content-type': 'application/json'
             },
@@ -1108,13 +1108,13 @@ class FordPassClient:  # noqa: PLR0904
             Descriptor for the ``PUT /api/messagecenter/v3/user/messages/read`` call.
         """
         ids = [int(i) for i in message_ids]
-        return RequestDict(
-            method='PUT',
-            url=f'{self._secrets["hosts"]["foundational"]}/api/messagecenter/v3/user/messages/read',
-            headers={
-                **self._ford_headers(), 'content-type': 'application/json'
-            },
-            data=self._json_body({'messageIds': ids}))
+        host = self._api_config['hosts']['foundational']
+        return RequestDict(method='PUT',
+                           url=f'{host}/api/messagecenter/v3/user/messages/read',
+                           headers={
+                               **self._ford_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({'messageIds': ids}))
 
     def get_alerts(self, vin: str, *, trace_id: str | None = None) -> RequestDict:
         """
@@ -1144,7 +1144,7 @@ class FordPassClient:  # noqa: PLR0904
         base = self._ford_headers(country_header='countryCode', extra_headers=extras)
         return RequestDict(
             method='POST',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/expvehiclealerts/v3/details',
+            url=f'{self._api_config["hosts"]["vehicle"]}/api/expvehiclealerts/v3/details',
             headers={
                 **base, 'content-type': 'application/json'
             },
@@ -1168,7 +1168,7 @@ class FordPassClient:  # noqa: PLR0904
         """
         params = {'brand': brand or self.brand, 'vin': vin}
         # getAlertHistory requires ``countryCode`` (camelCase); other casings return 404.
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(
             method='GET',
             url=f'{host}/vehicle-alert-history/v1/getAlertHistory?{urllib.parse.urlencode(params)}',
@@ -1189,7 +1189,7 @@ class FordPassClient:  # noqa: PLR0904
         ----------
         path : str
             Service-planner endpoint path under
-            :data:`self._secrets['hosts']['vehicle']`.
+            :data:`self._api_config['hosts']['vehicle']`.
         vin : str
             VIN of the target vehicle (sent as the ``vin`` request header).
         odometer : int | None
@@ -1211,7 +1211,7 @@ class FordPassClient:  # noqa: PLR0904
         if odometer is not None:
             params['odometer'] = odometer
         return RequestDict(method='GET',
-                           url=(f'{self._secrets["hosts"]["vehicle"]}{path}'
+                           url=(f'{self._api_config["hosts"]["vehicle"]}{path}'
                                 f'?{urllib.parse.urlencode(params)}'),
                            headers=self._ford_headers(country_header='countrycode',
                                                       extra_headers={'vin': vin}),
@@ -1359,7 +1359,7 @@ class FordPassClient:  # noqa: PLR0904
             Descriptor for the ``GET /api/mmota/v2/details`` call.
         """
         # MmotaDashboardService declares ``@Header("countryCode")`` (camelCase).
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(method='GET',
                            url=f'{host}/api/mmota/v2/details?vin={urllib.parse.quote(vin)}',
                            headers=self._ford_headers(country_header='countryCode'),
@@ -1386,7 +1386,7 @@ class FordPassClient:  # noqa: PLR0904
         # ``releaseNotesUrl`` header rather than a query parameter.
         return RequestDict(
             method='GET',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/expvsureleasenotes/v2/details',
+            url=f'{self._api_config["hosts"]["vehicle"]}/api/expvsureleasenotes/v2/details',
             headers=self._ford_headers(country_header='countryCode',
                                        extra_headers={'releaseNotesUrl': release_notes_url}),
             data=None)
@@ -1422,7 +1422,7 @@ class FordPassClient:  # noqa: PLR0904
             'pa_code': pa_code
         }
         return RequestDict(method='POST',
-                           url=f'{self._secrets["hosts"]["vehicle"]}/api/dealersearch/v2/dealer',
+                           url=f'{self._api_config["hosts"]["vehicle"]}/api/dealersearch/v2/dealer',
                            headers={
                                **self._ford_headers(), 'content-type': 'application/json'
                            },
@@ -1443,7 +1443,7 @@ class FordPassClient:  # noqa: PLR0904
             Descriptor for the ``GET /api/roadsideassistancena/v1/symptoms`` call.
         """
         extras: dict[str, str] = {'x-source': self._roadside_x_source()}
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         is_bev_param = 'true' if is_bev else 'false'
         return RequestDict(method='GET',
                            url=f'{host}/api/roadsideassistancena/v1/symptoms?isBEV={is_bev_param}',
@@ -1462,7 +1462,7 @@ class FordPassClient:  # noqa: PLR0904
         extras: dict[str, str] = {'x-source': self._roadside_x_source()}
         return RequestDict(
             method='GET',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/roadsideassistancena/v1/locationtypes',
+            url=f'{self._api_config["hosts"]["vehicle"]}/api/roadsideassistancena/v1/locationtypes',
             headers=self._ford_headers(extra_headers=extras),
             data=None)
 
@@ -1483,7 +1483,7 @@ class FordPassClient:  # noqa: PLR0904
         if not isinstance(vins, str):
             vins = ','.join(vins)
         extras: dict[str, str] = {'x-source': self._roadside_x_source()}
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         quoted = urllib.parse.quote(vins)
         return RequestDict(method='GET',
                            url=f'{host}/api/roadsideassistancena/v1/event/active?vins={quoted}',
@@ -1512,19 +1512,19 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``PUT /api/roadsideassistancena/v1/event/predraft`` call.
         """
-        return RequestDict(
-            method='PUT',
-            url=f'{self._secrets["hosts"]["vehicle"]}/api/roadsideassistancena/v1/event/predraft',
-            headers={
-                **self._ford_headers(), 'content-type': 'application/json'
-            },
-            data=self._json_body({
-                'vin': vin,
-                'customer': {
-                    'name': customer_name,
-                    'phone': customer_phone
-                }
-            }))
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='PUT',
+                           url=f'{host}/api/roadsideassistancena/v1/event/predraft',
+                           headers={
+                               **self._ford_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({
+                               'vin': vin,
+                               'customer': {
+                                   'name': customer_name,
+                                   'phone': customer_phone
+                               }
+                           }))
 
     def list_drivers(self, vin: str) -> RequestDict:
         """
@@ -1540,7 +1540,7 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``POST .../getAuthorizedUsers`` call.
         """
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(method='POST',
                            url=f'{host}/api/fpcpl-secondary-auth-service/v2/getAuthorizedUsers',
                            headers={
@@ -1562,7 +1562,7 @@ class FordPassClient:  # noqa: PLR0904
         RequestDict
             Descriptor for the ``POST .../authorized-user-count`` call.
         """
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(method='POST',
                            url=f'{host}/api/fpcpl-secondary-auth-service/v1/authorized-user-count',
                            headers={
@@ -1605,7 +1605,7 @@ class FordPassClient:  # noqa: PLR0904
             'userFirstName': inviter_first_name,
             'vehicleName': vehicle_display_name
         }
-        host = self._secrets['hosts']['vehicle']
+        host = self._api_config['hosts']['vehicle']
         return RequestDict(method='POST',
                            url=f'{host}/api/fpcpl-secondary-auth-service/v1/sendInvite',
                            headers={

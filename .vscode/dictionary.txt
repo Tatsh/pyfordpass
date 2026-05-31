@@ -159,6 +159,7 @@ notarytool
 novokuznetsk
 numpy
 ojinaga
+okhttp
 omsk
 onefile
 oneline

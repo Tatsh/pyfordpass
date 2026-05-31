@@ -9,13 +9,13 @@ import json
 import os
 
 from click.testing import CliRunner
-from fordpass.abcdef import load_secrets
+from fordpass.api_config import load_api_config
 from fordpass.client import AsyncFordPassClient
 from fordpass.sansio import FordPassClient
 import pytest
 
 if TYPE_CHECKING:
-    from fordpass.typing import Secrets
+    from fordpass.typing import APIConfig
     from pytest_mock import MockerFixture
 
 if os.getenv('_PYTEST_RAISE', '0') != '0':  # pragma no cover
@@ -54,7 +54,7 @@ def runner() -> CliRunner:
 @pytest.fixture(autouse=True)
 def clear_module_caches() -> None:
     """Reset `@functools.cache`-decorated public loaders between tests."""
-    load_secrets.cache_clear()
+    load_api_config.cache_clear()
 
 
 @pytest.fixture(autouse=True)
@@ -69,14 +69,14 @@ def isolate_platform_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     state_dir.mkdir()
     monkeypatch.setattr('fordpass.config.CONFIG_DIR', config_dir)
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', config_dir / 'config.toml')
-    monkeypatch.setattr('fordpass.abcdef.SECRETS_FILE', config_dir / 'abcdef.toml')
+    monkeypatch.setattr('fordpass.api_config.API_CONFIG_FILE', config_dir / 'api.toml')
     monkeypatch.setattr('fordpass.commands.utils.STATE_DIR', state_dir)
     monkeypatch.setattr('fordpass.commands.utils.TOKEN_FILE', state_dir / 'tokens.json')
     monkeypatch.setattr('fordpass.commands.auth.TOKEN_FILE', state_dir / 'tokens.json')
 
 
 @pytest.fixture
-def stub_secrets() -> Secrets:
+def stub_api_config() -> APIConfig:
     return {
         'application_id': 'STUB_APP_ID',
         'user_agent': 'STUB_USER_AGENT',
@@ -109,8 +109,8 @@ def stub_secrets() -> Secrets:
 
 
 @pytest.fixture
-def core_client(stub_secrets: Secrets) -> FordPassClient:
-    return FordPassClient(secrets=stub_secrets,
+def core_client(stub_api_config: APIConfig) -> FordPassClient:
+    return FordPassClient(api_config=stub_api_config,
                           cat='STUB_CAT',
                           cat_refresh='STUB_CAT_REFRESH',
                           tmc='STUB_TMC')
@@ -158,9 +158,9 @@ def fake_auth_session(mocker: MockerFixture) -> MagicMock:
 
 
 @pytest.fixture
-def async_client(stub_secrets: Secrets, fake_session: MagicMock,
+def async_client(stub_api_config: APIConfig, fake_session: MagicMock,
                  fake_auth_session: MagicMock) -> AsyncFordPassClient:
-    return AsyncFordPassClient(secrets=stub_secrets,
+    return AsyncFordPassClient(api_config=stub_api_config,
                                cat='STUB_CAT',
                                cat_refresh='STUB_CAT_REFRESH',
                                tmc='STUB_TMC',

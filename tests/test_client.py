@@ -10,7 +10,7 @@ import pytest
 
 if TYPE_CHECKING:
 
-    from fordpass.typing import Secrets
+    from fordpass.typing import APIConfig
     from pytest_mock import MockerFixture
 
 _VIN = '1FAHP00000A000000'
@@ -26,7 +26,7 @@ def _make_response(*, status_code: int = 200, json_body: Any = None) -> MagicMoc
     return response
 
 
-def test_default_construction_uses_load_secrets(mocker: MockerFixture) -> None:
+def test_default_construction_uses_load_api_config(mocker: MockerFixture) -> None:
     stub = {
         'application_id': 'X',
         'user_agent': 'X',
@@ -55,7 +55,7 @@ def test_default_construction_uses_load_secrets(mocker: MockerFixture) -> None:
             }
         }
     }
-    mocker.patch('fordpass.client.load_secrets', return_value=stub)
+    mocker.patch('fordpass.client.load_api_config', return_value=stub)
     mocker.patch('fordpass.client.niquests.AsyncSession')
     mocker.patch('fordpass.client.CurlAsyncSession')
     client = AsyncFordPassClient()
@@ -525,14 +525,15 @@ async def test_aclose_skips_externally_owned_sessions(async_client: AsyncFordPas
     fake_auth_session.close.assert_not_called()
 
 
-async def test_aclose_closes_owned_sessions(stub_secrets: Secrets, mocker: MockerFixture) -> None:
+async def test_aclose_closes_owned_sessions(stub_api_config: APIConfig,
+                                            mocker: MockerFixture) -> None:
     niquests_session = mocker.MagicMock()
     niquests_session.close = mocker.AsyncMock()
     curl_session = mocker.MagicMock()
     curl_session.close = mocker.AsyncMock()
     mocker.patch('fordpass.client.niquests.AsyncSession', return_value=niquests_session)
     mocker.patch('fordpass.client.CurlAsyncSession', return_value=curl_session)
-    client = AsyncFordPassClient(secrets=stub_secrets, cat='X', tmc='Y')
+    client = AsyncFordPassClient(api_config=stub_api_config, cat='X', tmc='Y')
     await client.aclose()
     niquests_session.close.assert_awaited_once()
     curl_session.close.assert_awaited_once()
@@ -571,10 +572,10 @@ async def test_send_retries_cat_plane_on_401(async_client: AsyncFordPassClient,
     assert async_client.cat == 'NEW_CAT'
 
 
-async def test_send_no_retry_without_cat_refresh(stub_secrets: Secrets, mocker: MockerFixture,
+async def test_send_no_retry_without_cat_refresh(stub_api_config: APIConfig, mocker: MockerFixture,
                                                  fake_session: MagicMock,
                                                  fake_auth_session: MagicMock) -> None:
-    client = AsyncFordPassClient(secrets=stub_secrets,
+    client = AsyncFordPassClient(api_config=stub_api_config,
                                  cat='STUB_CAT',
                                  tmc='STUB_TMC',
                                  session=fake_session,

@@ -30,7 +30,7 @@ from curl_cffi.requests import AsyncSession as CurlAsyncSession
 from typing_extensions import Self
 import niquests
 
-from .abcdef import load_secrets
+from .api_config import load_api_config
 from .config import load_config
 from .sansio import FordPassClient
 from .utils import (
@@ -50,6 +50,7 @@ if TYPE_CHECKING:
 
     from .sansio import RequestDict
     from .typing.alerts import AlertHistoryResponse, AlertsResponse
+    from .typing.api_config import APIConfig
     from .typing.auth import B2CTokenResponse, CATTokenResponse, TMCTokenResponse
     from .typing.commands import AckResponse
     from .typing.common import DistanceUnit, GPSPosition
@@ -60,7 +61,6 @@ if TYPE_CHECKING:
     from .typing.release import ReleaseNotesResponse
     from .typing.roadside import IDNameListResponse, RoadsideActiveResponse
     from .typing.schedule import ScheduleEntry, SchedulesResponse
-    from .typing.secrets import Secrets
     from .typing.service import (
         CompletedServiceActionDetail,
         ServiceActionDetail,
@@ -74,7 +74,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
     """Async FordPass client (niquests for data, curl-cffi for auth)."""
     def __init__(self,
                  *,
-                 secrets: Secrets | None = None,
+                 api_config: APIConfig | None = None,
                  cat: str | None = None,
                  cat_refresh: str | None = None,
                  tmc: str | None = None,
@@ -88,10 +88,10 @@ class AsyncFordPassClient:  # noqa: PLR0904
 
         Parameters
         ----------
-        secrets : Secrets | None
+        api_config : APIConfig | None
             API constants bundle (hosts, B2C identifiers, user-agent, …). When ``None`` (the
-            default), the bundle is loaded via :py:func:`fordpass.abcdef.load_secrets` - this is
-            the only place in the package that performs that I/O.
+            default), the bundle is loaded via :py:func:`fordpass.api_config.load_api_config` -
+            this is the only place in the package that performs that I/O.
         cat : str | None
             Ford CAT access token forwarded to the underlying
             :py:class:`fordpass.sansio.FordPassClient`.
@@ -112,13 +112,14 @@ class AsyncFordPassClient:  # noqa: PLR0904
             Pre-existing curl-cffi session for auth-plane traffic. If ``None`` (the default), a
             new Chrome-impersonating session is created and closed in :py:meth:`aclose`.
         """
-        self.core = FordPassClient(secrets=secrets if secrets is not None else load_secrets(),
-                                   cat=cat,
-                                   cat_refresh=cat_refresh,
-                                   tmc=tmc,
-                                   country=country,
-                                   locale=locale,
-                                   brand=brand)
+        self.core = FordPassClient(
+            api_config=api_config if api_config is not None else load_api_config(),
+            cat=cat,
+            cat_refresh=cat_refresh,
+            tmc=tmc,
+            country=country,
+            locale=locale,
+            brand=brand)
         self.session = session or niquests.AsyncSession()
         # Versioned chrome profile (``chromeNNN``) pins a specific Chrome release's
         # JA3/JA4 + HTTP-2 SETTINGS fingerprint - the unversioned ``chrome`` alias

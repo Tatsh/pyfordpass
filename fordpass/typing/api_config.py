@@ -1,4 +1,4 @@
-"""Schema for the ``abcdef.toml`` FordPass API constants bundle."""
+"""Schema for the ``api.toml`` FordPass API constants bundle."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypedDict
@@ -6,36 +6,37 @@ from typing import TYPE_CHECKING, TypedDict
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-__all__ = ('Secrets', 'SecretsAuth', 'SecretsB2C', 'SecretsHosts', 'SecretsRoadside', 'SecretsTMC')
+__all__ = ('APIConfig', 'APIConfigAuth', 'APIConfigB2C', 'APIConfigHosts', 'APIConfigRoadside',
+           'APIConfigTMC')
 
 
-class Secrets(TypedDict):
-    """Top-level shape of ``abcdef.toml`` (FordPass API constants)."""
+class APIConfig(TypedDict):
+    """Top-level shape of ``api.toml`` (FordPass API constants)."""
 
     application_id: str
     """Value of the ``application-id`` / ``Application-Id`` header on Ford-plane calls."""
-    auth: SecretsAuth
+    auth: APIConfigAuth
     """OAuth / token-exchange parameter groups."""
-    hosts: SecretsHosts
+    hosts: APIConfigHosts
     """Per-tier base URLs."""
     profile_groups_default: str
     """Default ``profileGroups`` query value for the user-profile lookup."""
-    roadside: SecretsRoadside
+    roadside: APIConfigRoadside
     """Roadside-assistance per-brand parameters."""
     user_agent: str
     """``User-Agent`` string the official mobile app emits on every API call."""
 
 
-class SecretsAuth(TypedDict):
+class APIConfigAuth(TypedDict):
     """OAuth / token-exchange parameter groups."""
 
-    b2c: SecretsB2C
+    b2c: APIConfigB2C
     """Azure AD B2C settings."""
-    tmc: SecretsTMC
+    tmc: APIConfigTMC
     """TMC settings."""
 
 
-class SecretsB2C(TypedDict):
+class APIConfigB2C(TypedDict):
     """Azure AD B2C identity-provider parameters."""
 
     client_id: str
@@ -48,7 +49,7 @@ class SecretsB2C(TypedDict):
     """Azure tenant ID owning the FordPass custom policies."""
 
 
-class SecretsHosts(TypedDict):
+class APIConfigHosts(TypedDict):
     """Per-tier hostnames used by the FordPass API."""
 
     foundational: str
@@ -63,14 +64,14 @@ class SecretsHosts(TypedDict):
     """Base URL for the vehicle service (commands, telemetry alerts, SRSM, ...)."""
 
 
-class SecretsRoadside(TypedDict):
+class APIConfigRoadside(TypedDict):
     """Roadside-assistance per-brand parameters."""
 
     x_source: Mapping[str, str]
     """Brand name (lowercase) → ``x-source`` header value."""
 
 
-class SecretsTMC(TypedDict):
+class APIConfigTMC(TypedDict):
     """TMC token-exchange parameters."""
 
     client_id: str

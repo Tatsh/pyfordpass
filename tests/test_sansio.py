@@ -8,13 +8,13 @@ from fordpass.sansio import FordPassClient
 import pytest
 
 if TYPE_CHECKING:
-    from fordpass.typing import Secrets
+    from fordpass.typing import APIConfig
 
 _VIN = '1FAHP00000A000000'
 
 
-def test_init_defaults(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets)
+def test_init_defaults(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config)
     assert client.cat is None
     assert client.cat_refresh is None
     assert client.tmc is None
@@ -30,8 +30,8 @@ def test_init_with_tokens(core_client: FordPassClient) -> None:
     assert core_client.tmc == 'STUB_TMC'
 
 
-def test_init_with_overrides(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets,
+def test_init_with_overrides(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config,
                             country='GBR',
                             locale='en-GB',
                             brand='lincoln',
@@ -88,8 +88,8 @@ def test_refresh_cat(core_client: FordPassClient) -> None:
     assert body['refresh_token'] == 'STUB_CAT_REFRESH'
 
 
-def test_refresh_cat_without_refresh_token(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets)
+def test_refresh_cat_without_refresh_token(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config)
     with pytest.raises(RuntimeError, match='cat_refresh'):
         client.refresh_cat()
 
@@ -103,8 +103,8 @@ def test_exchange_cat_for_tmc(core_client: FordPassClient) -> None:
     assert 'subject_issuer=fordpass' in req['data']
 
 
-def test_exchange_cat_for_tmc_without_cat_refresh(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets)
+def test_exchange_cat_for_tmc_without_cat_refresh(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config)
     with pytest.raises(RuntimeError, match='cat_refresh'):
         client.exchange_cat_for_tmc()
 
@@ -458,14 +458,14 @@ def test_invite_driver(core_client: FordPassClient) -> None:
     assert body['vehicleName'] == 'F-150'
 
 
-def test_roadside_x_source_lincoln_brand(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets, brand='lincoln', cat='STUB_CAT')
+def test_roadside_x_source_lincoln_brand(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config, brand='lincoln', cat='STUB_CAT')
     req = client.get_roadside_symptoms()
     assert req['headers']['x-source'] == 'stub-x-source-lincoln'
 
 
-def test_roadside_x_source_unknown_brand(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets, brand='tesla', cat='STUB_CAT')
+def test_roadside_x_source_unknown_brand(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config, brand='tesla', cat='STUB_CAT')
     with pytest.raises(RuntimeError, match='Unsupported brand'):
         client.get_roadside_symptoms()
 
@@ -476,14 +476,14 @@ def test_ford_headers_have_application_id_and_auth(core_client: FordPassClient) 
     assert req['headers']['auth-token'] == 'STUB_CAT'
 
 
-def test_ford_headers_require_cat(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets)
+def test_ford_headers_require_cat(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config)
     with pytest.raises(RuntimeError, match='cat is unset'):
         client.list_garage()
 
 
-def test_tmc_command_requires_tmc(stub_secrets: Secrets) -> None:
-    client = FordPassClient(secrets=stub_secrets, cat='STUB_CAT')
+def test_tmc_command_requires_tmc(stub_api_config: APIConfig) -> None:
+    client = FordPassClient(api_config=stub_api_config, cat='STUB_CAT')
     with pytest.raises(RuntimeError, match='tmc is unset'):
         client.remote_start(_VIN)
 
