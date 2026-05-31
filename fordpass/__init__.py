@@ -14,4 +14,4 @@ from .client import AsyncFordPassClient
 from .sansio import FordPassClient, RequestDict
 
 __all__ = ('AsyncFordPassClient', 'FordPassClient', 'RequestDict')
-__version__ = '0.0.0'
+__version__ = '0.0.1'

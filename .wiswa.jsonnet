@@ -6,7 +6,7 @@ local utils = import 'utils.libjsonnet';
   description: 'FordPass client and CLI.',
   keywords: ['command line', 'ford', 'fordpass'],
   primary_module: 'fordpass',
-  version: '0.0.0',
+  version: '0.0.1',
   want_main: true,
   want_flatpak: true,
   local top = self,

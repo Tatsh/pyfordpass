@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "FORDPASS" "1" "May 31, 2026" "0.0.0" "pyfordpass"
+.TH "FORDPASS" "1" "May 31, 2026" "0.0.1" "pyfordpass"
 .SH NAME
 fordpass \- FordPass client and CLI
 .sp
@@ -41,7 +41,7 @@ sponsored by, or otherwise connected to Ford Motor Company or any of its subsidi
 \(dqThe Lincoln Way\(dq, \(dqFord\(dq, and \(dqLincoln\(dq are trademarks of Ford Motor Company.
 .sp
 Because this client speaks to private endpoints rather than a documented public API, Ford may
-change, throttle, or revoke access without notice — and the maintainer cannot guarantee that any
+change, throttle, or revoke access without notice \- and the maintainer cannot guarantee that any
 particular feature will keep working.
 .INDENT 0.0
 .INDENT 3.5
@@ -70,7 +70,7 @@ If the secondary account is later suspended, your primary account, warranty reco
 roadside\-assistance enrolment remain unaffected.
 .sp
 See the \X'tty: link https://github.com/marq24/ha-fordpass#general-disclaimer'\fI\%ha\-fordpass project\(aqs general disclaimer and account\-setup guidance\fP\X'tty: link' for the same procedure written up
-from the Home Assistant integration\(aqs perspective — the steps are identical regardless of which
+from the Home Assistant integration\(aqs perspective \- the steps are identical regardless of which
 third\-party client consumes the credentials.
 .SH INSTALLATION
 .INDENT 0.0
@@ -99,10 +99,10 @@ against the same protocol the CLI uses. A typical first\-time flow:
 .INDENT 3.5
 .sp
 .EX
-fordpass auth login       # interactive sign\-in against the secondary account
-fordpass vehicle list     # see what\(aqs in the garage
-fordpass vehicle show VIN # detailed view for one vehicle
-fordpass remote start VIN # remote\-start command
+fordpass auth login       # Interactive sign\-in against the secondary account.
+fordpass vehicle list     # See what\(aqs in the garage.
+fordpass vehicle show VIN # Detailed view for one vehicle.
+fordpass remote start VIN # Remote\-start command.
 .EE
 .UNINDENT
 .UNINDENT
@@ -113,6 +113,51 @@ machine\-readable output.
 For programmatic use, see \fI\%fordpass.client.AsyncFordPassClient\fP (async HTTP client) and
 \fI\%fordpass.sansio.FordPassClient\fP (sans\-I/O protocol core that builds
 \fI\%fordpass.sansio.RequestDict\fP descriptors).
+.SH CONFIGURATION
+.sp
+\fBpyfordpass\fP has two sets of optional settings, each managed with its own subcommand rather than
+by editing files by hand. Both live under \fB~/.config/pyfordpass\fP on Linux (the platform\-specific
+equivalent elsewhere).
+.sp
+\fBUser preferences\fP are managed with \fBfordpass config\fP\&. The most useful is a default VIN, so you
+need not pass it to every command:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+# Set a default VIN, used whenever a command\(aqs VIN argument is omitted.
+fordpass config set vehicle.default_vin VIN
+# Distance (\(dqmi\(dq/\(dqkm\(dq) and temperature (\(dqF\(dq/\(dqC\(dq); both default from your locale.
+fordpass config set units.distance mi
+fordpass config set units.temperature C
+# Default output format: \(dqpretty\(dq (Rich tables) or \(dqjson\(dq.
+fordpass config set output.format json
+# Show the effective configuration (defaults included), drop a key, or start over.
+fordpass config dump
+fordpass config delete units.distance
+fordpass config reset
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+\fBAPI constants\fP are managed with \fBfordpass api\-config\fP\&. The built\-in defaults target Ford in
+the USA, so most users never need to touch them. When Ford rotates a host or client ID you can
+patch individual values without waiting for a new release; anything you set is merged over the
+defaults, so only the changed keys are required:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+# Override a single value; everything else falls back to the built\-in defaults.
+fordpass api\-config set hosts.login https://login.ford.com
+# Show the effective constants (defaults merged with overrides), or discard all overrides.
+fordpass api\-config dump
+fordpass api\-config reset
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Values for other regions and for Lincoln can be copied from \X'tty: link https://github.com/marq24/ha-fordpass/blob/main/custom_components/fordpass/const.py'\fI\%ha\-fordpass const.py\fP\X'tty: link'\&.
 .SH COMMAND REFERENCE
 .SS fordpass
 .sp
@@ -243,6 +288,123 @@ Arguments
 .B VIN
 Optional argument
 .UNINDENT
+.SS api\-config
+.sp
+Inspect and edit the API constants override (\fBapi.toml\fP).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass api\-config [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS delete
+.sp
+Delete KEY (a dotted path) from the API constants override.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass api\-config delete [OPTIONS] KEY
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B KEY
+Required argument
+.UNINDENT
+.SS dump
+.sp
+Print the effective API constants, including the built\-in defaults.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass api\-config dump [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS reset
+.sp
+Reset the API constants by deleting the override file, restoring defaults.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass api\-config reset [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.SS set
+.sp
+Set KEY (a dotted path such as \fIhosts.login\fP) to VALUE.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass api\-config set [OPTIONS] KEY VALUE
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B KEY
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VALUE
+Required argument
+.UNINDENT
 .SS auth
 .sp
 Sign in / out, inspect tokens.
@@ -340,6 +502,123 @@ Enable debug level logging.
 .TP
 .B \-\-json
 Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS config
+.sp
+Inspect and edit the user configuration (\fBconfig.toml\fP).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass config [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS delete
+.sp
+Delete KEY (a dotted path) from the configuration.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass config delete [OPTIONS] KEY
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B KEY
+Required argument
+.UNINDENT
+.SS dump
+.sp
+Print the effective configuration, including injected defaults.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass config dump [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.SS reset
+.sp
+Reset the configuration by deleting the file, restoring defaults.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass config reset [OPTIONS]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.SS set
+.sp
+Set KEY (a dotted path such as \fIvehicle.default_vin\fP) to VALUE.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass config set [OPTIONS] KEY VALUE
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B KEY
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VALUE
+Required argument
 .UNINDENT
 .SS dealer
 .sp

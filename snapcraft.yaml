@@ -20,7 +20,8 @@ parts:
     plugin: 'python'
     python-packages:
       - '.'
-    source: '.'
+    source: 'https://github.com/Tatsh/pyfordpass'
+    source-tag: 'v0.0.1'
     stage-packages: []
 platforms:
   amd64:
@@ -30,5 +31,5 @@ platforms:
 source-code: 'https://github.com/Tatsh/pyfordpass'
 summary: 'FordPass client and CLI.'
 title: 'pyfordpass'
-version: '0.0.0'
+version: '0.0.1'
 website: 'https://tatsh.github.io/pyfordpass/'
