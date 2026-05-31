@@ -71,8 +71,8 @@ async def schedule_list(client: AsyncFordPassClient, _ctx: click.Context, vin: s
 
 
 def _extract_schedules(
-        resp: SchedulesResponse | Sequence[ScheduleEntry]
-        | Mapping[str, object]) -> list[ScheduleEntry]:
+    resp: SchedulesResponse | Sequence[ScheduleEntry]
+    | Mapping[str, object]) -> list[ScheduleEntry]:
     """
     Pull the schedule list out of the upstream response envelope.
 

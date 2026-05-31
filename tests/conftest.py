@@ -2,15 +2,20 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
+from unittest.mock import MagicMock
+import json
 import os
 
 from click.testing import CliRunner
+from fordpass.abcdef import load_secrets
+from fordpass.client import AsyncFordPassClient
 from fordpass.sansio import FordPassClient
 import pytest
 
 if TYPE_CHECKING:
     from fordpass.typing import Secrets
+    from pytest_mock import MockerFixture
 
 if os.getenv('_PYTEST_RAISE', '0') != '0':  # pragma no cover
 
@@ -48,7 +53,6 @@ def runner() -> CliRunner:
 @pytest.fixture(autouse=True)
 def clear_module_caches() -> None:
     """Reset `@functools.cache`-decorated public loaders between tests."""
-    from fordpass.abcdef import load_secrets
     load_secrets.cache_clear()
 
 
@@ -91,3 +95,55 @@ def core_client(stub_secrets: Secrets) -> FordPassClient:
                           cat='STUB_CAT',
                           cat_refresh='STUB_CAT_REFRESH',
                           tmc='STUB_TMC')
+
+
+def _make_response(*,
+                   status_code: int = 200,
+                   json_body: Any = None,
+                   content: bytes | None = None,
+                   text: str = '') -> MagicMock:
+    """Build a MagicMock that mimics niquests.Response / curl_cffi.Response."""
+    response = MagicMock()
+    response.status_code = status_code
+    if content is None:
+        content = b'{}' if json_body is None else json.dumps(json_body).encode()
+    response.content = content
+    response.text = text or content.decode()
+    response.json = MagicMock(return_value=json_body if json_body is not None else {})
+    response.raise_for_status = MagicMock()
+    return response
+
+
+@pytest.fixture
+def fake_response_factory() -> Any:
+    return _make_response
+
+
+@pytest.fixture
+def fake_session(mocker: MockerFixture) -> MagicMock:
+    session = mocker.MagicMock()
+    session.request = mocker.AsyncMock(return_value=_make_response(json_body={'ok': True}))
+    session.close = mocker.AsyncMock()
+    return session
+
+
+@pytest.fixture
+def fake_auth_session(mocker: MockerFixture) -> MagicMock:
+    session = mocker.MagicMock()
+    session.request = mocker.AsyncMock(return_value=_make_response(json_body={
+        'access_token': 'NEW_CAT',
+        'refresh_token': 'NEW_REFRESH'
+    }))
+    session.close = mocker.AsyncMock()
+    return session
+
+
+@pytest.fixture
+def async_client(stub_secrets: Secrets, fake_session: MagicMock,
+                 fake_auth_session: MagicMock) -> AsyncFordPassClient:
+    return AsyncFordPassClient(secrets=stub_secrets,
+                               cat='STUB_CAT',
+                               cat_refresh='STUB_CAT_REFRESH',
+                               tmc='STUB_TMC',
+                               session=fake_session,
+                               auth_session=fake_auth_session)

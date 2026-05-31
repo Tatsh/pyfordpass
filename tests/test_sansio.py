@@ -156,13 +156,12 @@ def test_set_asu_enabled_off(core_client: FordPassClient) -> None:
 
 
 def test_set_asu_schedule(core_client: FordPassClient) -> None:
-    req = core_client.set_asu_schedule(
-        _VIN,
-        day_schedules=[{
-            'dayOfWeek': 'MONDAY',
-            'timeOfDay': '03:00'
-        }],
-        activation_setting='LATEST_OFF_PLUG')
+    req = core_client.set_asu_schedule(_VIN,
+                                       day_schedules=[{
+                                           'dayOfWeek': 'MONDAY',
+                                           'timeOfDay': '03:00'
+                                       }],
+                                       activation_setting='LATEST_OFF_PLUG')
     body = json.loads(req['data'] or '{}')
     assert body['type'] == 'scheduleASUActivationCommand'
     assert body['properties']['activationScheduleSetting'] == 'LATEST_OFF_PLUG'
@@ -235,11 +234,7 @@ def test_delete_remote_start_schedule(core_client: FordPassClient) -> None:
 
 
 def test_toggle_remote_start_schedule(core_client: FordPassClient) -> None:
-    req = core_client.toggle_remote_start_schedule(42,
-                                                   schedule_body={
-                                                       'vin': _VIN,
-                                                       'status': 1
-                                                   })
+    req = core_client.toggle_remote_start_schedule(42, schedule_body={'vin': _VIN, 'status': 1})
     assert req['method'] == 'PUT'
     assert '/startschedules/42' in req['url']
     body = json.loads(req['data'] or '{}')

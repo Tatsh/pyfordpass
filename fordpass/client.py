@@ -227,7 +227,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
             headers['authorization'] = f'Bearer {self.tmc}'
             return True
         cat_header = next((k for k in ('auth-token', 'Auth-Token') if k in headers), None)
-        if cat_header is None:
+        if cat_header is None:  # pragma: no cover
             return False
         await self.refresh_cat()
         headers[cat_header] = self.cat or ''

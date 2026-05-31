@@ -108,7 +108,7 @@ def test_load_config_reads_default_vin(tmp_path: Path, monkeypatch: pytest.Monke
 
 
 def test_load_config_ignores_empty_default_vin(tmp_path: Path,
-                                                monkeypatch: pytest.MonkeyPatch) -> None:
+                                               monkeypatch: pytest.MonkeyPatch) -> None:
     config_path = tmp_path / 'config.toml'
     config_path.write_text("[vehicle]\ndefault_vin = ''\n")
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', config_path)
@@ -134,7 +134,7 @@ def test_load_config_ignores_invalid_output_format(tmp_path: Path,
 
 
 def test_default_distance_falls_back_to_lc_all(tmp_path: Path,
-                                                monkeypatch: pytest.MonkeyPatch) -> None:
+                                               monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', tmp_path / 'missing.toml')
     monkeypatch.setenv('LC_ALL', 'en_GB.UTF-8')
     monkeypatch.delenv('LANG', raising=False)
@@ -189,7 +189,7 @@ def test_resolve_output_format_config_file_format(tmp_path: Path,
 
 
 def test_resolve_output_format_default_pretty(tmp_path: Path,
-                                               monkeypatch: pytest.MonkeyPatch) -> None:
+                                              monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr('fordpass.config.CONFIG_FILE', tmp_path / 'missing.toml')
     monkeypatch.delenv(OUTPUT_ENV_VAR, raising=False)
     assert resolve_output_format() == 'pretty'
