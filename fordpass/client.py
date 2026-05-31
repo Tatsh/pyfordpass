@@ -65,7 +65,7 @@ if TYPE_CHECKING:
         ServiceActionDetail,
         ServicePlannerResponse,
     )
-    from .typing.telemetry import TelemetryResponse, TirePressureEntry
+    from .typing.telemetry import DepartureSchedule, TelemetryResponse, TirePressureEntry
     from .typing.vehicle import GarageVehicle
 
 
@@ -677,7 +677,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
         data = await self._send_json(self.core.get_tire_pressure(vin))
         return (data.get('metrics') or {}).get('tirePressure') or []
 
-    async def get_next_departure(self, vin: str) -> Mapping[str, object] | None:
+    async def get_next_departure(self, vin: str) -> DepartureSchedule | None:
         """
         Fetch the next-up departure schedule for ``vin`` (EV/PHEV only).
 
@@ -688,7 +688,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
 
         Returns
         -------
-        Mapping[str, object] | None
+        DepartureSchedule | None
             The matching schedule, or ``None`` if no schedule was identified.
         """
         data = await self._send_json(self.core.get_next_departure(vin))

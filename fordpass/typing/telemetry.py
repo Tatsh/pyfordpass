@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, TypeAlias, TypedDict
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-__all__ = ('MetricEntry', 'MetricValue', 'TelemetryResponse', 'TirePressureEntry')
+__all__ = ('DepartureSchedule', 'MetricEntry', 'MetricValue', 'TelemetryResponse',
+           'TirePressureEntry')
 
 MetricValue: TypeAlias = (
     'str | int | float | bool | Mapping[str, "MetricValue"] | Sequence["MetricValue"] | None')
@@ -20,6 +21,21 @@ falling back to :py:class:`Any`.
 
 :meta hide-value:
 """
+
+
+class DepartureSchedule(TypedDict, total=False):
+    """
+    One entry from ``xevDepartureSchedules.value.departureLocations[*].departureSchedules[*]``.
+
+    EV/PHEV only - ICE vehicles never populate the parent metric. Only ``scheduleId`` is
+    contractually present (it is the key used to match against
+    ``xevNextDepartureTimeScheduleId.value``); other keys observed in upstream payloads vary
+    by firmware revision and are intentionally not modelled here. Callers that want to read
+    fields beyond ``scheduleId`` should use ``.get(...)`` against the dict directly.
+    """
+
+    scheduleId: str
+    """Server-assigned schedule identifier; matches ``xevNextDepartureTimeScheduleId.value``."""
 
 
 class MetricEntry(TypedDict, total=False):

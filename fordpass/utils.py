@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeGuard, cast
 if TYPE_CHECKING:
     from .typing.alerts import AlertsResponse
     from .typing.common import CompassDirection, GPSPosition
-    from .typing.telemetry import MetricEntry
+    from .typing.telemetry import DepartureSchedule, MetricEntry
     from .typing.vehicle import GarageVehicle
 
 MetricsBlock: TypeAlias = 'Mapping[str, MetricEntry | Sequence[MetricEntry]]'
@@ -241,7 +241,7 @@ def find_preferred_dealer_code(garage: Sequence[GarageVehicle]
     return None
 
 
-def find_next_departure(metrics: MetricsBlock) -> Mapping[str, Any] | None:
+def find_next_departure(metrics: MetricsBlock) -> DepartureSchedule | None:
     """
     Walk a telemetry metrics block to find the next-up departure schedule.
 
@@ -255,7 +255,7 @@ def find_next_departure(metrics: MetricsBlock) -> Mapping[str, Any] | None:
 
     Returns
     -------
-    Mapping[str, Any] | None
+    DepartureSchedule | None
         The matching schedule dict, or ``None`` if no schedule was identified.
     """
     next_id = scalar_metric_value(metrics.get('xevNextDepartureTimeScheduleId'))
@@ -268,5 +268,5 @@ def find_next_departure(metrics: MetricsBlock) -> Mapping[str, Any] | None:
     for loc in tree.get('departureLocations', []) or []:
         for s in loc.get('departureSchedules', []) or []:
             if s.get('scheduleId') == next_id_str:
-                return cast('Mapping[str, Any]', s)
+                return cast('DepartureSchedule', s)
     return None

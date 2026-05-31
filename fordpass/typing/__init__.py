@@ -78,7 +78,13 @@ from fordpass.typing.service import (
     ServicePerformed,
     ServicePlannerResponse,
 )
-from fordpass.typing.telemetry import MetricEntry, MetricValue, TelemetryResponse, TirePressureEntry
+from fordpass.typing.telemetry import (
+    DepartureSchedule,
+    MetricEntry,
+    MetricValue,
+    TelemetryResponse,
+    TirePressureEntry,
+)
 from fordpass.typing.vehicle import (
     GarageVehicle,
     VehicleCapabilities,
@@ -90,7 +96,8 @@ __all__ = ('AckResponse', 'AlertCategory', 'AlertColorCode', 'AlertEntry', 'Aler
            'AlertHistoryResponse', 'AlertPrognostics', 'AlertUrgency', 'AlertsResponse',
            'B2CTokenResponse', 'CATTokenResponse', 'CompassDirection',
            'CompletedServiceActionDetail', 'Config', 'CountryHeaderCasing', 'DealerResponse',
-           'DistanceUnit', 'DriverEntry', 'DriversCountResponse', 'DriversListResponse',
+           'DepartureSchedule', 'DistanceUnit', 'DriverEntry', 'DriversCountResponse',
+           'DriversListResponse',
            'EngineType', 'GPSPosition', 'GarageVehicle', 'HTTPConfig', 'IDNameEntry',
            'IDNameListResponse', 'InviteResponse', 'MaintenanceDetails', 'MaintenanceItem',
            'MessageEntry', 'MessagesResponse', 'MessagesResultEnvelope', 'MetricEntry',
