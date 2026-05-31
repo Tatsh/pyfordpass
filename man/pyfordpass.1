@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "PYFORDPASS" "1" "May 30, 2026" "0.0.0" "pyfordpass"
+.TH "PYFORDPASS" "1" "May 31, 2026" "0.0.0" "pyfordpass"
 .SH NAME
 pyfordpass \- pyfordpass v0.0.0
 .sp
@@ -73,8 +73,6 @@ For programmatic use, see \fI\%fordpass.client.AsyncFordPassClient\fP (async HTT
 .SS pyfordpass
 .sp
 FordPass CLI.
-.sp
-Usage: \fBford <activity> <action> [args]\fP\&.
 .sp
 Usage
 .INDENT 0.0
@@ -189,6 +187,11 @@ Options
 .B \-d, \-\-debug
 Enable debug level logging.
 .UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
 .sp
 Arguments
 .INDENT 0.0
@@ -289,6 +292,11 @@ Options
 .B \-d, \-\-debug
 Enable debug level logging.
 .UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
 .SS dealer
 .sp
 Preferred\-dealer info.
@@ -321,6 +329,11 @@ Options
 .TP
 .B \-d, \-\-debug
 Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
 .UNINDENT
 .sp
 Arguments
@@ -361,6 +374,11 @@ Options
 .TP
 .B \-d, \-\-debug
 Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
 .UNINDENT
 .sp
 Arguments
@@ -735,6 +753,11 @@ Options
 .TP
 .B \-d, \-\-debug
 Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
 .UNINDENT
 .sp
 Arguments
@@ -1179,6 +1202,11 @@ Enable debug level logging.
 .TP
 .B \-\-phone <phone>
 Customer phone.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
 .UNINDENT
 .sp
 Arguments
@@ -1731,6 +1759,11 @@ Override the distance unit from \fIconfig.toml\fP for this call.
 kilometers | kilometres | km | mi | miles
 .UNINDENT
 .UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
 .sp
 Arguments
 .INDENT 0.0
@@ -1757,6 +1790,11 @@ Options
 .TP
 .B \-d, \-\-debug
 Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
 .UNINDENT
 .sp
 Arguments

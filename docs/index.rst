@@ -37,7 +37,7 @@ For programmatic use, see :py:class:`fordpass.client.AsyncFordPassClient` (async
 Command reference
 -----------------
 
-.. click:: fordpass.commands.root:ford
+.. click:: fordpass.main:ford
    :prog: pyfordpass
    :nested: full
 
