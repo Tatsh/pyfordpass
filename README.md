@@ -88,35 +88,38 @@ machine-readable output.
 
 ## Configuration
 
-`pyfordpass` reads two optional TOML files from its configuration directory
-(`~/.config/pyfordpass` on Linux; the platform-specific equivalent elsewhere). Both are optional.
+`pyfordpass` has two sets of optional settings, each managed with its own subcommand rather than
+by editing files by hand. Both live under `~/.config/pyfordpass` on Linux (the platform-specific
+equivalent elsewhere).
 
-**User preferences** live in `config.toml`. Every key is optional; the most useful is a default VIN
-so you need not pass it to every command:
+**User preferences** are managed with `fordpass config`. The most useful is a default VIN, so you
+need not pass it to every command:
 
-```toml
-[vehicle]
-default_vin = "<your VIN>" # Used whenever a command's VIN argument is omitted.
-
-[units]
-distance = "mi"   # "mi" or "km"; defaults from your locale.
-temperature = "F" # "F" or "C"; defaults from your locale.
-
-[output]
-format = "pretty" # "pretty" (Rich tables; default) or "json".
-
-[http]
-impersonate = "chrome146" # curl-cffi browser-impersonation profile for the auth endpoints.
+```shell
+# Set a default VIN, used whenever a command's VIN argument is omitted.
+fordpass config set vehicle.default_vin VIN
+# Distance ("mi"/"km") and temperature ("F"/"C"); both default from your locale.
+fordpass config set units.distance mi
+fordpass config set units.temperature C
+# Default output format: "pretty" (Rich tables) or "json".
+fordpass config set output.format json
+# Show the effective configuration (defaults included), drop a key, or start over.
+fordpass config dump
+fordpass config delete units.distance
+fordpass config reset
 ```
 
-**API constants** live in `api.toml` and are entirely optional. The built-in defaults target Ford
-in the USA, so most users never need this file. When Ford rotates a host or client ID you can patch
-individual values here without waiting for a new release; anything you set is merged over the
-defaults, so only the changed keys are required:
+**API constants** are managed with `fordpass api-config`. The built-in defaults target Ford in the
+USA, so most users never need to touch them. When Ford rotates a host or client ID you can patch
+individual values without waiting for a new release; anything you set is merged over the defaults,
+so only the changed keys are required:
 
-```toml
-[hosts]
-login = "https://login.ford.com"
+```shell
+# Override a single value; everything else falls back to the built-in defaults.
+fordpass api-config set hosts.login https://login.ford.com
+# Show the effective constants (defaults merged with overrides), or discard all overrides.
+fordpass api-config dump
+fordpass api-config reset
 ```
 
 Values for other regions and for Lincoln can be copied from the
