@@ -48,4 +48,18 @@ local utils = import 'utils.libjsonnet';
       },
     },
   },
+  docs_conf+: {
+    config+: {
+      intersphinx_mapping+: {
+        bascom: ['https://bascom.readthedocs.io/en/latest/', null],
+        click: ['https://click.palletsprojects.com/en/stable/', null],
+        curl_cffi: ['https://curl-cffi.readthedocs.io/en/stable/', null],
+        niquests: ['https://niquests.readthedocs.io/en/stable/', null],
+        platformdirs: ['https://platformdirs.readthedocs.io/en/stable/', null],
+        rich: ['https://rich.readthedocs.io/en/stable/', null],
+        tomlkit: ['https://tomlkit.readthedocs.io/en/latest/', null],
+        typing_extensions: ['https://typing-extensions.readthedocs.io/en/latest/', null],
+      },
+    },
+  },
 }

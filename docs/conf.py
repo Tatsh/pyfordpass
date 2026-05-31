@@ -75,5 +75,15 @@ html_theme_options = {
     'site_url': 'https://pyfordpass.readthedocs.org',
     'toc_title_is_page_title': True
 }
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+intersphinx_mapping = {
+    'bascom': ('https://bascom.readthedocs.io/en/latest/', None),
+    'click': ('https://click.palletsprojects.com/en/stable/', None),
+    'curl_cffi': ('https://curl-cffi.readthedocs.io/en/stable/', None),
+    'niquests': ('https://niquests.readthedocs.io/en/stable/', None),
+    'platformdirs': ('https://platformdirs.readthedocs.io/en/stable/', None),
+    'python': ('https://docs.python.org/3', None),
+    'rich': ('https://rich.readthedocs.io/en/stable/', None),
+    'tomlkit': ('https://tomlkit.readthedocs.io/en/latest/', None),
+    'typing_extensions': ('https://typing-extensions.readthedocs.io/en/latest/', None)
+}
 man_pages = [('index', 'fordpass', 'FordPass client and CLI', author, 1)]
