@@ -1,5 +1,5 @@
 app-id: 'sh.tat.pyfordpass'
-command: 'pyfordpass'
+command: 'fordpass'
 finish-args:
   - '--share=ipc'
   - '--share=network'

@@ -62,4 +62,10 @@ local utils = import 'utils.libjsonnet';
       },
     },
   },
+  flatpak+: { command: top.primary_module },
+  snapcraft+: {
+    apps+: {
+      [top.project_name]+: { command: 'bin/%s' % top.primary_module },
+    },
+  },
 }

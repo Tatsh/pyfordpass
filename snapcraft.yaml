@@ -1,6 +1,6 @@
 apps:
   pyfordpass:
-    command: 'bin/pyfordpass'
+    command: 'bin/fordpass'
     plugs:
       - 'home'
       - 'network'
