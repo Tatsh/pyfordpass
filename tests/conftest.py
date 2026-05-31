@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import NoReturn
+from typing import TYPE_CHECKING, NoReturn
 import os
 
 from click.testing import CliRunner
+from fordpass.sansio import FordPassClient
 import pytest
+
+if TYPE_CHECKING:
+    from fordpass.typing import Secrets
 
 if os.getenv('_PYTEST_RAISE', '0') != '0':  # pragma no cover
 
@@ -46,3 +50,44 @@ def clear_module_caches() -> None:
     """Reset `@functools.cache`-decorated public loaders between tests."""
     from fordpass.abcdef import load_secrets
     load_secrets.cache_clear()
+
+
+@pytest.fixture
+def stub_secrets() -> Secrets:
+    return {
+        'application_id': 'STUB_APP_ID',
+        'user_agent': 'STUB_USER_AGENT',
+        'profile_groups_default': 'STUB_PROFILE_GROUPS',
+        'hosts': {
+            'foundational': 'https://stub-foundational.example',
+            'login': 'https://stub-login.example',
+            'tmc': 'https://stub-tmc.example',
+            'tmc_accounts': 'https://stub-tmc-accounts.example',
+            'vehicle': 'https://stub-vehicle.example',
+        },
+        'auth': {
+            'b2c': {
+                'client_id': 'STUB_B2C_CLIENT',
+                'policy_template': 'B2C_1A_{locale}_STUB',
+                'redirect_uri': 'stub://callback',
+                'tenant_id': 'stub-tenant',
+            },
+            'tmc': {
+                'client_id': 'STUB_TMC_CLIENT'
+            },
+        },
+        'roadside': {
+            'x_source': {
+                'ford': 'stub-x-source-ford',
+                'lincoln': 'stub-x-source-lincoln'
+            }
+        },
+    }
+
+
+@pytest.fixture
+def core_client(stub_secrets: Secrets) -> FordPassClient:
+    return FordPassClient(secrets=stub_secrets,
+                          cat='STUB_CAT',
+                          cat_refresh='STUB_CAT_REFRESH',
+                          tmc='STUB_TMC')
