@@ -74,6 +74,43 @@ For programmatic use, see :py:class:`fordpass.client.AsyncFordPassClient` (async
 :py:class:`fordpass.sansio.FordPassClient` (sans-I/O protocol core that builds
 :py:class:`fordpass.sansio.RequestDict` descriptors).
 
+Configuration
+-------------
+
+``pyfordpass`` reads two optional TOML files from its configuration directory
+(``~/.config/pyfordpass`` on Linux; the platform-specific equivalent elsewhere). Both are optional.
+
+**User preferences** live in ``config.toml``. Every key is optional; the most useful is a default
+VIN so you need not pass it to every command:
+
+.. code-block:: toml
+
+   [vehicle]
+   default_vin = "<your VIN>" # Used whenever a command's VIN argument is omitted.
+
+   [units]
+   distance = "mi"   # "mi" or "km"; defaults from your locale.
+   temperature = "F" # "F" or "C"; defaults from your locale.
+
+   [output]
+   format = "pretty" # "pretty" (Rich tables; default) or "json".
+
+   [http]
+   impersonate = "chrome146" # curl-cffi browser-impersonation profile for the auth endpoints.
+
+**API constants** live in ``api.toml`` and are entirely optional. The built-in defaults target Ford
+in the USA, so most users never need this file. When Ford rotates a host or client ID you can patch
+individual values here without waiting for a new release; anything you set is merged over the
+defaults, so only the changed keys are required:
+
+.. code-block:: toml
+
+   [hosts]
+   login = "https://login.ford.com"
+
+Values for other regions and for Lincoln can be copied from the `ha-fordpass const.py
+<https://github.com/marq24/ha-fordpass/blob/main/custom_components/fordpass/const.py>`_.
+
 Command reference
 -----------------
 

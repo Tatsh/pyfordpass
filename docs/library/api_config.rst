@@ -1,5 +1,5 @@
-API constants loader
-====================
+API configuration loader
+=========================
 
-.. automodule:: fordpass.abcdef
+.. automodule:: fordpass.api_config
    :members:

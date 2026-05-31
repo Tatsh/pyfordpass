@@ -1,5 +1,5 @@
-Secrets
-=======
+APIConfig
+=========
 
-.. automodule:: fordpass.typing.secrets
+.. automodule:: fordpass.typing.api_config
    :members:

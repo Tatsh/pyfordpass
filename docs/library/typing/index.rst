@@ -14,6 +14,7 @@ Submodules
    :maxdepth: 1
 
    alerts
+   api_config
    auth
    commands
    common
@@ -25,7 +26,6 @@ Submodules
    release
    roadside
    schedule
-   secrets
    service
    telemetry
    vehicle

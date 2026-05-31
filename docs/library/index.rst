@@ -13,6 +13,6 @@ Modules
    sansio
    client
    config
-   abcdef
+   api_config
    utils
    typing/index
