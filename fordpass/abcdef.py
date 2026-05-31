@@ -34,7 +34,7 @@ def _require(raw: Mapping[str, object], path: tuple[str, ...]) -> object:
 
     Returns
     -------
-    Any
+    object
         The value at the given path.
 
     Raises

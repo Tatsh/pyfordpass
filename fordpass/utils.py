@@ -60,7 +60,7 @@ def is_list_like(value: object) -> TypeGuard[Sequence[Any]]:
 
     Returns
     -------
-    bool
+    TypeGuard[Sequence[Any]]
         ``True`` for lists, tuples, and other :py:class:`~collections.abc.Sequence` types, but
         ``False`` for strings and bytes (which are themselves Sequences in Python's type hierarchy
         but are virtually never what callers mean when they check for list-shaped JSON data).

@@ -895,7 +895,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
 
         Returns
         -------
-        Any
+        AckResponse | None
             The parsed server response, or ``None`` if the call returns 204.
         """
         return cast('AckResponse | None', await self._send_json(
@@ -912,7 +912,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
 
         Returns
         -------
-        Any
+        AckResponse | None
             The parsed server response, or ``None`` if the call returns 204.
         """
         return cast('AckResponse | None', await self._send_json(
