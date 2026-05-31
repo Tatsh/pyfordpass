@@ -71,16 +71,21 @@ Map of accepted ``--unit`` values to the canonical short form.
               type=click.Choice(sorted(_DISTANCE_UNIT_ALIASES), case_sensitive=False),
               default=None,
               help='Override the distance unit from `config.toml` for this call.')
+@json_option
 @with_client
 async def telemetry_odometer(client: AsyncFordPassClient, _ctx: click.Context, vin: str,
-                             unit: str | None) -> None:
+                             unit: str | None, *, as_json: bool) -> None:
     """Vehicle odometer reading."""
     km = await client.get_odometer(vin)
+    pref = (_DISTANCE_UNIT_ALIASES[unit.lower()] if unit is not None else load_config(
+        locale=client.locale)['units']['distance'])
+    if should_emit_json(as_json):
+        value: float | None = None if km is None else (km * KM_TO_MI if pref == 'mi' else km)
+        dump_json({'value': value, 'unit': pref})
+        return
     if km is None:
         click.echo('unknown')
         return
-    pref = (_DISTANCE_UNIT_ALIASES[unit.lower()] if unit is not None else load_config(
-        locale=client.locale)['units']['distance'])
     if pref == 'mi':
         click.echo(f'{km * KM_TO_MI:.1f} mi')
         return
@@ -90,10 +95,15 @@ async def telemetry_odometer(client: AsyncFordPassClient, _ctx: click.Context, v
 @telemetry.command('oil')
 @debug_option
 @vin_argument
+@json_option
 @with_client
-async def telemetry_oil(client: AsyncFordPassClient, _ctx: click.Context, vin: str) -> None:
+async def telemetry_oil(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
+                        as_json: bool) -> None:
     """Oil life remaining (%)."""
     pct = await client.get_oil_life(vin)
+    if should_emit_json(as_json):
+        dump_json({'oil_life_pct': pct})
+        return
     click.echo('unknown' if pct is None else f'{pct}%')
 
 

@@ -1,6 +1,5 @@
 # TODO
 
-- Make sure all leaf commands have --json, if it is applicable.
 - Make sure leaf command's tables do not have JSON (or Python objects, or machine-readable output)
   in rows.
 - Make sure all TypedDict fields are ordered alphabetically case-sensitive.

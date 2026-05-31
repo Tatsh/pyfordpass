@@ -131,10 +131,15 @@ async def ota_disable(client: AsyncFordPassClient, _ctx: click.Context, vin: str
 @ota.command('release-notes')
 @debug_option
 @vin_argument
+@json_option
 @with_client
-async def ota_release_notes(client: AsyncFordPassClient, _ctx: click.Context, vin: str) -> None:
+async def ota_release_notes(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
+                            as_json: bool) -> None:
     """Fetch release notes for the pending OTA (two-step flow)."""
     notes = await client.get_release_notes(vin)
+    if should_emit_json(as_json):
+        dump_json(notes)
+        return
     if notes is None:
         click.echo('No MMOTA alert is pending, so there is nothing to fetch.')
         return

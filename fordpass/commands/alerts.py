@@ -90,10 +90,15 @@ async def alerts_history(client: AsyncFordPassClient, _ctx: click.Context, vin: 
 @alerts.command('washer')
 @debug_option
 @vin_argument
+@json_option
 @with_client
-async def alerts_washer(client: AsyncFordPassClient, _ctx: click.Context, vin: str) -> None:
+async def alerts_washer(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
+                        as_json: bool) -> None:
     """Washer-fluid status."""
     low = await client.is_washer_fluid_low(vin)
-    click.echo('low' if low else 'ok')
+    if should_emit_json(as_json):
+        dump_json({'low': low})
+    else:
+        click.echo('low' if low else 'ok')
     if low:
         sys.exit(1)

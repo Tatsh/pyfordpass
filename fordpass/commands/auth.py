@@ -6,12 +6,15 @@ import click
 from .utils import (
     TOKEN_FILE,
     debug_option,
+    dump_json,
     ensure_signed_in,
     interactive_signin,
+    json_option,
     load_tokens,
     make_client,
     persist_tokens,
     run_async,
+    should_emit_json,
 )
 
 
@@ -48,17 +51,26 @@ def auth_refresh() -> None:
 
 @auth.command('status')
 @debug_option
-def auth_status() -> None:
+@json_option
+def auth_status(*, as_json: bool) -> None:
     """Show saved tokens (truncated)."""
     tokens = load_tokens()
+    cat = tokens.get('cat') or ''
+    tmc = tokens.get('tmc') or ''
+    if should_emit_json(as_json):
+        dump_json({
+            'signed_in': bool(tokens),
+            'tokens_path': str(TOKEN_FILE),
+            'cat_length': len(cat),
+            'tmc_length': len(tmc)
+        })
+        return
     if not tokens:
         click.echo('Not signed in.')
         return
-    cat = tokens.get('cat') or '<missing>'
-    tmc = tokens.get('tmc') or '<missing>'
     click.echo(f'Tokens at: {TOKEN_FILE}')
-    click.echo(f'  CAT: {cat[:48]}...({len(cat)} chars)')
-    click.echo(f'  TMC: {tmc[:48]}...({len(tmc)} chars)')
+    click.echo(f'  CAT: {cat[:48] or "<missing>"}...({len(cat)} chars)')
+    click.echo(f'  TMC: {tmc[:48] or "<missing>"}...({len(tmc)} chars)')
 
 
 @auth.command('logout')
