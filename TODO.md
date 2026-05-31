@@ -1,6 +1,5 @@
 # TODO
 
-- Make sure all TypedDict fields are ordered alphabetically case-sensitive.
 - Make sure all .py files under typing/ have TypeAliases first (ordered alphabetically
   case-sensitive), then TypedDicts.
 - Make sure all Returns sections in docstrings match the actual return type.
