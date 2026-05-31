@@ -13,6 +13,14 @@ local utils = import 'utils.libjsonnet';
   publishing+: { flathub: 'sh.tat.%s' % top.project_name },
   pyproject+: {
     tool+: {
+      coverage+: {
+        report+: {
+          omit+: ['fordpass/timezone_map.py', 'fordpass/typing/*.py'],
+        },
+        run+: {
+          omit+: ['fordpass/timezone_map.py', 'fordpass/typing/*.py'],
+        },
+      },
       pytest+: {
         ini_options+: {
           asyncio_mode: 'auto',

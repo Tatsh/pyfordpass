@@ -39,3 +39,10 @@ def recover_stale_process_cwd(request: pytest.FixtureRequest) -> None:
 @pytest.fixture
 def runner() -> CliRunner:
     return CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def clear_module_caches() -> None:
+    """Reset `@functools.cache`-decorated public loaders between tests."""
+    from fordpass.abcdef import load_secrets
+    load_secrets.cache_clear()

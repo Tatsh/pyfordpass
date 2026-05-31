@@ -148,7 +148,7 @@ def extract_position(metrics: MetricsBlock) -> GPSPosition | None:
             result['heading'] = float(heading_value)
     if (compass := scalar_metric_value(metrics.get('compassDirection'))) is not None:
         result['compass'] = cast('CompassDirection', str(compass))
-    if isinstance(position_entry, Mapping):
+    if isinstance(position_entry, Mapping):  # pragma: no branch
         update_time = position_entry.get('updateTime')  # ty: ignore[invalid-argument-type]
         if update_time is not None:
             result['update_time'] = str(update_time)

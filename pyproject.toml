@@ -93,12 +93,28 @@ version_provider = "pep621"
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:"]
-omit = ["conftest.py", "fordpass/__main__.py", "tests.py", "tests/*/test_*.py", "tests/test_*.py"]
+omit = [
+  "conftest.py",
+  "fordpass/__main__.py",
+  "fordpass/timezone_map.py",
+  "fordpass/typing/*.py",
+  "tests.py",
+  "tests/*/test_*.py",
+  "tests/test_*.py",
+]
 show_missing = true
 
 [tool.coverage.run]
 branch = true
-omit = ["conftest.py", "fordpass/__main__.py", "tests.py", "tests/*/test_*.py", "tests/test_*.py"]
+omit = [
+  "conftest.py",
+  "fordpass/__main__.py",
+  "fordpass/timezone_map.py",
+  "fordpass/typing/*.py",
+  "tests.py",
+  "tests/*/test_*.py",
+  "tests/test_*.py",
+]
 
 [tool.doc8]
 max-line-length = 100
