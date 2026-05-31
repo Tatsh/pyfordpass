@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 def test_auth_login_drives_interactive_signin(runner: CliRunner, mocker: MockerFixture,
                                               mock_command_client: object) -> None:
     interactive = mocker.patch('fordpass.commands.auth.interactive_signin',
-                                new_callable=mocker.AsyncMock)
+                               new_callable=mocker.AsyncMock)
     result = runner.invoke(ford, ('auth', 'login'))
     assert result.exit_code == 0
     interactive.assert_awaited_once()
@@ -40,7 +40,10 @@ def test_auth_status_no_tokens(runner: CliRunner, mocker: MockerFixture, tmp_pat
 
 def test_auth_status_shows_tokens(runner: CliRunner, mocker: MockerFixture) -> None:
     mocker.patch('fordpass.commands.auth.load_tokens',
-                  return_value={'cat': 'X' * 200, 'tmc': 'Y' * 100})
+                 return_value={
+                     'cat': 'X' * 200,
+                     'tmc': 'Y' * 100
+                 })
     result = runner.invoke(ford, ('auth', 'status'))
     assert result.exit_code == 0
     assert 'CAT' in result.output
@@ -49,7 +52,10 @@ def test_auth_status_shows_tokens(runner: CliRunner, mocker: MockerFixture) -> N
 
 def test_auth_status_json(runner: CliRunner, mocker: MockerFixture) -> None:
     mocker.patch('fordpass.commands.auth.load_tokens',
-                  return_value={'cat': 'X' * 200, 'tmc': 'Y' * 100})
+                 return_value={
+                     'cat': 'X' * 200,
+                     'tmc': 'Y' * 100
+                 })
     result = runner.invoke(ford, ('auth', 'status', '--json'))
     assert result.exit_code == 0
     assert '"signed_in": true' in result.output

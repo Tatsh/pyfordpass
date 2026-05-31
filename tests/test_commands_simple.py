@@ -10,7 +10,6 @@ import pytest
 if TYPE_CHECKING:
     from click.testing import CliRunner
 
-
 _VIN = '1FAHP00000A000000'
 
 
@@ -153,8 +152,7 @@ def test_ota_status_empty(runner: CliRunner, mock_command_client: MagicMock) -> 
     assert 'not reported' in result.output
 
 
-def test_ota_status_from_configurations(runner: CliRunner,
-                                          mock_command_client: MagicMock) -> None:
+def test_ota_status_from_configurations(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.query_telemetry.return_value = {
         'metrics': {
             'configurations': {
@@ -203,8 +201,7 @@ def test_ota_status_disabled(runner: CliRunner, mock_command_client: MagicMock) 
     assert 'Disabled' in result.output
 
 
-def test_ota_status_from_event_fallback(runner: CliRunner,
-                                          mock_command_client: MagicMock) -> None:
+def test_ota_status_from_event_fallback(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.query_telemetry.return_value = {
         'events': {
             'automaticSoftwareUpdateUserSettingsEvent': {
@@ -268,7 +265,7 @@ def test_ota_status_json(runner: CliRunner, mock_command_client: MagicMock) -> N
 
 @pytest.mark.parametrize('subcommand', ['enable', 'disable', 'queue-refresh'])
 def test_ota_simple_commands(runner: CliRunner, mock_command_client: MagicMock,
-                              subcommand: str) -> None:
+                             subcommand: str) -> None:
     response = MagicMock()
     response.status_code = 200
     mapping = {
@@ -310,7 +307,7 @@ def test_ota_release_notes_json(runner: CliRunner, mock_command_client: MagicMoc
     ('unlock', 'unlock'),
 ])
 def test_remote_force_commands(runner: CliRunner, mock_command_client: MagicMock, subcommand: str,
-                                client_method: str) -> None:
+                               client_method: str) -> None:
     response = MagicMock()
     response.status_code = 200
     getattr(mock_command_client, client_method).return_value = response

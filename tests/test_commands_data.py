@@ -10,9 +10,7 @@ if TYPE_CHECKING:
     from click.testing import CliRunner
     from pytest_mock import MockerFixture
 
-
 _VIN = '1FAHP00000A000000'
-
 
 # ----- messages -----
 
@@ -84,13 +82,7 @@ def test_messages_show_missing(runner: CliRunner, mock_command_client: MagicMock
 
 
 def test_messages_show_json(runner: CliRunner, mock_command_client: MagicMock) -> None:
-    mock_command_client.get_messages.return_value = {
-        'result': {
-            'messages': [{
-                'messageId': '7'
-            }]
-        }
-    }
+    mock_command_client.get_messages.return_value = {'result': {'messages': [{'messageId': '7'}]}}
     result = runner.invoke(ford, ('messages', 'show', '7', '--json'))
     assert result.exit_code == 0
     assert '"messageId"' in result.output
@@ -111,8 +103,9 @@ def test_messages_show_empty_body(runner: CliRunner, mock_command_client: MagicM
 
 
 def test_messages_delete(runner: CliRunner, mock_command_client: MagicMock,
-                          mocker: MockerFixture) -> None:
-    mocker.patch('fordpass.commands.messages.validate_message_ids_exist', new_callable=mocker.AsyncMock)
+                         mocker: MockerFixture) -> None:
+    mocker.patch('fordpass.commands.messages.validate_message_ids_exist',
+                 new_callable=mocker.AsyncMock)
     mock_command_client.delete_messages.return_value = None
     result = runner.invoke(ford, ('messages', 'delete', '1', '2'))
     assert result.exit_code == 0
@@ -120,8 +113,9 @@ def test_messages_delete(runner: CliRunner, mock_command_client: MagicMock,
 
 
 def test_messages_delete_single(runner: CliRunner, mock_command_client: MagicMock,
-                                 mocker: MockerFixture) -> None:
-    mocker.patch('fordpass.commands.messages.validate_message_ids_exist', new_callable=mocker.AsyncMock)
+                                mocker: MockerFixture) -> None:
+    mocker.patch('fordpass.commands.messages.validate_message_ids_exist',
+                 new_callable=mocker.AsyncMock)
     mock_command_client.delete_messages.return_value = None
     result = runner.invoke(ford, ('messages', 'delete', '1'))
     assert result.exit_code == 0
@@ -129,8 +123,9 @@ def test_messages_delete_single(runner: CliRunner, mock_command_client: MagicMoc
 
 
 def test_messages_mark_read(runner: CliRunner, mock_command_client: MagicMock,
-                             mocker: MockerFixture) -> None:
-    mocker.patch('fordpass.commands.messages.validate_message_ids_exist', new_callable=mocker.AsyncMock)
+                            mocker: MockerFixture) -> None:
+    mocker.patch('fordpass.commands.messages.validate_message_ids_exist',
+                 new_callable=mocker.AsyncMock)
     mock_command_client.mark_messages_read.return_value = None
     result = runner.invoke(ford, ('messages', 'mark-read', '3'))
     assert result.exit_code == 0
@@ -138,8 +133,9 @@ def test_messages_mark_read(runner: CliRunner, mock_command_client: MagicMock,
 
 
 def test_messages_delete_json(runner: CliRunner, mock_command_client: MagicMock,
-                                mocker: MockerFixture) -> None:
-    mocker.patch('fordpass.commands.messages.validate_message_ids_exist', new_callable=mocker.AsyncMock)
+                              mocker: MockerFixture) -> None:
+    mocker.patch('fordpass.commands.messages.validate_message_ids_exist',
+                 new_callable=mocker.AsyncMock)
     mock_command_client.delete_messages.return_value = {'status': 'ok'}
     result = runner.invoke(ford, ('messages', 'delete', '1', '--json'))
     assert result.exit_code == 0
@@ -147,8 +143,9 @@ def test_messages_delete_json(runner: CliRunner, mock_command_client: MagicMock,
 
 
 def test_messages_mark_read_json(runner: CliRunner, mock_command_client: MagicMock,
-                                   mocker: MockerFixture) -> None:
-    mocker.patch('fordpass.commands.messages.validate_message_ids_exist', new_callable=mocker.AsyncMock)
+                                 mocker: MockerFixture) -> None:
+    mocker.patch('fordpass.commands.messages.validate_message_ids_exist',
+                 new_callable=mocker.AsyncMock)
     mock_command_client.mark_messages_read.return_value = {'status': 'ok'}
     result = runner.invoke(ford, ('messages', 'mark-read', '1', '--json'))
     assert result.exit_code == 0
@@ -208,8 +205,7 @@ def test_profile_update_happy_path(runner: CliRunner, mock_command_client: Magic
     response = MagicMock()
     response.status_code = 200
     mock_command_client.save_profile.return_value = response
-    result = runner.invoke(ford,
-                            ('profile', 'update', '--field', 'names.firstName=Alice'))
+    result = runner.invoke(ford, ('profile', 'update', '--field', 'names.firstName=Alice'))
     assert result.exit_code == 0
 
 
@@ -282,9 +278,8 @@ def test_drivers_count_json(runner: CliRunner, mock_command_client: MagicMock) -
 
 def test_drivers_invite_success(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.invite_driver.return_value = {}
-    result = runner.invoke(ford,
-                            ('drivers', 'invite', _VIN, '--email', 'x@example.com', '--name',
-                             'Bob', '--vehicle-name', 'F-150'))
+    result = runner.invoke(ford, ('drivers', 'invite', _VIN, '--email', 'x@example.com', '--name',
+                                  'Bob', '--vehicle-name', 'F-150'))
     assert result.exit_code == 0
     assert 'Invite sent' in result.output
 
@@ -294,9 +289,8 @@ def test_drivers_invite_failure(runner: CliRunner, mock_command_client: MagicMoc
         'errorCode': 'E1',
         'errorMessage': 'Email already pending'
     }
-    result = runner.invoke(ford,
-                            ('drivers', 'invite', _VIN, '--email', 'x@example.com', '--name',
-                             'Bob', '--vehicle-name', 'F-150'))
+    result = runner.invoke(ford, ('drivers', 'invite', _VIN, '--email', 'x@example.com', '--name',
+                                  'Bob', '--vehicle-name', 'F-150'))
     assert result.exit_code != 0
     assert 'Email already pending' in result.output
 
@@ -396,7 +390,6 @@ def test_roadside_predraft(runner: CliRunner, mock_command_client: MagicMock) ->
 
 def test_roadside_predraft_json(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.predraft_roadside_event.return_value = {'draftId': 'D1'}
-    result = runner.invoke(ford,
-                            ('roadside', 'predraft', _VIN, '--name', 'Alice', '--json'))
+    result = runner.invoke(ford, ('roadside', 'predraft', _VIN, '--name', 'Alice', '--json'))
     assert result.exit_code == 0
     assert '"draftId"' in result.output

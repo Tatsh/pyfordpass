@@ -1,27 +1,29 @@
 """Tests for fordpass.commands.vehicle."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
+from typing import TYPE_CHECKING, Any
 
 from fordpass.commands.utils import Readiness
 from fordpass.main import ford
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from click.testing import CliRunner
     from pytest_mock import MockerFixture
-
 
 _VIN = '1FAHP00000A000000'
 
 
-def _ready_ok(**overrides: object) -> Readiness:
-    base: dict[str, object] = {
+def _ready_ok(**overrides: Any) -> Readiness:
+    base: dict[str, Any] = {
         'battery_conditions': (),
         'life_cycle_mode': 'NORMAL',
         'load_status': 'OK',
         'ok': True,
-        'raw': {'mode': 'NORMAL'},
+        'raw': {
+            'mode': 'NORMAL'
+        },
         'reasons': (),
         'state_of_charge': 92.0,
         'voltage': 12.6,
@@ -93,7 +95,7 @@ def test_vehicle_show_pretty(runner: CliRunner, mock_command_client: MagicMock) 
 
 
 def test_vehicle_show_ice_filters_ev_only(runner: CliRunner,
-                                            mock_command_client: MagicMock) -> None:
+                                          mock_command_client: MagicMock) -> None:
     mock_command_client.list_garage.return_value = [{
         'vin': _VIN,
         'profile': {
@@ -110,8 +112,7 @@ def test_vehicle_show_ice_filters_ev_only(runner: CliRunner,
     assert result.exit_code == 0
 
 
-def test_vehicle_show_no_capabilities(runner: CliRunner,
-                                        mock_command_client: MagicMock) -> None:
+def test_vehicle_show_no_capabilities(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_garage.return_value = [{
         'vin': _VIN,
         'profile': {
@@ -141,21 +142,21 @@ def test_vehicle_show_json(runner: CliRunner, mock_command_client: MagicMock) ->
 
 
 def test_vehicle_ready_ok(runner: CliRunner, mocker: MockerFixture,
-                            mock_command_client: MagicMock) -> None:
+                          mock_command_client: MagicMock) -> None:
     mocker.patch('fordpass.commands.vehicle.check_readiness',
-                  new_callable=mocker.AsyncMock,
-                  return_value=_ready_ok())
+                 new_callable=mocker.AsyncMock,
+                 return_value=_ready_ok())
     result = runner.invoke(ford, ('vehicle', 'ready', _VIN))
     assert result.exit_code == 0
     assert 'Ready' in result.output
 
 
 def test_vehicle_ready_blocked(runner: CliRunner, mocker: MockerFixture,
-                                 mock_command_client: MagicMock) -> None:
+                               mock_command_client: MagicMock) -> None:
     blocked = _ready_ok(ok=False, reasons=('Deep sleep mode', 'Firmware updating'))
     mocker.patch('fordpass.commands.vehicle.check_readiness',
-                  new_callable=mocker.AsyncMock,
-                  return_value=blocked)
+                 new_callable=mocker.AsyncMock,
+                 return_value=blocked)
     result = runner.invoke(ford, ('vehicle', 'ready', _VIN))
     assert result.exit_code == 0
     assert 'Battery Saver' in result.output
@@ -163,21 +164,24 @@ def test_vehicle_ready_blocked(runner: CliRunner, mocker: MockerFixture,
 
 
 def test_vehicle_ready_minimal_fields(runner: CliRunner, mocker: MockerFixture,
-                                        mock_command_client: MagicMock) -> None:
-    minimal = _ready_ok(state_of_charge=None, voltage=None, load_status=None,
-                         life_cycle_mode=None, raw={})
+                                      mock_command_client: MagicMock) -> None:
+    minimal = _ready_ok(state_of_charge=None,
+                        voltage=None,
+                        load_status=None,
+                        life_cycle_mode=None,
+                        raw={})
     mocker.patch('fordpass.commands.vehicle.check_readiness',
-                  new_callable=mocker.AsyncMock,
-                  return_value=minimal)
+                 new_callable=mocker.AsyncMock,
+                 return_value=minimal)
     result = runner.invoke(ford, ('vehicle', 'ready', _VIN))
     assert result.exit_code == 0
 
 
 def test_vehicle_ready_json(runner: CliRunner, mocker: MockerFixture,
-                              mock_command_client: MagicMock) -> None:
+                            mock_command_client: MagicMock) -> None:
     mocker.patch('fordpass.commands.vehicle.check_readiness',
-                  new_callable=mocker.AsyncMock,
-                  return_value=_ready_ok())
+                 new_callable=mocker.AsyncMock,
+                 return_value=_ready_ok())
     result = runner.invoke(ford, ('vehicle', 'ready', _VIN, '--json'))
     assert result.exit_code == 0
     assert '"ok": true' in result.output
@@ -204,15 +208,13 @@ def test_vehicle_mileage(runner: CliRunner, mock_command_client: MagicMock) -> N
     assert '12345' in result.output
 
 
-def test_vehicle_list_envelope_shape(runner: CliRunner,
-                                       mock_command_client: MagicMock) -> None:
+def test_vehicle_list_envelope_shape(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_garage.return_value = {'vehicles': [{'vin': _VIN, 'nickName': 'X'}]}
     result = runner.invoke(ford, ('vehicle', 'list'))
     assert result.exit_code == 0
 
 
-def test_vehicle_list_unknown_shape(runner: CliRunner,
-                                      mock_command_client: MagicMock) -> None:
+def test_vehicle_list_unknown_shape(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_garage.return_value = {'unknown_envelope': []}
     result = runner.invoke(ford, ('vehicle', 'list'))
     assert result.exit_code == 0
@@ -220,7 +222,7 @@ def test_vehicle_list_unknown_shape(runner: CliRunner,
 
 
 def test_vehicle_list_non_list_non_mapping(runner: CliRunner,
-                                             mock_command_client: MagicMock) -> None:
+                                           mock_command_client: MagicMock) -> None:
     mock_command_client.list_garage.return_value = None
     result = runner.invoke(ford, ('vehicle', 'list'))
     assert result.exit_code == 0

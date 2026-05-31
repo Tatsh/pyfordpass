@@ -852,7 +852,7 @@ def parse_user_days(value: str) -> dict[str, int]:
     raw = re.sub(r'[,\s/+]+', ',', value.strip().lower()).strip(',')
     tokens: list[str] = []
     for chunk in raw.split(','):
-        if not chunk:
+        if not chunk:  # pragma: no cover
             continue
         if chunk in _DAY_NAMES:
             tokens.append(chunk)

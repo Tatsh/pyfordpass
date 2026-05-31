@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 from fordpass.main import ford
 
 if TYPE_CHECKING:
+    from unittest.mock import MagicMock
+
     from click.testing import CliRunner
     from pytest_mock import MockerFixture
-
 
 _VIN = '1FAHP00000A000000'
 
@@ -63,8 +63,7 @@ def test_telemetry_odometer_json(runner: CliRunner, mock_command_client: MagicMo
     assert '"value"' in result.output
 
 
-def test_telemetry_odometer_json_unknown(runner: CliRunner,
-                                          mock_command_client: MagicMock) -> None:
+def test_telemetry_odometer_json_unknown(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.get_odometer.return_value = None
     result = runner.invoke(ford, ('telemetry', 'odometer', _VIN, '--json'))
     assert result.exit_code == 0
@@ -93,11 +92,31 @@ def test_telemetry_oil_json(runner: CliRunner, mock_command_client: MagicMock) -
 
 def test_telemetry_tires_pretty(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.get_tire_pressure.return_value = [
-        {'vehicleWheel': 'FRONT_LEFT', 'value': 220.5, 'wheelPlacardFront': 220.0},
-        {'vehicleWheel': 'REAR_RIGHT', 'value': 100.0, 'wheelPlacardRear': 220.0},
-        {'vehicleWheel': 'FRONT_RIGHT', 'value': 50.0, 'wheelPlacardFront': 220.0},
-        {'vehicleWheel': 'REAR_LEFT', 'value': None, 'wheelPlacardRear': None},
-        {'vehicleWheel': 'UNKNOWN', 'value': 220.0, 'wheelPlacardRear': 220.0},
+        {
+            'vehicleWheel': 'FRONT_LEFT',
+            'value': 220.5,
+            'wheelPlacardFront': 220.0
+        },
+        {
+            'vehicleWheel': 'REAR_RIGHT',
+            'value': 100.0,
+            'wheelPlacardRear': 220.0
+        },
+        {
+            'vehicleWheel': 'FRONT_RIGHT',
+            'value': 50.0,
+            'wheelPlacardFront': 220.0
+        },
+        {
+            'vehicleWheel': 'REAR_LEFT',
+            'value': None,
+            'wheelPlacardRear': None
+        },
+        {
+            'vehicleWheel': 'UNKNOWN',
+            'value': 220.0,
+            'wheelPlacardRear': 220.0
+        },
     ]
     result = runner.invoke(ford, ('telemetry', 'tires', _VIN))
     assert result.exit_code == 0
@@ -106,7 +125,11 @@ def test_telemetry_tires_pretty(runner: CliRunner, mock_command_client: MagicMoc
 
 def test_telemetry_tires_psi(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.get_tire_pressure.return_value = [
-        {'vehicleWheel': 'FRONT_LEFT', 'value': 220.0, 'wheelPlacardFront': 220.0},
+        {
+            'vehicleWheel': 'FRONT_LEFT',
+            'value': 220.0,
+            'wheelPlacardFront': 220.0
+        },
     ]
     result = runner.invoke(ford, ('telemetry', 'tires', _VIN, '--unit', 'mi'))
     assert result.exit_code == 0
@@ -130,59 +153,147 @@ def test_telemetry_all_pretty(runner: CliRunner, mock_command_client: MagicMock)
     mock_command_client.query_telemetry.return_value = {
         'updateTime': '2026-05-30T00:00:00Z',
         'metrics': {
-            'odometer': {'value': 20000.0, 'updateTime': '2026-05-30T00:00:00Z'},
-            'fuelLevel': {'value': 75.0},
-            'engineCoolantTemp': {'value': 90.0},
-            'ambientTemp': {'value': None},
-            'speed': {'value': 60.0},
-            'gearLeverPosition': {'value': 'PARK'},
-            'position': {
-                'value': {'location': {'lat': 1.0, 'lon': 2.0}},
+            'odometer': {
+                'value': 20000.0,
                 'updateTime': '2026-05-30T00:00:00Z'
             },
-            'heading': {'value': 90.0},
-            'compassDirection': {'value': 'NORTH'},
-            'acceleration': {'value': {'x': 0.1, 'y': 0.0, 'z': 9.8}},
+            'fuelLevel': {
+                'value': 75.0
+            },
+            'engineCoolantTemp': {
+                'value': 90.0
+            },
+            'ambientTemp': {
+                'value': None
+            },
+            'speed': {
+                'value': 60.0
+            },
+            'gearLeverPosition': {
+                'value': 'PARK'
+            },
+            'position': {
+                'value': {
+                    'location': {
+                        'lat': 1.0,
+                        'lon': 2.0
+                    }
+                },
+                'updateTime': '2026-05-30T00:00:00Z'
+            },
+            'heading': {
+                'value': 90.0
+            },
+            'compassDirection': {
+                'value': 'NORTH'
+            },
+            'acceleration': {
+                'value': {
+                    'x': 0.1,
+                    'y': 0.0,
+                    'z': 9.8
+                }
+            },
             'tirePressure': [{
-                'vehicleWheel': 'FRONT_LEFT', 'value': 220.0,
+                'vehicleWheel': 'FRONT_LEFT',
+                'value': 220.0,
                 'wheelPlacardFront': 220.0,
             }],
-            'tirePressureStatus': [{'vehicleWheel': 'FRONT_LEFT', 'value': 'NORMAL_OPERATION'}],
-            'tirePressureSystemStatus': [{'value': 'NORMAL'}],
+            'tirePressureStatus': [{
+                'vehicleWheel': 'FRONT_LEFT',
+                'value': 'NORMAL_OPERATION'
+            }],
+            'tirePressureSystemStatus': [{
+                'value': 'NORMAL'
+            }],
             'doorStatus': [
-                {'vehicleDoor': 'FRONT_LEFT', 'value': 'CLOSED'},
-                {'vehicleDoor': 'FRONT_RIGHT', 'value': 'OPEN'},
+                {
+                    'vehicleDoor': 'FRONT_LEFT',
+                    'value': 'CLOSED'
+                },
+                {
+                    'vehicleDoor': 'FRONT_RIGHT',
+                    'value': 'OPEN'
+                },
             ],
             'doorLockStatus': [
-                {'vehicleDoor': 'FRONT_LEFT', 'value': 'LOCKED'},
-                {'vehicleDoor': 'FRONT_RIGHT', 'value': 'UNLOCKED'},
+                {
+                    'vehicleDoor': 'FRONT_LEFT',
+                    'value': 'LOCKED'
+                },
+                {
+                    'vehicleDoor': 'FRONT_RIGHT',
+                    'value': 'UNLOCKED'
+                },
             ],
-            'seatBeltStatus': [{'vehicleOccupantRole': 'DRIVER', 'value': 'BUCKLED'}],
-            'displaySystemOfMeasure': {'value': 'IMPERIAL'},
-            'batteryStateOfCharge': {'value': 92.0},
-            'batteryVoltage': {'value': 12.6},
-            'batteryLoadStatus': {'value': 'OK'},
-            'panicAlarmStatus': {'value': True},
+            'seatBeltStatus': [{
+                'vehicleOccupantRole': 'DRIVER',
+                'value': 'BUCKLED'
+            }],
+            'displaySystemOfMeasure': {
+                'value': 'IMPERIAL'
+            },
+            'batteryStateOfCharge': {
+                'value': 92.0
+            },
+            'batteryVoltage': {
+                'value': 12.6
+            },
+            'batteryLoadStatus': {
+                'value': 'OK'
+            },
+            'panicAlarmStatus': {
+                'value': True
+            },
             'indicators': {
                 'value': {
-                    'lowFuelWarning': {'value': False},
-                    'oilLow': {'error': {'errorName': 'X', 'errorSource': 'Y'}},
+                    'lowFuelWarning': {
+                        'value': False
+                    },
+                    'oilLow': {
+                        'error': {
+                            'errorName': 'X',
+                            'errorSource': 'Y'
+                        }
+                    },
                     'engineOilLow': 'not a mapping',
                 }
             },
             'configurations': {
                 'value': {
-                    'someConfig': {'value': 'SETTING_A', 'updateTime': '2026-05-30T00:00:00Z'},
-                    'errorConfig': {'error': {'errorName': 'E', 'errorSource': 'src'}},
+                    'someConfig': {
+                        'value': 'SETTING_A',
+                        'updateTime': '2026-05-30T00:00:00Z'
+                    },
+                    'errorConfig': {
+                        'error': {
+                            'errorName': 'E',
+                            'errorSource': 'src'
+                        }
+                    },
                     'directScalar': 'just a string',
                     'directList': [1, 2],
-                    'nestedValue': {'value': {'inner': 'X'}},
-                    'listValue': {'value': [1, 2, 3]},
+                    'nestedValue': {
+                        'value': {
+                            'inner': 'X'
+                        }
+                    },
+                    'listValue': {
+                        'value': [1, 2, 3]
+                    },
                 }
             },
-            'extraUnknown': {'value': 42},
-            'doorClosedList': [{'vehicleDoor': 'FRONT_LEFT', 'value': 'CLOSED'}],
-            'doorLockedList': [{'vehicleDoor': 'FRONT_LEFT', 'value': 'LOCKED'}],
+            'extraUnknown': {
+                'value': 42
+            },
+            'doorClosedList': [{
+                'vehicleDoor': 'FRONT_LEFT',
+                'value': 'CLOSED'
+            }],
+            'doorLockedList': [{
+                'vehicleDoor': 'FRONT_LEFT',
+                'value': 'LOCKED'
+            }],
         }
     }
     result = runner.invoke(ford, ('telemetry', 'all', _VIN))
@@ -197,10 +308,8 @@ def test_telemetry_all_empty(runner: CliRunner, mock_command_client: MagicMock) 
 
 
 def test_telemetry_all_with_metrics_filter(runner: CliRunner,
-                                              mock_command_client: MagicMock) -> None:
-    mock_command_client.query_telemetry.return_value = {
-        'metrics': {'odometer': {'value': 100.0}}
-    }
+                                           mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {'metrics': {'odometer': {'value': 100.0}}}
     result = runner.invoke(ford, ('telemetry', 'all', _VIN, '-m', 'odometer'))
     assert result.exit_code == 0
 
@@ -225,8 +334,7 @@ def test_telemetry_position_pretty(runner: CliRunner, mock_command_client: Magic
     assert '40' in result.output
 
 
-def test_telemetry_position_minimal(runner: CliRunner,
-                                      mock_command_client: MagicMock) -> None:
+def test_telemetry_position_minimal(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.get_position.return_value = {'lat': 1.0, 'lon': 2.0}
     result = runner.invoke(ford, ('telemetry', 'position', _VIN))
     assert result.exit_code == 0
@@ -253,7 +361,7 @@ def test_telemetry_position_maps_uri(runner: CliRunner, mock_command_client: Mag
 
 
 def test_telemetry_position_maps_uri_no_position(runner: CliRunner,
-                                                   mock_command_client: MagicMock) -> None:
+                                                 mock_command_client: MagicMock) -> None:
     mock_command_client.get_position.return_value = None
     result = runner.invoke(ford, ('telemetry', 'position', _VIN, '--maps-uri'))
     assert result.exit_code != 0
@@ -261,9 +369,158 @@ def test_telemetry_position_maps_uri_no_position(runner: CliRunner,
 
 
 def test_telemetry_position_open_maps(runner: CliRunner, mocker: MockerFixture,
-                                        mock_command_client: MagicMock) -> None:
+                                      mock_command_client: MagicMock) -> None:
     mock_command_client.get_position.return_value = {'lat': 1.0, 'lon': 2.0}
     opener = mocker.patch('fordpass.commands.telemetry.webbrowser.open')
     result = runner.invoke(ford, ('telemetry', 'position', _VIN, '--open-maps'))
     assert result.exit_code == 0
     opener.assert_called_once()
+
+
+def test_telemetry_all_corner_case_metrics(runner: CliRunner,
+                                           mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'position': {
+                'value': {
+                    'location': {
+                        'lat': 40.7,
+                        'lon': -74.0,
+                        'alt': 100.0,
+                    }
+                }
+            },
+            'heading': {
+                'value': {
+                    'heading': 90.0
+                }
+            },
+            'positionMissingLatLon': {
+                'value': {
+                    'location': {}
+                }
+            },
+            'tirePressure': [{
+                'vehicleWheel': 'FRONT_LEFT',
+                'value': None
+            }, {
+                'vehicleWheel': 'REAR_RIGHT',
+                'value': 'NaN'
+            }],
+            'tirePressureStatus': [{
+                'vehicleWheel': 'FRONT_LEFT',
+                'value': 'LOW_PRESSURE'
+            }],
+            'doorStatus': [{
+                'vehicleDoor': 'FRONT_LEFT',
+                'value': 'CLOSED'
+            }],
+            'doorLockStatus': [{
+                'vehicleDoor': 'FRONT_LEFT',
+                'value': 'LOCKED'
+            }],
+            'engineSpeed': {
+                'value': 800
+            },
+            'unknownNoneValue': None,
+            'unknownStringScalar': 'just a raw string, not an envelope',
+            'listLikeAtTop': [{
+                'item': 1
+            }],
+            'configurations': {
+                'value': {}
+            },
+            'indicators': {
+                'value': {
+                    'oilLow': {
+                        'value': True
+                    },
+                    'lowFuel': {
+                        'value': False
+                    }
+                }
+            },
+        }
+    }
+    result = runner.invoke(ford, ('telemetry', 'all', _VIN))
+    assert result.exit_code == 0
+
+
+def test_telemetry_all_indicators_with_empty_value(runner: CliRunner,
+                                                   mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'odometer': {
+                'value': 20000.0
+            },
+            'indicators': {
+                'value': {}
+            }
+        }
+    }
+    result = runner.invoke(ford, ('telemetry', 'all', _VIN))
+    assert result.exit_code == 0
+
+
+def test_telemetry_all_celsius_temperature_preference(runner: CliRunner, mocker: MockerFixture,
+                                                      mock_command_client: MagicMock) -> None:
+    mocker.patch('fordpass.commands.telemetry.load_config',
+                 return_value={'units': {
+                     'distance': 'km',
+                     'temperature': 'C'
+                 }})
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'engineCoolantTemp': {
+                'value': 90.0
+            }
+        }
+    }
+    result = runner.invoke(ford, ('telemetry', 'all', _VIN))
+    assert result.exit_code == 0
+    assert '°C' in result.output
+
+
+def test_telemetry_all_position_without_lat_lon(runner: CliRunner,
+                                                mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'position': {
+                'value': {
+                    'location': {}
+                }
+            }
+        }
+    }
+    result = runner.invoke(ford, ('telemetry', 'all', _VIN))
+    assert result.exit_code == 0
+
+
+def test_telemetry_all_empty_list_metric(runner: CliRunner, mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'tirePressure': [],
+            'odometer': {
+                'value': 100.0
+            }
+        }
+    }
+    result = runner.invoke(ford, ('telemetry', 'all', _VIN))
+    assert result.exit_code == 0
+
+
+def test_telemetry_all_value_is_inline_list(runner: CliRunner,
+                                            mock_command_client: MagicMock) -> None:
+    mock_command_client.query_telemetry.return_value = {
+        'metrics': {
+            'someMetric': {
+                'value': [{
+                    'k': 1
+                }, {
+                    'k': 2
+                }]
+            }
+        }
+    }
+    result = runner.invoke(ford, ('telemetry', 'all', _VIN))
+    assert result.exit_code == 0

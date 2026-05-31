@@ -140,7 +140,7 @@ def fake_response_factory() -> Any:
 
 @pytest.fixture
 def fake_session(mocker: MockerFixture) -> MagicMock:
-    session = mocker.MagicMock()
+    session: MagicMock = mocker.MagicMock()
     session.request = mocker.AsyncMock(return_value=_make_response(json_body={'ok': True}))
     session.close = mocker.AsyncMock()
     return session
@@ -148,7 +148,7 @@ def fake_session(mocker: MockerFixture) -> MagicMock:
 
 @pytest.fixture
 def fake_auth_session(mocker: MockerFixture) -> MagicMock:
-    session = mocker.MagicMock()
+    session: MagicMock = mocker.MagicMock()
     session.request = mocker.AsyncMock(return_value=_make_response(json_body={
         'access_token': 'NEW_CAT',
         'refresh_token': 'NEW_REFRESH'
@@ -190,8 +190,7 @@ def mock_command_client(mocker: MockerFixture) -> MagicMock:
     mocker.patch('fordpass.commands.utils.make_client', return_value=client)
     mocker.patch('fordpass.commands.utils.ensure_signed_in', new_callable=AsyncMock)
     mocker.patch('fordpass.commands.utils.persist_tokens')
-    mocker.patch('fordpass.commands.utils.run_async',
-                 side_effect=asyncio.run)
+    mocker.patch('fordpass.commands.utils.run_async', side_effect=asyncio.run)
     command_modules = ('alerts', 'auth', 'dealer', 'departure', 'drivers', 'messages', 'ota',
                        'profile', 'remote', 'roadside', 'schedule', 'service', 'telemetry',
                        'vehicle')
@@ -201,7 +200,5 @@ def mock_command_client(mocker: MockerFixture) -> MagicMock:
                      new_callable=AsyncMock,
                      create=True)
         mocker.patch(f'fordpass.commands.{mod}.persist_tokens', create=True)
-        mocker.patch(f'fordpass.commands.{mod}.run_async',
-                     side_effect=asyncio.run,
-                     create=True)
+        mocker.patch(f'fordpass.commands.{mod}.run_async', side_effect=asyncio.run, create=True)
     return client

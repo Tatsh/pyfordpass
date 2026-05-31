@@ -31,6 +31,7 @@ from typing_extensions import Self
 import niquests
 
 from .abcdef import load_secrets
+from .config import load_config
 from .sansio import FordPassClient
 from .utils import (
     extract_fuel,
@@ -122,7 +123,6 @@ class AsyncFordPassClient:  # noqa: PLR0904
         # Versioned chrome profile (``chromeNNN``) pins a specific Chrome release's
         # JA3/JA4 + HTTP-2 SETTINGS fingerprint - the unversioned ``chrome`` alias
         # drifts between curl-cffi releases.
-        from fordpass.config import load_config  # noqa: PLC0415
         impersonate = (load_config().get('http') or {}).get('impersonate') or 'chrome146'
         self.auth_session = auth_session or CurlAsyncSession(impersonate=cast('Any', impersonate))
         self._owns_session = session is None

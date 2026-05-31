@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
-import sys
 
 from rich.table import Table
 import click
@@ -94,11 +93,11 @@ async def alerts_history(client: AsyncFordPassClient, _ctx: click.Context, vin: 
 @with_client
 async def alerts_washer(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                         as_json: bool) -> None:
-    """Washer-fluid status."""
+    """Washer-fluid status."""  # noqa: DOC501
     low = await client.is_washer_fluid_low(vin)
     if should_emit_json(as_json):
         dump_json({'low': low})
     else:
         click.echo('low' if low else 'ok')
     if low:
-        sys.exit(1)
+        raise click.exceptions.Exit(1)

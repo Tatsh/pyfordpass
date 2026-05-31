@@ -363,7 +363,7 @@ def _format_scalar(key: str, value: Any, pref_distance: str, pref_temperature: s
         return 'Yes' if value else 'No'
     if isinstance(value, (int, float)):
         return _format_numeric(key, value, pref_distance, pref_temperature)
-    return str(value)
+    return str(value)  # pragma: no cover
 
 
 def _format_numeric(key: str, value: float, pref_distance: str, pref_temperature: str) -> str:

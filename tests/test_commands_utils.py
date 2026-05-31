@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, MagicMock
-
-import pytest
+from zoneinfo import ZoneInfoNotFoundError
+import asyncio
+import json
+import threading
 
 from fordpass.commands.utils import (
     Readiness,
@@ -19,6 +20,7 @@ from fordpass.commands.utils import (
     format_iso_datetime,
     format_iso_time,
     install_loop,
+    interactive_signin,
     load_tokens,
     make_client,
     parse_user_datetime,
@@ -33,21 +35,27 @@ from fordpass.commands.utils import (
 )
 from fordpass.main import ford
 import click
+import pytest
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from click.testing import CliRunner
     from pytest_mock import MockerFixture
 
-
 _VIN = '1FAHP00000A000000'
+
+# `validate_vin` ignores its first two args (they're prefixed `_ctx`, `_param`); passing None at
+# the call sites needs casts to satisfy the Click-derived parameter annotations.
+_NULL_CTX = cast('click.Context', None)
+_NULL_PARAM = cast('click.Parameter', None)
 
 
 def test_load_tokens_when_file_missing() -> None:
     assert load_tokens() == {}
 
 
-def test_save_tokens_then_load(tmp_path: Path,
-                                 mocker: MockerFixture) -> None:
+def test_save_tokens_then_load(tmp_path: Path, mocker: MockerFixture) -> None:
     token_file = tmp_path / 'tokens.json'
     mocker.patch('fordpass.commands.utils.TOKEN_FILE', token_file)
     save_tokens({'cat': 'A', 'cat_refresh': 'B', 'tmc': 'C'})
@@ -64,38 +72,33 @@ def test_persist_tokens(mocker: MockerFixture, tmp_path: Path) -> None:
     client.tmc = 'Z'
     persist_tokens(client)
     assert token_file.exists()
-    import json
-    assert json.loads(token_file.read_text()) == {
-        'cat': 'X',
-        'cat_refresh': 'Y',
-        'tmc': 'Z'
-    }
+    assert json.loads(token_file.read_text()) == {'cat': 'X', 'cat_refresh': 'Y', 'tmc': 'Z'}
 
 
 def test_validate_vin_accepts_valid() -> None:
-    assert validate_vin(None, None, _VIN) == _VIN
+    assert validate_vin(_NULL_CTX, _NULL_PARAM, _VIN) == _VIN
 
 
 def test_validate_vin_passes_none_through() -> None:
-    assert validate_vin(None, None, None) is None
+    assert validate_vin(_NULL_CTX, _NULL_PARAM, None) is None
 
 
 def test_validate_vin_rejects_bad_charset() -> None:
     with pytest.raises(click.BadParameter, match='not a valid'):
-        validate_vin(None, None, 'IOQ12345678901234')
+        validate_vin(_NULL_CTX, _NULL_PARAM, 'IOQ12345678901234')
 
 
 def test_validate_vin_rejects_check_digit() -> None:
     with pytest.raises(click.BadParameter, match='check-digit'):
-        validate_vin(None, None, '1FA12345678901234')
+        validate_vin(_NULL_CTX, _NULL_PARAM, '1FA12345678901234')
 
 
 def test_should_emit_json_true_when_flag_set(mocker: MockerFixture) -> None:
-    assert should_emit_json(True) is True
+    assert should_emit_json(as_json=True) is True
 
 
 def test_should_emit_json_default(mocker: MockerFixture) -> None:
-    assert should_emit_json(False) is False
+    assert should_emit_json(as_json=False) is False
 
 
 def test_duration_range() -> None:
@@ -234,22 +237,22 @@ def test_parse_user_timezone_iana_no_ford_code() -> None:
 
 
 def test_format_ford_request_date_morning() -> None:
-    dt = datetime(2026, 5, 28, 1, 50, 0)
+    dt = datetime(2026, 5, 28, 1, 50, 0, tzinfo=timezone.utc)
     assert format_ford_request_date(dt) == '5-28-2026 1:50:00 AM'
 
 
 def test_format_ford_request_date_afternoon() -> None:
-    dt = datetime(2026, 5, 28, 13, 50, 0)
+    dt = datetime(2026, 5, 28, 13, 50, 0, tzinfo=timezone.utc)
     assert format_ford_request_date(dt) == '5-28-2026 1:50:00 PM'
 
 
 def test_format_ford_request_date_midnight() -> None:
-    dt = datetime(2026, 1, 1, 0, 0, 0)
+    dt = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     assert format_ford_request_date(dt) == '1-1-2026 12:00:00 AM'
 
 
 def test_format_ford_request_date_noon() -> None:
-    dt = datetime(2026, 1, 1, 12, 0, 0)
+    dt = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     assert format_ford_request_date(dt) == '1-1-2026 12:00:00 PM'
 
 
@@ -267,22 +270,43 @@ async def test_validate_message_ids_exist_happy(mock_command_client: MagicMock) 
 
 
 async def test_validate_message_ids_exist_missing(mock_command_client: MagicMock) -> None:
-    mock_command_client.get_messages.return_value = {
-        'result': {
-            'messages': [{
-                'messageId': '1'
-            }]
-        }
-    }
+    mock_command_client.get_messages.return_value = {'result': {'messages': [{'messageId': '1'}]}}
     with pytest.raises(Exception, match='not in inbox'):
         await validate_message_ids_exist(mock_command_client, [1, 99])
 
 
-async def test_validate_message_ids_exist_empty_inbox(
-        mock_command_client: MagicMock) -> None:
+async def test_validate_message_ids_exist_empty_inbox(mock_command_client: MagicMock) -> None:
     mock_command_client.get_messages.return_value = {'result': {'messages': []}}
     with pytest.raises(click.ClickException, match='not in inbox'):
         await validate_message_ids_exist(mock_command_client, [1])
+
+
+async def test_validate_message_ids_exist_non_mapping_items_skipped(
+        mock_command_client: MagicMock) -> None:
+    # Exercises the `if not isinstance(m, Mapping): continue` defensive branch.
+    mock_command_client.get_messages.return_value = {
+        'result': {
+            'messages': ['not a mapping', {
+                'messageId': '1'
+            }]
+        }
+    }
+    await validate_message_ids_exist(mock_command_client, [1])
+
+
+def test_parse_user_days_consecutive_separators() -> None:
+    # Exercises the `if not chunk: continue` branch when separator collapsing leaves empties.
+    out = parse_user_days(',,,mon,,,tue,,,')
+    assert out['mon'] == 1
+    assert out['tue'] == 1
+
+
+def test_parse_user_timezone_offset_unresolvable(mocker: MockerFixture) -> None:
+    # `+05:00` would normally resolve via Etc/GMT-5; forcing ZoneInfoNotFoundError takes the
+    # else-branch where _parse_offset_tz returns None and the IANA-lookup path rejects it.
+    mocker.patch('fordpass.commands.utils.ZoneInfo', side_effect=ZoneInfoNotFoundError('boom'))
+    with pytest.raises(click.BadParameter, match='IANA'):
+        parse_user_timezone('+05:00')
 
 
 async def test_check_readiness_ok(mock_command_client: MagicMock) -> None:
@@ -307,7 +331,7 @@ async def test_check_readiness_ok(mock_command_client: MagicMock) -> None:
     result = await check_readiness(mock_command_client, _VIN)
     assert result.ok is True
     assert result.life_cycle_mode == 'NORMAL'
-    assert result.voltage == 12.6
+    assert result.voltage == pytest.approx(12.6)
 
 
 async def test_check_readiness_blocked(mock_command_client: MagicMock) -> None:
@@ -318,8 +342,7 @@ async def test_check_readiness_blocked(mock_command_client: MagicMock) -> None:
                 'value': {
                     'data': {
                         'commandPreclusionCauses': {
-                            'deepSleepCommandPreclusionState':
-                                'COMMANDS_PRECLUDED_BY_DEEP_SLEEP',
+                            'deepSleepCommandPreclusionState': 'COMMANDS_PRECLUDED_BY_DEEP_SLEEP',
                         }
                     }
                 }
@@ -351,42 +374,40 @@ async def test_assert_ready_or_abort_force_skips(mock_command_client: MagicMock)
 
 
 async def test_assert_ready_or_abort_ok(mocker: MockerFixture,
-                                          mock_command_client: MagicMock) -> None:
+                                        mock_command_client: MagicMock) -> None:
     mocker.patch('fordpass.commands.utils.check_readiness',
-                  new_callable=mocker.AsyncMock,
-                  return_value=Readiness(battery_conditions=(),
-                                          life_cycle_mode='NORMAL',
-                                          load_status='OK',
-                                          ok=True,
-                                          raw={},
-                                          reasons=(),
-                                          state_of_charge=92.0,
-                                          voltage=12.6))
+                 new_callable=mocker.AsyncMock,
+                 return_value=Readiness(battery_conditions=(),
+                                        life_cycle_mode='NORMAL',
+                                        load_status='OK',
+                                        ok=True,
+                                        raw={},
+                                        reasons=(),
+                                        state_of_charge=92.0,
+                                        voltage=12.6))
     await assert_ready_or_abort(mock_command_client, _VIN, force=False)
 
 
 async def test_assert_ready_or_abort_blocked(mocker: MockerFixture,
-                                               mock_command_client: MagicMock) -> None:
+                                             mock_command_client: MagicMock) -> None:
     mocker.patch('fordpass.commands.utils.check_readiness',
-                  new_callable=mocker.AsyncMock,
-                  return_value=Readiness(battery_conditions=(),
-                                          life_cycle_mode='DEEP_SLEEP',
-                                          load_status='UNKNOWN',
-                                          ok=False,
-                                          raw={'state': 'X'},
-                                          reasons=('Battery Saver mode',),
-                                          state_of_charge=None,
-                                          voltage=None))
+                 new_callable=mocker.AsyncMock,
+                 return_value=Readiness(battery_conditions=(),
+                                        life_cycle_mode='DEEP_SLEEP',
+                                        load_status='UNKNOWN',
+                                        ok=False,
+                                        raw={'state': 'X'},
+                                        reasons=('Battery Saver mode',),
+                                        state_of_charge=None,
+                                        voltage=None))
     import click
     with pytest.raises(click.Abort):
         await assert_ready_or_abort(mock_command_client, _VIN, force=False)
 
 
 def test_install_loop_lets_run_async_dispatch(mocker: MockerFixture) -> None:
-    import asyncio
-    import threading
-
     async def task() -> int:
+        await asyncio.sleep(0)
         return 42
 
     loop = asyncio.new_event_loop()
@@ -408,10 +429,13 @@ def test_run_async_without_install_raises(mocker: MockerFixture) -> None:
     mocker.patch('fordpass.commands.utils._LOOP', None)
 
     async def task() -> int:
+        await asyncio.sleep(0)
         return 1
 
+    coro = task()
     with pytest.raises(RuntimeError, match='Event loop'):
-        run_async(task())
+        run_async(coro)
+    coro.close()
 
 
 async def test_ensure_signed_in_when_already_signed_in() -> None:
@@ -421,10 +445,8 @@ async def test_ensure_signed_in_when_already_signed_in() -> None:
     await ensure_signed_in(client, ctx)
 
 
-async def test_ensure_signed_in_when_not_signed_in_runs_interactive(
-        mocker: MockerFixture) -> None:
-    interactive = mocker.patch('fordpass.commands.utils.interactive_signin',
-                                new_callable=AsyncMock)
+async def test_ensure_signed_in_when_not_signed_in_runs_interactive(mocker: MockerFixture) -> None:
+    interactive = mocker.patch('fordpass.commands.utils.interactive_signin', new_callable=AsyncMock)
     mocker.patch('fordpass.commands.utils.click.confirm', return_value=True)
     client = MagicMock()
     client.cat = None
@@ -434,8 +456,7 @@ async def test_ensure_signed_in_when_not_signed_in_runs_interactive(
 
 
 async def test_ensure_signed_in_user_declines(mocker: MockerFixture) -> None:
-    interactive = mocker.patch('fordpass.commands.utils.interactive_signin',
-                                new_callable=AsyncMock)
+    interactive = mocker.patch('fordpass.commands.utils.interactive_signin', new_callable=AsyncMock)
     mocker.patch('fordpass.commands.utils.click.confirm', return_value=False)
     client = MagicMock()
     client.cat = None
@@ -450,20 +471,24 @@ async def test_ensure_signed_in_user_declines(mocker: MockerFixture) -> None:
 def test_make_client_default_construction(mocker: MockerFixture) -> None:
     fake_client = MagicMock()
     mocker.patch('fordpass.commands.utils.load_tokens',
-                  return_value={'cat': 'A', 'cat_refresh': 'B', 'tmc': 'C'})
+                 return_value={
+                     'cat': 'A',
+                     'cat_refresh': 'B',
+                     'tmc': 'C'
+                 })
     mocker.patch('fordpass.commands.utils.AsyncFordPassClient', return_value=fake_client)
     result = make_client()
     assert result is fake_client
 
 
-def test_with_client_persists_when_tokens_change(runner: CliRunner,
-                                                    mocker: MockerFixture,
-                                                    mock_command_client: MagicMock) -> None:
+def test_with_client_persists_when_tokens_change(runner: CliRunner, mocker: MockerFixture,
+                                                 mock_command_client: MagicMock) -> None:
     # The mock_command_client fixture already starts with all three tokens set; flipping cat
     # mid-command should trigger persist_tokens via the with_client wrapper.
     persist = mocker.patch('fordpass.commands.utils.persist_tokens')
 
     async def changing_get_alerts(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        await asyncio.sleep(0)
         mock_command_client.cat = 'NEW_CAT'
         return {'alerts': []}
 
@@ -471,3 +496,103 @@ def test_with_client_persists_when_tokens_change(runner: CliRunner,
     result = runner.invoke(ford, ('alerts', 'current', _VIN))
     assert result.exit_code == 0
     assert persist.called
+
+
+async def test_interactive_signin_happy(mocker: MockerFixture,
+                                        mock_command_client: MagicMock) -> None:
+    mocker.patch('fordpass.commands.utils.click.prompt',
+                 return_value='fordapp://userauthorized?code=AUTHZ_CODE_X')
+    mock_command_client.b2c_authorize_url = MagicMock(
+        return_value='https://stub-login.example/authorize')
+    mock_command_client.exchange_b2c_code = AsyncMock(return_value={'access_token': 'B2C_X'})
+    mock_command_client.mint_cat_from_b2c = AsyncMock(return_value={})
+    mock_command_client.exchange_cat_for_tmc = AsyncMock(return_value={})
+    await interactive_signin(mock_command_client)
+    mock_command_client.exchange_b2c_code.assert_awaited_once()
+    mock_command_client.mint_cat_from_b2c.assert_awaited_once_with(b2c_access_token='B2C_X')
+    mock_command_client.exchange_cat_for_tmc.assert_awaited_once()
+
+
+async def test_interactive_signin_decodes_kid(mocker: MockerFixture,
+                                              mock_command_client: MagicMock) -> None:
+    import base64
+    header = base64.urlsafe_b64encode(b'{"kid":"KID_X"}').rstrip(b'=').decode()
+    fake_code = f'{header}.payload.sig'
+    mocker.patch('fordpass.commands.utils.click.prompt',
+                 return_value=f'fordapp://userauthorized?code={fake_code}')
+    mock_command_client.b2c_authorize_url = MagicMock(return_value='url')
+    mock_command_client.exchange_b2c_code = AsyncMock(return_value={'access_token': 'B2C_X'})
+    mock_command_client.mint_cat_from_b2c = AsyncMock(return_value={})
+    mock_command_client.exchange_cat_for_tmc = AsyncMock(return_value={})
+    await interactive_signin(mock_command_client)
+    mock_command_client.exchange_b2c_code.assert_awaited_once()
+
+
+async def test_interactive_signin_missing_code(mocker: MockerFixture,
+                                               mock_command_client: MagicMock) -> None:
+    mocker.patch('fordpass.commands.utils.click.prompt',
+                 return_value='fordapp://userauthorized?other=X')
+    mock_command_client.b2c_authorize_url = MagicMock(return_value='url')
+    with pytest.raises(click.ClickException, match='No `code='):
+        await interactive_signin(mock_command_client)
+
+
+async def test_interactive_signin_b2c_returns_no_token(mocker: MockerFixture,
+                                                       mock_command_client: MagicMock) -> None:
+    mocker.patch('fordpass.commands.utils.click.prompt',
+                 return_value='fordapp://userauthorized?code=X')
+    mock_command_client.b2c_authorize_url = MagicMock(return_value='url')
+    mock_command_client.exchange_b2c_code = AsyncMock(return_value={})
+    with pytest.raises(click.ClickException, match='no access_token'):
+        await interactive_signin(mock_command_client)
+
+
+def test_parse_user_timezone_local_falls_back_to_system(mocker: MockerFixture) -> None:
+    fake_zone = MagicMock()
+    fake_zone.key = 'America/New_York'
+    fake_now = MagicMock()
+    fake_now.astimezone.return_value.tzinfo = fake_zone
+    fake_datetime = mocker.patch('fordpass.commands.utils.datetime')
+    fake_datetime.now.return_value = fake_now
+    assert parse_user_timezone('local') == parse_user_timezone('America/New_York')
+
+
+def test_parse_user_timezone_system_no_iana(mocker: MockerFixture) -> None:
+    fake_zone = MagicMock(spec=[])  # No `key` attribute.
+    fake_now = MagicMock()
+    fake_now.astimezone.return_value.tzinfo = fake_zone
+    fake_datetime = mocker.patch('fordpass.commands.utils.datetime')
+    fake_datetime.now.return_value = fake_now
+    with pytest.raises(click.BadParameter, match='system timezone'):
+        parse_user_timezone('local')
+
+
+def test_parse_user_timezone_offset_with_minutes_skipped() -> None:
+    # `+05:30` has non-zero minutes - the parser returns None, treated as "not an offset",
+    # then the IANA-lookup path takes over and rejects unknown IANA names.
+    with pytest.raises(click.BadParameter, match='IANA'):
+        parse_user_timezone('+05:30')
+
+
+def test_parse_user_days_unknown_letter() -> None:
+    with pytest.raises(click.BadParameter, match='not a recognised day'):
+        parse_user_days('xyz')
+
+
+def test_vin_argument_falls_back_to_config_default(runner: CliRunner, mocker: MockerFixture,
+                                                   mock_command_client: MagicMock) -> None:
+    mocker.patch('fordpass.commands.utils.load_config',
+                 return_value={'vehicle': {
+                     'default_vin': _VIN
+                 }})
+    mock_command_client.get_alerts.return_value = {'alerts': []}
+    result = runner.invoke(ford, ('alerts', 'current'))
+    assert result.exit_code == 0
+
+
+def test_vin_argument_no_value_no_config(runner: CliRunner, mocker: MockerFixture,
+                                         mock_command_client: MagicMock) -> None:
+    mocker.patch('fordpass.commands.utils.load_config', return_value={'vehicle': {}})
+    result = runner.invoke(ford, ('alerts', 'current'))
+    assert result.exit_code != 0
+    assert 'VIN is required' in result.output

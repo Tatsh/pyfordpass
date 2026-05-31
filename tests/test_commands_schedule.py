@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 from fordpass.main import ford
 
 if TYPE_CHECKING:
-    from click.testing import CliRunner
+    from unittest.mock import MagicMock
 
+    from click.testing import CliRunner
 
 _VIN = '1FAHP00000A000000'
 
@@ -63,8 +63,7 @@ def test_schedule_list_json(runner: CliRunner, mock_command_client: MagicMock) -
     assert '"startSchedule"' in result.output
 
 
-def test_schedule_list_legacy_envelope(runner: CliRunner,
-                                          mock_command_client: MagicMock) -> None:
+def test_schedule_list_legacy_envelope(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_remote_start_schedules.return_value = {
         'schedules': [{
             'scheduleId': '7'
@@ -75,15 +74,13 @@ def test_schedule_list_legacy_envelope(runner: CliRunner,
 
 
 def test_schedule_list_bare_list(runner: CliRunner, mock_command_client: MagicMock) -> None:
-    mock_command_client.list_remote_start_schedules.return_value = [{
-        'scheduleId': '7'
-    }]
+    mock_command_client.list_remote_start_schedules.return_value = [{'scheduleId': '7'}]
     result = runner.invoke(ford, ('schedule', 'list', _VIN))
     assert result.exit_code == 0
 
 
 def test_schedule_list_startschedule_as_list(runner: CliRunner,
-                                                mock_command_client: MagicMock) -> None:
+                                             mock_command_client: MagicMock) -> None:
     mock_command_client.list_remote_start_schedules.return_value = {
         'startSchedule': [{
             'scheduleId': '9'
@@ -93,16 +90,14 @@ def test_schedule_list_startschedule_as_list(runner: CliRunner,
     assert result.exit_code == 0
 
 
-def test_schedule_list_unknown_shape(runner: CliRunner,
-                                        mock_command_client: MagicMock) -> None:
+def test_schedule_list_unknown_shape(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_remote_start_schedules.return_value = 'unexpected'
     result = runner.invoke(ford, ('schedule', 'list', _VIN))
     assert result.exit_code == 0
     assert 'No remote-start schedules' in result.output
 
 
-def test_schedule_list_values_not_list(runner: CliRunner,
-                                          mock_command_client: MagicMock) -> None:
+def test_schedule_list_values_not_list(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_remote_start_schedules.return_value = {
         'startSchedule': {
             '$values': 'not a list'
@@ -112,8 +107,7 @@ def test_schedule_list_values_not_list(runner: CliRunner,
     assert result.exit_code == 0
 
 
-def test_schedule_list_empty_mapping(runner: CliRunner,
-                                        mock_command_client: MagicMock) -> None:
+def test_schedule_list_empty_mapping(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.list_remote_start_schedules.return_value = {}
     result = runner.invoke(ford, ('schedule', 'list', _VIN))
     assert result.exit_code == 0
@@ -121,7 +115,7 @@ def test_schedule_list_empty_mapping(runner: CliRunner,
 
 
 def test_schedule_enable_non_string_field(runner: CliRunner,
-                                             mock_command_client: MagicMock) -> None:
+                                          mock_command_client: MagicMock) -> None:
     mock_command_client.list_remote_start_schedules.return_value = {
         'startSchedule': {
             '$values': [{
@@ -140,16 +134,17 @@ def test_schedule_enable_non_string_field(runner: CliRunner,
 
 def test_schedule_add(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.add_remote_start_schedule.return_value = None
-    result = runner.invoke(ford, ('schedule', 'add', _VIN, '--start', '2026-05-30T07:30',
-                                   '--days', 'mon,tue', '--tz', 'America/New_York'))
+    result = runner.invoke(ford, ('schedule', 'add', _VIN, '--start', '2026-05-30T07:30', '--days',
+                                  'mon,tue', '--tz', 'America/New_York'))
     assert result.exit_code == 0
     assert 'Schedule added' in result.output
 
 
 def test_schedule_add_with_numeric_tz(runner: CliRunner, mock_command_client: MagicMock) -> None:
     mock_command_client.add_remote_start_schedule.return_value = None
-    result = runner.invoke(ford, ('schedule', 'add', _VIN, '--start', '2026-05-30T07:30',
-                                   '--days', 'mwf', '--tz', '85'))
+    result = runner.invoke(
+        ford,
+        ('schedule', 'add', _VIN, '--start', '2026-05-30T07:30', '--days', 'mwf', '--tz', '85'))
     assert result.exit_code == 0
 
 
