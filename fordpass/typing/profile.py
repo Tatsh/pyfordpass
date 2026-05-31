@@ -127,7 +127,8 @@ class ProfileUnitsOfMeasure(TypedDict, total=False):
 
 
 class SaveProfileFields(TypedDict, total=False):
-    """Keyword-argument shape accepted by the ``PATCH .../users/me`` profile-update endpoint.
+    """
+    Keyword-argument shape accepted by the ``PATCH .../users/me`` profile-update endpoint.
 
     Designed to be unpacked into ``save_profile(**fields)`` via :py:class:`typing.Unpack`.
     Every field is optional; only the sections the caller passes are updated.

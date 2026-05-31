@@ -21,7 +21,8 @@ __all__ = ('CONFIG_DIR', 'CONFIG_FILE', 'KM_PER_MILE', 'KM_TO_MI', 'KPA_PER_PSI'
            'OUTPUT_ENV_VAR', 'load_config', 'resolve_output_format')
 
 OUTPUT_ENV_VAR = 'PYFORDPASS_OUTPUT'
-"""Name of the environment variable that overrides the configured output format.
+"""
+Name of the environment variable that overrides the configured output format.
 
 Accepted values are ``'json'`` and ``'pretty'`` (case-insensitive).
 
@@ -29,49 +30,57 @@ Accepted values are ``'json'`` and ``'pretty'`` (case-insensitive).
 """
 
 CONFIG_DIR = Path(user_config_dir(appname='pyfordpass', appauthor=False))
-"""Directory holding the user configuration file (``~/.config/pyfordpass`` on Linux).
+"""
+Directory holding the user configuration file (``~/.config/pyfordpass`` on Linux).
 
 :meta hide-value:
 """
 
 CONFIG_FILE = CONFIG_DIR / 'config.toml'
-"""Path to the user configuration TOML.
+"""
+Path to the user configuration TOML.
 
 :meta hide-value:
 """
 
 KM_PER_MILE = 1.609344
-"""Exact conversion factor: one statute mile in kilometres.
+"""
+Exact conversion factor: one statute mile in kilometres.
 
 :meta hide-value:
 """
 
 KM_TO_MI = 1.0 / KM_PER_MILE
-"""Multiplier converting a kilometre value to miles.
+"""
+Multiplier converting a kilometre value to miles.
 
 :meta hide-value:
 """
 
 KPA_PER_PSI = 6.89475729
-"""Exact conversion factor: one PSI in kilopascals.
+"""
+Exact conversion factor: one PSI in kilopascals.
 
 :meta hide-value:
 """
 
 KPA_TO_PSI = 1.0 / KPA_PER_PSI
-"""Multiplier converting a kilopascal value to PSI.
+"""
+Multiplier converting a kilopascal value to PSI.
 
 :meta hide-value:
 """
 
 _MILES_LOCALES = frozenset({'en-gb', 'en-us'})
-"""Locales whose users typically prefer miles for road distance.
+"""
+Locales whose users typically prefer miles for road distance.
 
 :meta hide-value:
 """
 
 _FAHRENHEIT_LOCALES = frozenset({'en-us'})
-"""Locales whose users typically prefer Fahrenheit for temperature.
+"""
+Locales whose users typically prefer Fahrenheit for temperature.
 
 The United Kingdom uses miles for road distance but Celsius for temperature, so it is intentionally
 absent from this set even though it appears in :data:`_MILES_LOCALES`.

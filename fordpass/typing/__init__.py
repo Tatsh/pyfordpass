@@ -1,4 +1,5 @@
-"""Public typing surface for FordPass response and config shapes.
+"""
+Public typing surface for FordPass response and config shapes.
 
 Internal pyfordpass code imports from the specific submodule (e.g.
 :py:mod:`fordpass.typing.service`); this ``__init__`` exists purely so external consumers can

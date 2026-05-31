@@ -9,7 +9,8 @@ if TYPE_CHECKING:
 __all__ = ('Config', 'HTTPConfig', 'OutputConfig', 'OutputFormat', 'UnitsConfig', 'VehicleConfig')
 
 OutputFormat: TypeAlias = Literal['json', 'pretty']
-"""Preferred output format for multi-value command responses.
+"""
+Preferred output format for multi-value command responses.
 
 :meta hide-value:
 """
@@ -42,9 +43,11 @@ class HTTPConfig(TypedDict, total=False):
     """HTTP-transport preferences read from ``[http]``."""
 
     impersonate: str
-    """curl-cffi browser-impersonation profile used for the OAuth/token endpoints
+    """
+    curl-cffi browser-impersonation profile used for the OAuth/token endpoints
     (e.g. ``'chrome146'``, ``'firefox144'``, ``'safari180'``). Defaults to
-    ``'chrome146'`` when unset."""
+    ``'chrome146'`` when unset.
+    """
 
 
 class Config(TypedDict, total=False):

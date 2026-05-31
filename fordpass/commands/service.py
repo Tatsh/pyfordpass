@@ -119,7 +119,8 @@ def service() -> None:
 
 
 _UPCOMING_TYPE_STYLE = {'MAINTENANCE': '[cyan]Maintenance[/cyan]', 'RECALL': '[red]Recall[/red]'}
-"""Display style per upcoming-action ``type`` value.
+"""
+Display style per upcoming-action ``type`` value.
 
 :meta hide-value:
 """

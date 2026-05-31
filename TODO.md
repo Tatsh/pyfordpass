@@ -1,18 +1,5 @@
 # TODO
 
-- Ensure all multi-line docstrings look like so:
-
-"""
-Content that would have
-multiple lines.
-"""
-
-and NOT:
-
-"""Content that would have
-multiple lines.
-"""
-
 - Make sure all leaf commands have pretty output by default.
 - Make sure all leaf commands have --json, if it is applicable.
 - Make sure leaf command's tables do not have JSON (or Python objects, or machine-readable output)
@@ -25,4 +12,4 @@ multiple lines.
 - Make `_extract_schedules` use a stronger parameter type
 - Make sure docs build without a warning or error
 - Write unit tests covering every file, 100% coverage.
-- Move fordpass/commands/root.py to fordpass/main.py and fix all imports.
+- Rename the CLI app to `fordpass`

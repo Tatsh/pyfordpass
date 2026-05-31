@@ -22,7 +22,8 @@ if TYPE_CHECKING:
     from fordpass.client import AsyncFordPassClient
 
 _BODY_PREVIEW_MAX = 80
-"""Maximum length of a message body rendered in the inbox table.
+"""
+Maximum length of a message body rendered in the inbox table.
 
 :meta hide-value:
 """

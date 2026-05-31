@@ -56,7 +56,8 @@ _DISTANCE_UNIT_ALIASES = {
     'mi': 'mi',
     'miles': 'mi'
 }
-"""Map of accepted ``--unit`` values to the canonical short form.
+"""
+Map of accepted ``--unit`` values to the canonical short form.
 
 :meta hide-value:
 """
@@ -98,25 +99,29 @@ async def telemetry_oil(client: AsyncFordPassClient, _ctx: click.Context, vin: s
 
 _WHEEL_ORDER = ('FRONT_LEFT', 'FRONT_RIGHT', 'REAR_LEFT', 'REAR_RIGHT', 'REAR_LEFT_INNER',
                 'REAR_LEFT_OUTER', 'REAR_RIGHT_INNER', 'REAR_RIGHT_OUTER')
-"""Canonical display order for wheels in the tire-pressure printout.
+"""
+Canonical display order for wheels in the tire-pressure printout.
 
 :meta hide-value:
 """
 
 _TIRE_OK_RATIO = 0.93
-"""Minimum measured/placard pressure ratio rendered as ``OK``.
+"""
+Minimum measured/placard pressure ratio rendered as ``OK``.
 
 :meta hide-value:
 """
 
 _TIRE_LOW_RATIO = 0.85
-"""Minimum measured/placard pressure ratio rendered as ``LOW`` (below this is ``ALERT``).
+"""
+Minimum measured/placard pressure ratio rendered as ``LOW`` (below this is ``ALERT``).
 
 :meta hide-value:
 """
 
 _JSON_CELL_MAX = 60
-"""Maximum length of a JSON-serialised value rendered inline in a table cell.
+"""
+Maximum length of a JSON-serialised value rendered inline in a table cell.
 
 :meta hide-value:
 """
@@ -198,7 +203,8 @@ _METRIC_GROUPS: tuple[tuple[str, tuple[str, ...]],
                               ('Seats', ('seatBeltStatus',
                                          'seatOccupancyStatus')), ('Display',
                                                                    ('displaySystemOfMeasure',)))
-"""Display grouping for :command:`telemetry all` pretty output.
+"""
+Display grouping for :command:`telemetry all` pretty output.
 
 Each entry is ``(group_title, ordered_metric_keys)``. Metrics not listed in any group fall into an
 automatic ``Other`` table so new upstream fields surface rather than silently disappear.
@@ -207,7 +213,8 @@ automatic ``Other`` table so new upstream fields surface rather than silently di
 """
 
 _ENUM_RE = re.compile(r'^[A-Z][A-Z0-9_]+$')
-"""Detect SCREAMING_SNAKE_CASE values like ``NORMAL_OPERATION`` or ``FRONT_LEFT``.
+"""
+Detect SCREAMING_SNAKE_CASE values like ``NORMAL_OPERATION`` or ``FRONT_LEFT``.
 
 :meta hide-value:
 """
@@ -223,7 +230,8 @@ _WHEEL_SHORT = {
     'REAR_RIGHT_OUTER': 'RRO',
     'SYSTEM': 'SYS'
 }
-"""Compact two-or-three-letter wheel labels for tire-pressure summaries.
+"""
+Compact two-or-three-letter wheel labels for tire-pressure summaries.
 
 :meta hide-value:
 """
@@ -235,7 +243,8 @@ _UNIT_SUFFIXES = {
     'batteryVoltage': ' V',
     'engineSpeed': ' rpm'
 }
-"""Static unit suffix appended after the scalar value of these metrics.
+"""
+Static unit suffix appended after the scalar value of these metrics.
 
 Temperature metrics deliberately omitted - they go through :py:func:`_format_temperature` which
 honours :py:data:`UnitsConfig.temperature`.
@@ -244,20 +253,23 @@ honours :py:data:`UnitsConfig.temperature`.
 """
 
 _DISTANCE_METRICS: frozenset[str] = frozenset({'odometer', 'fuelRange'})
-"""Scalar metrics whose raw value is kilometres; converted on demand to miles.
+"""
+Scalar metrics whose raw value is kilometres; converted on demand to miles.
 
 :meta hide-value:
 """
 
 _SPEED_METRICS: frozenset[str] = frozenset({'speed'})
-"""Scalar metrics whose raw value is km/h; converted on demand to mph.
+"""
+Scalar metrics whose raw value is km/h; converted on demand to mph.
 
 :meta hide-value:
 """
 
 _TEMPERATURE_METRICS: frozenset[str] = frozenset(
     {'ambientTemp', 'engineCoolantTemp', 'engineOilTemp', 'outsideTemperature'})
-"""Scalar metrics whose raw value is degrees Celsius.
+"""
+Scalar metrics whose raw value is degrees Celsius.
 
 :meta hide-value:
 """

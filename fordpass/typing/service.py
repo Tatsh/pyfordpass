@@ -98,8 +98,10 @@ class ServicePlannerResponse(TypedDict, total=False):
     completedServiceActions: Sequence[CompletedServiceActionDetail]
     """Historical actions to surface in the planner."""
     response: Mapping[str, object]
-    """Per-service detail block (used by single-item endpoints; the
+    """
+    Per-service detail block (used by single-item endpoints; the
     ``upcomingServiceActions`` / ``completedServiceActions`` lists are used by the
-    planner-summary endpoints)."""
+    planner-summary endpoints).
+    """
     upcomingServiceActions: Sequence[ServiceActionDetail]
     """Pending / upcoming actions to surface in the planner."""

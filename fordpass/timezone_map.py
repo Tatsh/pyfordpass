@@ -431,7 +431,8 @@ FORD_ZONE_BY_IANA = {
     'Pacific/Wake': 448,
     'Pacific/Wallis': 449
 }
-"""IANA timezone name → Ford internal zone-code integer.
+"""
+IANA timezone name → Ford internal zone-code integer.
 
 :meta hide-value:
 """

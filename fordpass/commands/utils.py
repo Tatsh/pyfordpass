@@ -1,4 +1,5 @@
-"""Command-layer helpers.
+"""
+Command-layer helpers.
 
 Async/sync bridge, token storage, PKCE, sign-in, input validation, locale-aware formatting, and
 the remote-command readiness gate.
@@ -86,7 +87,8 @@ _LOGGERS: dict[str, _LoggerConfiguration] = {
         'level': 'WARNING'
     }
 }
-"""Logger configuration applied when ``-d/--debug`` is set on any leaf command.
+"""
+Logger configuration applied when ``-d/--debug`` is set on any leaf command.
 
 :meta hide-value:
 """
@@ -119,7 +121,8 @@ def debug_option(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 console = Console()
-"""Shared Rich :py:class:`~rich.console.Console` used by command-side pretty printouts.
+"""
+Shared Rich :py:class:`~rich.console.Console` used by command-side pretty printouts.
 
 :meta hide-value:
 """
@@ -405,7 +408,8 @@ def ack(resp: niquests.Response, name: str) -> None:
 
 
 _VIN_RE = re.compile(r'^[A-HJ-NPR-Z0-9][FL][A-HJ-NPR-Z0-9]{15}$')
-"""ISO 3779 VIN charset: 17 alphanumerics (no ``I`` / ``O`` / ``Q``), with the constraint that
+"""
+ISO 3779 VIN charset: 17 alphanumerics (no ``I`` / ``O`` / ``Q``), with the constraint that
 position 2 must be ``F`` (Ford) or ``L`` (Lincoln).
 
 :meta hide-value:
@@ -440,19 +444,22 @@ _VIN_TRANSLITERATE: dict[str, int] = {
     'Y': 8,
     'Z': 9,
 }
-"""ISO 3779 VIN-character-to-digit table for the check-digit algorithm.
+"""
+ISO 3779 VIN-character-to-digit table for the check-digit algorithm.
 
 :meta hide-value:
 """
 
 _VIN_WEIGHTS = (8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2)
-"""Position weights for the VIN check-digit algorithm (position 9 is the check itself).
+"""
+Position weights for the VIN check-digit algorithm (position 9 is the check itself).
 
 :meta hide-value:
 """
 
 _VIN_CHECK_REMAINDER_X = 10
-"""Position-9 remainder value that maps to the literal ``'X'`` rather than a digit.
+"""
+Position-9 remainder value that maps to the literal ``'X'`` rather than a digit.
 
 :meta hide-value:
 """
@@ -545,7 +552,8 @@ def _resolve_vin(ctx: click.Context, param: click.Parameter, value: str | None) 
 
 
 vin_argument = click.argument('vin', required=False, callback=_resolve_vin)
-"""Reusable ``VIN`` positional-argument decorator that falls back to ``[vehicle] default_vin``.
+"""
+Reusable ``VIN`` positional-argument decorator that falls back to ``[vehicle] default_vin``.
 
 :meta hide-value:
 """
@@ -556,7 +564,8 @@ vin_option = click.option(
     default=None,
     callback=_resolve_vin,
     help='Target VIN. Falls back to `[vehicle] default_vin` from `config.toml`.')
-"""Reusable ``VIN`` option decorator for commands whose positional slot is taken by another value.
+"""
+Reusable ``VIN`` option decorator for commands whose positional slot is taken by another value.
 
 :meta hide-value:
 """
@@ -566,7 +575,8 @@ json_option = click.option('--json',
                            is_flag=True,
                            default=False,
                            help='Emit machine-readable JSON instead of a pretty table.')
-"""Reusable ``--json`` flag decorator paired with :py:func:`should_emit_json`.
+"""
+Reusable ``--json`` flag decorator paired with :py:func:`should_emit_json`.
 
 :meta hide-value:
 """
@@ -612,7 +622,8 @@ def duration_range(min_seconds: int, max_seconds: int) -> click.IntRange:
 
 
 UOM_CHOICE = click.Choice(['mi', 'km'], case_sensitive=False)
-"""Case-insensitive ``mi`` / ``km`` choice for service-planner odometer-units options.
+"""
+Case-insensitive ``mi`` / ``km`` choice for service-planner odometer-units options.
 
 :meta hide-value:
 """
@@ -723,7 +734,8 @@ def format_iso_datetime(iso: object) -> str:
 
 
 _DATE_TIME_TOKEN_COUNT = 2
-"""Number of space-separated tokens expected from :py:func:`format_iso_datetime` (date + time).
+"""
+Number of space-separated tokens expected from :py:func:`format_iso_datetime` (date + time).
 
 :meta hide-value:
 """
@@ -797,13 +809,15 @@ _DAY_NAMES: dict[str, str] = {
     'sat': 'sat',
     'saturday': 'sat',
 }
-"""Tolerant English-day-name aliases recognised by :py:func:`parse_user_days`.
+"""
+Tolerant English-day-name aliases recognised by :py:func:`parse_user_days`.
 
 :meta hide-value:
 """
 
 _DAY_FIELDS: tuple[str, ...] = ('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat')
-"""Canonical day keys in Ford's wire-format order, sun to sat.
+"""
+Canonical day keys in Ford's wire-format order, sun to sat.
 
 :meta hide-value:
 """
@@ -969,7 +983,8 @@ _PRECLUSION_CAUSES: tuple[tuple[str, str, str], ...] = (
     ('carrierRegistrationCommandPreclusionState', 'COMMANDS_PRECLUDED_BY_CARRIER_REGISTRATION',
      'Carrier registration pending'),
 )
-"""The five ``commandPreclusionCauses`` enums the FordPass app inspects, paired with the sentinel
+"""
+The five ``commandPreclusionCauses`` enums the FordPass app inspects, paired with the sentinel
 value that marks them active and a short user-facing label.
 
 The mobile app walks

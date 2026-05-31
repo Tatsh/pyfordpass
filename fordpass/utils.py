@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     from .typing.vehicle import GarageVehicle
 
 MetricsBlock: TypeAlias = 'Mapping[str, MetricEntry | Sequence[MetricEntry]]'
-"""The ``metrics`` sub-object of a telemetry response (the shape on
+"""
+The ``metrics`` sub-object of a telemetry response (the shape on
 :py:class:`fordpass.typing.telemetry.TelemetryResponse`).
 
 :meta hide-value:

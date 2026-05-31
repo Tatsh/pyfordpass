@@ -97,7 +97,8 @@ async def vehicle_list(client: AsyncFordPassClient, _ctx: click.Context, *, as_j
 
 
 _CAPABILITY_HIDDEN_VALUES = frozenset({'NoDisplay', 'Unavailable', 'None'})
-"""Capability-map values that mark a feature as not applicable to this vehicle.
+"""
+Capability-map values that mark a feature as not applicable to this vehicle.
 
 The garage capability map flags every feature the FordPass app *could* show. Values in this set
 mean "do not surface in the UI" - the feature is either absent on this vehicle or hidden by
@@ -113,7 +114,8 @@ _EV_ONLY_CAPABILITIES = frozenset({
     'plugAndChargeUserSubscription', 'proPowerOnBoard', 'showEVBatteryLevel', 'tripAndChargeLogs',
     'vehicleChargingStatusExtended'
 })
-"""Capability-map keys that only apply to BEV/PHEV vehicles.
+"""
+Capability-map keys that only apply to BEV/PHEV vehicles.
 
 Filtered out of the pretty ``vehicle show`` output when ``profile.engineType`` is ``'ICE'``. Most
 of these are already screened out by :py:data:`_CAPABILITY_HIDDEN_VALUES` (the upstream marks them
@@ -123,7 +125,8 @@ of these are already screened out by :py:data:`_CAPABILITY_HIDDEN_VALUES` (the u
 """
 
 _EV_ONLY_PROFILE_FIELDS = frozenset({'globalChargeSettings', 'highVoltageBatteryPackType'})
-"""Profile fields that only apply to BEV/PHEV vehicles.
+"""
+Profile fields that only apply to BEV/PHEV vehicles.
 
 Filtered out of the pretty ``vehicle show`` output when ``profile.engineType`` is ``'ICE'``.
 
@@ -131,7 +134,8 @@ Filtered out of the pretty ``vehicle show`` output when ``profile.engineType`` i
 """
 
 _PROFILE_HIDDEN_VALUES = frozenset({'None', 'Unavailable'})
-"""Profile-block values that mark the field as not applicable to this vehicle.
+"""
+Profile-block values that mark the field as not applicable to this vehicle.
 
 Filtered out of the pretty ``vehicle show`` output the same way :py:data:`_CAPABILITY_HIDDEN_VALUES`
 are.
@@ -143,7 +147,8 @@ _ACRONYMS = frozenset({
     'AC', 'ASU', 'BEV', 'CCS', 'DC', 'DEF', 'EV', 'EVSE', 'GPS', 'HMI', 'HV', 'ICE', 'IP', 'JSON',
     'OEM', 'OTA', 'PAAK', 'PHEV', 'SDN', 'SOC', 'TCU', 'TMC', 'TPMS', 'URL', 'USB', 'VIN', 'XEV'
 })
-"""Tokens that should be rendered in all-caps after camelCase splitting.
+"""
+Tokens that should be rendered in all-caps after camelCase splitting.
 
 The default :py:func:`_humanize_camel` would otherwise produce ``Ccs Connectivity`` or ``Xev
 Battery Range`` - title-casing every token. Anything whose uppercase form is in this set is

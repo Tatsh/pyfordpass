@@ -14,7 +14,8 @@ if TYPE_CHECKING:
 __all__ = ('SECRETS_FILE', 'load_secrets')
 
 SECRETS_FILE = CONFIG_DIR / 'abcdef.toml'
-"""Path to the constants TOML file.
+"""
+Path to the constants TOML file.
 
 :meta hide-value:
 """
