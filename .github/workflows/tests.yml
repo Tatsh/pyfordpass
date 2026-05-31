@@ -27,6 +27,11 @@ jobs:
           job-summary: true
           report-title: 'Test Report'
           verbose: true
+      - if: "github.event_name != 'pull_request'"
+        name: 'Coverage'
+        uses: 'coverallsapp/github-action@v2.3.7'
+        with:
+          file: 'coverage.xml'
     strategy:
       matrix:
         python-version:

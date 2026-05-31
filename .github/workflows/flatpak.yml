@@ -58,7 +58,6 @@ name: 'Flatpak'
       - 'v*.*.*'
   workflow_dispatch: null
 permissions:
-  actions: 'write'
   attestations: 'write'
   contents: 'write'
   id-token: 'write'

@@ -3,7 +3,6 @@ local utils = import 'utils.libjsonnet';
 {
   uses_user_defaults: true,
   project_name: 'pyfordpass',
-  private: true,
   description: 'FordPass client and CLI.',
   keywords: ['command line', 'ford', 'fordpass'],
   primary_module: 'fordpass',

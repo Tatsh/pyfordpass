@@ -1,7 +1,7 @@
 {
   "_wiswa": {
-    "commandLine": "wiswa",
-    "lastRun": "2026-05-31T10:48:00Z",
+    "commandLine": "wiswa -d --skip-remote",
+    "lastRun": "2026-05-31T10:58:22Z",
     "version": "566ff22"
   },
   "contributors": ["Andrew Udvare <audvare@gmail.com>"],
@@ -98,7 +98,6 @@
     "reorderKeys": true,
     "singleQuote": true
   },
-  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Tatsh/pyfordpass.git"

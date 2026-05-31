@@ -3,6 +3,7 @@ adak
 almaty
 amain
 anadyr
+anchore
 Ångström
 appauthor
 appdir
@@ -45,6 +46,7 @@ cooldown
 coro
 countrycode
 coveragerc
+coverallsapp
 ctypes
 cuiaba
 cvin
@@ -186,6 +188,7 @@ pyfordpass
 pyinstaller
 pylint
 pylock
+pypa
 pypi
 pyproject
 pytest
@@ -212,6 +215,7 @@ shellcheck
 shellformat
 signtool
 simferopol
+snapcore
 snapcraft
 softprops
 soupsieve
@@ -220,6 +224,7 @@ srednekolymsk
 srsm
 startschedule
 startschedules
+syft
 syowa
 tatsh
 testpaths

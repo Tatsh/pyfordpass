@@ -2,17 +2,23 @@
 
 <!-- WISWA-GENERATED-README:START -->
 
+[![Python versions](https://img.shields.io/pypi/pyversions/pyfordpass.svg?color=blue&logo=python&logoColor=white)](https://www.python.org/)
+[![PyPI - Version](https://img.shields.io/pypi/v/pyfordpass)](https://pypi.org/project/pyfordpass/)
 [![GitHub tag (with filter)](https://img.shields.io/github/v/tag/Tatsh/pyfordpass)](https://github.com/Tatsh/pyfordpass/tags)
 [![License](https://img.shields.io/github/license/Tatsh/pyfordpass)](https://github.com/Tatsh/pyfordpass/blob/master/LICENSE.txt)
 [![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/Tatsh/pyfordpass/v0.0.0/master)](https://github.com/Tatsh/pyfordpass/compare/v0.0.0...master)
 [![CodeQL](https://github.com/Tatsh/pyfordpass/actions/workflows/codeql.yml/badge.svg)](https://github.com/Tatsh/pyfordpass/actions/workflows/codeql.yml)
 [![QA](https://github.com/Tatsh/pyfordpass/actions/workflows/qa.yml/badge.svg)](https://github.com/Tatsh/pyfordpass/actions/workflows/qa.yml)
 [![Tests](https://github.com/Tatsh/pyfordpass/actions/workflows/tests.yml/badge.svg)](https://github.com/Tatsh/pyfordpass/actions/workflows/tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/Tatsh/pyfordpass/badge.svg?branch=master)](https://coveralls.io/github/Tatsh/pyfordpass?branch=master)
 [![Dependabot](https://img.shields.io/badge/Dependabot-enabled-blue?logo=dependabot)](https://github.com/dependabot)
+[![Documentation Status](https://readthedocs.org/projects/pyfordpass/badge/?version=latest)](https://pyfordpass.readthedocs.org/?badge=latest)
 [![mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![uv](https://img.shields.io/badge/uv-261230?logo=astral)](https://docs.astral.sh/uv/)
 [![pytest](https://img.shields.io/badge/pytest-zz?logo=Pytest&labelColor=black&color=black)](https://docs.pytest.org/en/stable/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Downloads](https://static.pepy.tech/badge/pyfordpass/month)](https://pepy.tech/project/pyfordpass)
+[![Stargazers](https://img.shields.io/github/stars/Tatsh/pyfordpass?logo=github&style=flat)](https://github.com/Tatsh/pyfordpass/stargazers)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Prettier](https://img.shields.io/badge/Prettier-black?logo=prettier)](https://prettier.io/)
 

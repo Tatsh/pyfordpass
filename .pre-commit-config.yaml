@@ -1,3 +1,11 @@
+ci:
+  skip:
+    - 'check-jsonschema'
+    - 'cspell'
+    - 'detect-aws-credentials'
+    - 'fix-formatting-markdown'
+    - 'fix-formatting-prettier'
+    - 'yarn-check-lock'
 default_install_hook_types:
   - 'pre-commit'
   - 'pre-push'

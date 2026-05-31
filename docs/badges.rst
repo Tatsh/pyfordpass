@@ -1,5 +1,13 @@
 .. only:: html
 
+   .. image:: https://img.shields.io/pypi/pyversions/pyfordpass.svg?color=blue&logo=python&logoColor=white
+      :target: https://www.python.org/
+      :alt: Python versions
+
+   .. image:: https://img.shields.io/pypi/v/pyfordpass
+      :target: https://pypi.org/project/pyfordpass/
+      :alt: PyPI - Version
+
    .. image:: https://img.shields.io/github/v/tag/Tatsh/pyfordpass
       :target: https://github.com/Tatsh/pyfordpass/tags
       :alt: GitHub tag (with filter)
@@ -24,9 +32,17 @@
       :target: https://github.com/Tatsh/pyfordpass/actions/workflows/tests.yml
       :alt: Tests
 
+   .. image:: https://coveralls.io/repos/github/Tatsh/pyfordpass/badge.svg?branch=master
+      :target: https://coveralls.io/github/Tatsh/pyfordpass?branch=master
+      :alt: Coverage Status
+
    .. image:: https://img.shields.io/badge/Dependabot-enabled-blue?logo=dependabot
       :target: https://github.com/dependabot
       :alt: Dependabot
+
+   .. image:: https://readthedocs.org/projects/pyfordpass/badge/?version=latest
+      :target: https://pyfordpass.readthedocs.org/?badge=latest
+      :alt: Documentation Status
 
    .. image:: https://www.mypy-lang.org/static/mypy_badge.svg
       :target: https://mypy-lang.org/
@@ -43,6 +59,14 @@
    .. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
       :target: https://github.com/astral-sh/ruff
       :alt: Ruff
+
+   .. image:: https://static.pepy.tech/badge/pyfordpass/month
+      :target: https://pepy.tech/project/pyfordpass
+      :alt: Downloads
+
+   .. image:: https://img.shields.io/github/stars/Tatsh/pyfordpass?logo=github&style=flat
+      :target: https://github.com/Tatsh/pyfordpass/stargazers
+      :alt: Stargazers
 
    .. image:: https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit
       :target: https://github.com/pre-commit/pre-commit

@@ -170,6 +170,24 @@ jobs:
           name: pyfordpass-binaries-${{ matrix.suffix }}
           path: |
             ${{ matrix.dist_path }}
+      - name: 'Attest'
+        uses: 'actions/attest@v4.1.0'
+        with:
+          subject-path: '${{ matrix.dist_path }}'
+      - name: 'Generate SBOM'
+        uses: 'anchore/sbom-action@v0.24.0'
+        env:
+          SYFT_SOURCE_NAME: 'pyfordpass'
+          SYFT_SOURCE_VERSION: ${{ github.ref_name }}
+        with:
+          path: 'dist/'
+          output-file: 'sbom.spdx.json'
+          upload-artifact: false
+      - name: 'Attest SBOM'
+        uses: 'actions/attest@v4.1.0'
+        with:
+          subject-path: '${{ matrix.dist_path }}'
+          sbom-path: 'sbom.spdx.json'
       - if: (matrix.os == 'macos-latest' || matrix.os == 'macos-15-intel') && github.ref_type == 'tag'
         name: 'Zip files'
         run: |
@@ -183,6 +201,17 @@ jobs:
           New-Item -ItemType Directory -Name _out
           Compress-Archive -Path ${{ matrix.dist_path }} -DestinationPath _out/pyfordpass-${{ github.ref_name }}-${{ matrix.suffix }}.zip
         shell: pwsh
+      - if: github.ref_type == 'tag'
+        name: 'Attest'
+        uses: 'actions/attest@v4.1.0'
+        with:
+          subject-path: '_out/*.zip'
+      - if: github.ref_type == 'tag'
+        name: 'Attest SBOM'
+        uses: 'actions/attest@v4.1.0'
+        with:
+          subject-path: '_out/*.zip'
+          sbom-path: 'sbom.spdx.json'
       - if: github.ref_type == 'tag'
         name: Upload package
         uses: softprops/action-gh-release@v3.0.0
@@ -203,6 +232,9 @@ jobs:
           - os: 'windows-latest'
             dist_path: 'dist/*.exe'
             suffix: 'win-x86_64'
+          - os: 'windows-11-arm'
+            dist_path: 'dist/*.exe'
+            suffix: 'win-arm64'
 name: 'PyInstaller'
 'on':
   push:
@@ -217,7 +249,6 @@ name: 'PyInstaller'
     tags:
       - 'v*.*.*'
 permissions:
-  actions: 'write'
   attestations: 'write'
   contents: 'write'
   id-token: 'write'
