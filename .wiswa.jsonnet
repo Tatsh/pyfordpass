@@ -12,9 +12,6 @@ local utils = import 'utils.libjsonnet';
   local top = self,
   publishing+: { flathub: 'sh.tat.%s' % top.project_name },
   pyproject+: {
-    project+: {
-      scripts: { ford: 'fordpass.commands:main' },
-    },
     tool+: {
       pytest+: {
         ini_options+: {

@@ -66,7 +66,7 @@ email = "audvare@gmail.com"
 name = "Andrew Udvare"
 
 [project.scripts]
-ford = "fordpass.commands:main"
+ford = "fordpass.main:main"
 
 [project.urls]
 Issues = "https://github.com/Tatsh/pyfordpass/issues"
