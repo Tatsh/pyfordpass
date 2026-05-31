@@ -37,6 +37,7 @@ local utils = import 'utils.libjsonnet';
           niquests: utils.latestPypiPackageVersionCaret('niquests'),
           platformdirs: utils.latestPypiPackageVersionCaret('platformdirs'),
           rich: utils.latestPypiPackageVersionCaret('rich'),
+          tomlkit: utils.latestPypiPackageVersionCaret('tomlkit'),
         },
         group+: {
           tests+: {

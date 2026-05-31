@@ -21,7 +21,6 @@ docs = [
   "sphinx-datatables>=1.0.0",
   "sphinx-immaterial>=0.13.9",
   "sphinx>=9.1.0; python_version >= \"3.13\"",
-  "tomlkit>=0.15.0",
 ]
 tests = [
   "mock>=5.2.0",
@@ -50,6 +49,7 @@ dependencies = [
   "niquests>=3.18.8",
   "platformdirs>=4.9.6",
   "rich>=15.0.0",
+  "tomlkit>=0.15.0",
   "typing-extensions>=4.15.0",
 ]
 description = "FordPass client and CLI."
