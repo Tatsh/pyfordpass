@@ -76,3 +76,4 @@ html_theme_options = {
     'toc_title_is_page_title': True
 }
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+man_pages = [('index', 'fordpass', 'FordPass client and CLI', author, 1)]

@@ -27,11 +27,51 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "PYFORDPASS" "1" "May 31, 2026" "0.0.0" "pyfordpass"
+.TH "FORDPASS" "1" "May 31, 2026" "0.0.0" "pyfordpass"
 .SH NAME
-pyfordpass \- pyfordpass v0.0.0
+fordpass \- FordPass client and CLI
 .sp
-FordPass client and CLI.
+FordPass client and CLI. A third\-party reverse\-engineered client for the same private mobile\-app
+endpoints the FordPass™ app uses, packaged as a Python library plus a \fBfordpass\fP command\-line
+tool.
+.SH DISCLAIMER
+.sp
+This project is \fBnot\fP an official Ford product. It is \fBnot\fP affiliated with, endorsed by,
+sponsored by, or otherwise connected to Ford Motor Company or any of its subsidiaries. \(dqFordPass\(dq,
+\(dqThe Lincoln Way\(dq, \(dqFord\(dq, and \(dqLincoln\(dq are trademarks of Ford Motor Company.
+.sp
+Because this client speaks to private endpoints rather than a documented public API, Ford may
+change, throttle, or revoke access without notice — and the maintainer cannot guarantee that any
+particular feature will keep working.
+.INDENT 0.0
+.INDENT 3.5
+.IP "Warning"
+.sp
+\fBUse of this software may cause your FordPass™ / The Lincoln Way™ account to be (temporarily)
+locked or suspended.\fP Traffic from any unofficial client can look anomalous to Ford\(aqs fraud
+and abuse detection. \fBUse at your own risk.\fP
+.UNINDENT
+.UNINDENT
+.sp
+It is \fBstrongly recommended\fP to use a \fBseparate, secondary FordPass™ account\fP for this
+software rather than your primary account:
+.INDENT 0.0
+.IP 1. 3
+In the FordPass app on a phone (signed in as the primary owner), invite a secondary email
+address as an additional driver for the vehicle. The invited address must be reachable from
+that phone for verification.
+.IP 2. 3
+Sign up for a new FordPass account using that secondary email and accept the driver invitation.
+.IP 3. 3
+Configure \fBpyfordpass\fP (\fBfordpass auth login\fP) with the secondary account\(aqs credentials.
+.UNINDENT
+.sp
+If the secondary account is later suspended, your primary account, warranty records, and
+roadside\-assistance enrolment remain unaffected.
+.sp
+See the \X'tty: link https://github.com/marq24/ha-fordpass#general-disclaimer'\fI\%ha\-fordpass project\(aqs general disclaimer and account\-setup guidance\fP\X'tty: link' for the same procedure written up
+from the Home Assistant integration\(aqs perspective — the steps are identical regardless of which
+third\-party client consumes the credentials.
 .SH INSTALLATION
 .INDENT 0.0
 .INDENT 3.5
@@ -54,23 +94,27 @@ uv tool install pyfordpass
 .SH QUICK START
 .sp
 The CLI is the primary surface. The library lives behind it for callers who want to integrate
-against the same protocol the CLI uses.
+against the same protocol the CLI uses. A typical first\-time flow:
 .INDENT 0.0
 .INDENT 3.5
 .sp
 .EX
-pyfordpass auth signin
-pyfordpass vehicle list
-pyfordpass remote start
+fordpass auth login       # interactive sign\-in against the secondary account
+fordpass vehicle list     # see what\(aqs in the garage
+fordpass vehicle show VIN # detailed view for one vehicle
+fordpass remote start VIN # remote\-start command
 .EE
 .UNINDENT
 .UNINDENT
+.sp
+Every subcommand supports \fB\-\-help\fP and most data\-returning subcommands support \fB\-\-json\fP for
+machine\-readable output.
 .sp
 For programmatic use, see \fI\%fordpass.client.AsyncFordPassClient\fP (async HTTP client) and
 \fI\%fordpass.sansio.FordPassClient\fP (sans\-I/O protocol core that builds
 \fI\%fordpass.sansio.RequestDict\fP descriptors).
 .SH COMMAND REFERENCE
-.SS pyfordpass
+.SS fordpass
 .sp
 FordPass CLI.
 .sp
@@ -79,7 +123,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass [OPTIONS] COMMAND [ARGS]...
+fordpass [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -99,7 +143,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass alerts [OPTIONS] COMMAND [ARGS]...
+fordpass alerts [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -112,7 +156,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass alerts current [OPTIONS] [VIN]
+fordpass alerts current [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -144,7 +188,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass alerts history [OPTIONS] [VIN]
+fordpass alerts history [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -176,7 +220,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass alerts washer [OPTIONS] [VIN]
+fordpass alerts washer [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -208,7 +252,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass auth [OPTIONS] COMMAND [ARGS]...
+fordpass auth [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -221,7 +265,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass auth login [OPTIONS]
+fordpass auth login [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -241,7 +285,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass auth logout [OPTIONS]
+fordpass auth logout [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -261,7 +305,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass auth refresh [OPTIONS]
+fordpass auth refresh [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -281,7 +325,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass auth status [OPTIONS]
+fordpass auth status [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -306,7 +350,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass dealer [OPTIONS] COMMAND [ARGS]...
+fordpass dealer [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -319,7 +363,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass dealer preferred [OPTIONS] [VIN]
+fordpass dealer preferred [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -351,7 +395,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass departure [OPTIONS] COMMAND [ARGS]...
+fordpass departure [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -364,7 +408,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass departure next [OPTIONS] [VIN]
+fordpass departure next [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -396,7 +440,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass drivers [OPTIONS] COMMAND [ARGS]...
+fordpass drivers [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -409,7 +453,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass drivers count [OPTIONS] [VIN]
+fordpass drivers count [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -441,7 +485,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass drivers invite [OPTIONS] [VIN]
+fordpass drivers invite [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -483,7 +527,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass drivers list [OPTIONS] [VIN]
+fordpass drivers list [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -515,7 +559,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass messages [OPTIONS] COMMAND [ARGS]...
+fordpass messages [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -528,7 +572,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass messages delete [OPTIONS] MESSAGE_IDS...
+fordpass messages delete [OPTIONS] MESSAGE_IDS...
 .EE
 .UNINDENT
 .UNINDENT
@@ -560,7 +604,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass messages list [OPTIONS]
+fordpass messages list [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -585,7 +629,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass messages mark\-read [OPTIONS] MESSAGE_IDS...
+fordpass messages mark\-read [OPTIONS] MESSAGE_IDS...
 .EE
 .UNINDENT
 .UNINDENT
@@ -617,7 +661,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass messages show [OPTIONS] MESSAGE_ID
+fordpass messages show [OPTIONS] MESSAGE_ID
 .EE
 .UNINDENT
 .UNINDENT
@@ -649,7 +693,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass ota [OPTIONS] COMMAND [ARGS]...
+fordpass ota [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -662,7 +706,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass ota disable [OPTIONS] [VIN]
+fordpass ota disable [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -689,7 +733,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass ota enable [OPTIONS] [VIN]
+fordpass ota enable [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -716,7 +760,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass ota queue\-refresh [OPTIONS] [VIN]
+fordpass ota queue\-refresh [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -743,7 +787,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass ota release\-notes [OPTIONS] [VIN]
+fordpass ota release\-notes [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -775,7 +819,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass ota status [OPTIONS] [VIN]
+fordpass ota status [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -807,7 +851,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass profile [OPTIONS] COMMAND [ARGS]...
+fordpass profile [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -820,7 +864,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass profile show [OPTIONS]
+fordpass profile show [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -850,7 +894,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass profile update [OPTIONS]
+fordpass profile update [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -875,7 +919,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote [OPTIONS] COMMAND [ARGS]...
+fordpass remote [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -888,7 +932,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote extend [OPTIONS] [VIN]
+fordpass remote extend [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -920,7 +964,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote lock [OPTIONS] [VIN]
+fordpass remote lock [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -952,7 +996,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote panic [OPTIONS] [VIN]
+fordpass remote panic [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -989,7 +1033,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote start [OPTIONS] [VIN]
+fordpass remote start [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1021,7 +1065,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote status [OPTIONS] [VIN]
+fordpass remote status [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1048,7 +1092,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote stop [OPTIONS] [VIN]
+fordpass remote stop [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1080,7 +1124,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass remote unlock [OPTIONS] [VIN]
+fordpass remote unlock [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1112,7 +1156,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass roadside [OPTIONS] COMMAND [ARGS]...
+fordpass roadside [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -1125,7 +1169,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass roadside active [OPTIONS] [VIN]
+fordpass roadside active [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1157,7 +1201,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass roadside locations [OPTIONS]
+fordpass roadside locations [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1182,7 +1226,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass roadside predraft [OPTIONS] [VIN]
+fordpass roadside predraft [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1224,7 +1268,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass roadside symptoms [OPTIONS]
+fordpass roadside symptoms [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1254,7 +1298,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass schedule [OPTIONS] COMMAND [ARGS]...
+fordpass schedule [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -1267,7 +1311,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass schedule add [OPTIONS] [VIN]
+fordpass schedule add [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1309,7 +1353,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass schedule delete [OPTIONS] SCHEDULE_ID
+fordpass schedule delete [OPTIONS] SCHEDULE_ID
 .EE
 .UNINDENT
 .UNINDENT
@@ -1341,7 +1385,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass schedule disable [OPTIONS] SCHEDULE_ID [VIN]
+fordpass schedule disable [OPTIONS] SCHEDULE_ID [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1373,7 +1417,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass schedule enable [OPTIONS] SCHEDULE_ID [VIN]
+fordpass schedule enable [OPTIONS] SCHEDULE_ID [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1405,7 +1449,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass schedule list [OPTIONS] [VIN]
+fordpass schedule list [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1437,7 +1481,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass service [OPTIONS] COMMAND [ARGS]...
+fordpass service [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -1450,7 +1494,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass service history [OPTIONS] [VIN]
+fordpass service history [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1499,7 +1543,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass service history\-detail [OPTIONS] SERVICE_EVENT_ID [VIN]
+fordpass service history\-detail [OPTIONS] SERVICE_EVENT_ID [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1553,7 +1597,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass service upcoming [OPTIONS] [VIN]
+fordpass service upcoming [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1602,7 +1646,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass service upcoming\-detail [OPTIONS] SERVICE_ACTION_ID [VIN]
+fordpass service upcoming\-detail [OPTIONS] SERVICE_ACTION_ID [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1656,7 +1700,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry [OPTIONS] COMMAND [ARGS]...
+fordpass telemetry [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -1669,7 +1713,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry all [OPTIONS] [VIN]
+fordpass telemetry all [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1706,7 +1750,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry fuel [OPTIONS] [VIN]
+fordpass telemetry fuel [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1738,7 +1782,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry odometer [OPTIONS] [VIN]
+fordpass telemetry odometer [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1780,7 +1824,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry oil [OPTIONS] [VIN]
+fordpass telemetry oil [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1812,7 +1856,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry position [OPTIONS] [VIN]
+fordpass telemetry position [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1854,7 +1898,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass telemetry tires [OPTIONS] [VIN]
+fordpass telemetry tires [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1896,7 +1940,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle [OPTIONS] COMMAND [ARGS]...
+fordpass vehicle [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
@@ -1909,7 +1953,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle list [OPTIONS]
+fordpass vehicle list [OPTIONS]
 .EE
 .UNINDENT
 .UNINDENT
@@ -1934,7 +1978,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle mileage [OPTIONS] MILES
+fordpass vehicle mileage [OPTIONS] MILES
 .EE
 .UNINDENT
 .UNINDENT
@@ -1966,7 +2010,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle nickname [OPTIONS] NAME
+fordpass vehicle nickname [OPTIONS] NAME
 .EE
 .UNINDENT
 .UNINDENT
@@ -1998,7 +2042,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle plate [OPTIONS] PLATE
+fordpass vehicle plate [OPTIONS] PLATE
 .EE
 .UNINDENT
 .UNINDENT
@@ -2030,7 +2074,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle ready [OPTIONS] [VIN]
+fordpass vehicle ready [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
@@ -2062,7 +2106,7 @@ Usage
 .INDENT 3.5
 .sp
 .EX
-pyfordpass vehicle show [OPTIONS] [VIN]
+fordpass vehicle show [OPTIONS] [VIN]
 .EE
 .UNINDENT
 .UNINDENT
