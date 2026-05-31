@@ -3,11 +3,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, cast
-import json
 import re
 
 from fordpass.utils import is_list_like
-from rich.json import JSON
 from rich.table import Table
 import click
 
@@ -300,10 +298,8 @@ async def vehicle_ready(client: AsyncFordPassClient, _ctx: click.Context, vin: s
         console.print('[dim]Start the vehicle to clear Battery Saver mode, or pass --force '
                       'on a remote-* command to send anyway.[/dim]')
     if readiness.raw:
-        console.print()
-        console.print('[bold cyan]Diagnostic payload[/bold cyan] '
-                      '[dim]- server-side preclusion state.[/dim]')
-        console.print(JSON(json.dumps(readiness.raw, default=str, sort_keys=True)))
+        console.print(f'[dim]Server-side preclusion state has {len(readiness.raw)} '
+                      f'fields; use --json to inspect.[/dim]')
 
 
 @vehicle.command('nickname')

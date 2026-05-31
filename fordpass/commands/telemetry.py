@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, cast
-import json
 import re
 import urllib.parse
 import webbrowser
@@ -125,13 +124,6 @@ Minimum measured/placard pressure ratio rendered as ``OK``.
 _TIRE_LOW_RATIO = 0.85
 """
 Minimum measured/placard pressure ratio rendered as ``LOW`` (below this is ``ALERT``).
-
-:meta hide-value:
-"""
-
-_JSON_CELL_MAX = 60
-"""
-Maximum length of a JSON-serialised value rendered inline in a table cell.
 
 :meta hide-value:
 """
@@ -530,8 +522,7 @@ def _format_metric_value(key: str, entry: Any, pref_distance: str, pref_temperat
         rendered = _format_nested(key, value)
         if rendered is not None:
             return rendered
-        text = json.dumps(value, default=str)
-        return text if len(text) <= _JSON_CELL_MAX else text[:_JSON_CELL_MAX - 3] + '...'
+        return f'(nested - {len(value)} keys; use --json to inspect)'
     if is_list_like(value):
         return _format_list_metric(key, value, pref_distance)
     return _format_scalar(key, value, pref_distance, pref_temperature)
@@ -667,7 +658,11 @@ def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str)
     for name in sorted(inner, key=_humanize_key):
         sub = inner[name]
         if not isinstance(sub, Mapping):
-            table.add_row(_humanize_key(name), str(sub), '')
+            if is_list_like(sub):
+                cell = f'({len(sub)} entries; use --json to inspect)'
+            else:
+                cell = _format_scalar(name, sub, pref_distance, pref_temperature)
+            table.add_row(_humanize_key(name), cell, '')
             continue
         if 'error' in sub:
             err = sub['error']
@@ -677,9 +672,10 @@ def _configurations_table(entry: Any, pref_distance: str, pref_temperature: str)
             table.add_row(_humanize_key(name), err_text, _format_metric_updated(sub))
             continue
         value = sub.get('value')
-        if isinstance(value, (dict, list)):
-            text = json.dumps(value, default=str)
-            display = (text if len(text) <= _JSON_CELL_MAX else text[:_JSON_CELL_MAX - 3] + '...')
+        if isinstance(value, Mapping):
+            display = f'(nested - {len(value)} keys; use --json to inspect)'
+        elif is_list_like(value):
+            display = f'({len(value)} entries; use --json to inspect)'
         else:
             display = _format_scalar(name, value, pref_distance, pref_temperature)
         table.add_row(_humanize_key(name), display, _format_metric_updated(sub))

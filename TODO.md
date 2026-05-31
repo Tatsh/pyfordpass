@@ -1,7 +1,5 @@
 # TODO
 
-- Make sure leaf command's tables do not have JSON (or Python objects, or machine-readable output)
-  in rows.
 - Make sure all TypedDict fields are ordered alphabetically case-sensitive.
 - Make sure all .py files under typing/ have TypeAliases first (ordered alphabetically
   case-sensitive), then TypedDicts.
