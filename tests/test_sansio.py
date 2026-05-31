@@ -109,14 +109,11 @@ def test_exchange_cat_for_tmc_without_cat_refresh(stub_secrets: Secrets) -> None
         client.exchange_cat_for_tmc()
 
 
-@pytest.mark.parametrize(('method_name', 'expected_type'), [
-    ('remote_start', 'remoteStart'),
-    ('cancel_remote_start', 'cancelRemoteStart'),
-    ('extend_remote_start', 'remoteStart'),
-    ('lock', 'lock'),
-    ('unlock', 'unlock'),
-    ('status_refresh', 'statusRefresh'),
-])
+@pytest.mark.parametrize(('method_name', 'expected_type'),
+                         [('remote_start', 'remoteStart'),
+                          ('cancel_remote_start', 'cancelRemoteStart'),
+                          ('extend_remote_start', 'remoteStart'), ('lock', 'lock'),
+                          ('unlock', 'unlock'), ('status_refresh', 'statusRefresh')])
 def test_simple_command_builders(core_client: FordPassClient, method_name: str,
                                  expected_type: str) -> None:
     req = getattr(core_client, method_name)(_VIN)

@@ -33,7 +33,7 @@ from fordpass.commands.utils import (
     validate_message_ids_exist,
     validate_vin,
 )
-from fordpass.main import ford
+from fordpass.main import fordpass
 import click
 import pytest
 
@@ -342,7 +342,7 @@ async def test_check_readiness_blocked(mock_command_client: MagicMock) -> None:
                 'value': {
                     'data': {
                         'commandPreclusionCauses': {
-                            'deepSleepCommandPreclusionState': 'COMMANDS_PRECLUDED_BY_DEEP_SLEEP',
+                            'deepSleepCommandPreclusionState': 'COMMANDS_PRECLUDED_BY_DEEP_SLEEP'
                         }
                     }
                 }
@@ -493,7 +493,7 @@ def test_with_client_persists_when_tokens_change(runner: CliRunner, mocker: Mock
         return {'alerts': []}
 
     mock_command_client.get_alerts = AsyncMock(side_effect=changing_get_alerts)
-    result = runner.invoke(ford, ('alerts', 'current', _VIN))
+    result = runner.invoke(fordpass, ('alerts', 'current', _VIN))
     assert result.exit_code == 0
     assert persist.called
 
@@ -586,13 +586,13 @@ def test_vin_argument_falls_back_to_config_default(runner: CliRunner, mocker: Mo
                      'default_vin': _VIN
                  }})
     mock_command_client.get_alerts.return_value = {'alerts': []}
-    result = runner.invoke(ford, ('alerts', 'current'))
+    result = runner.invoke(fordpass, ('alerts', 'current'))
     assert result.exit_code == 0
 
 
 def test_vin_argument_no_value_no_config(runner: CliRunner, mocker: MockerFixture,
                                          mock_command_client: MagicMock) -> None:
     mocker.patch('fordpass.commands.utils.load_config', return_value={'vehicle': {}})
-    result = runner.invoke(ford, ('alerts', 'current'))
+    result = runner.invoke(fordpass, ('alerts', 'current'))
     assert result.exit_code != 0
     assert 'VIN is required' in result.output

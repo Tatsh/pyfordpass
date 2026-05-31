@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fordpass.main import ford, main
+from fordpass.main import fordpass, main
 import pytest
 
 if TYPE_CHECKING:
@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 def test_ford_help(runner: CliRunner) -> None:
-    result = runner.invoke(ford, ['--help'])
+    result = runner.invoke(fordpass, ['--help'])
     assert result.exit_code == 0
     assert 'FordPass CLI' in result.output
 

@@ -86,25 +86,25 @@ def stub_secrets() -> Secrets:
             'login': 'https://stub-login.example',
             'tmc': 'https://stub-tmc.example',
             'tmc_accounts': 'https://stub-tmc-accounts.example',
-            'vehicle': 'https://stub-vehicle.example',
+            'vehicle': 'https://stub-vehicle.example'
         },
         'auth': {
             'b2c': {
                 'client_id': 'STUB_B2C_CLIENT',
                 'policy_template': 'B2C_1A_{locale}_STUB',
                 'redirect_uri': 'stub://callback',
-                'tenant_id': 'stub-tenant',
+                'tenant_id': 'stub-tenant'
             },
             'tmc': {
                 'client_id': 'STUB_TMC_CLIENT'
-            },
+            }
         },
         'roadside': {
             'x_source': {
                 'ford': 'stub-x-source-ford',
                 'lincoln': 'stub-x-source-lincoln'
             }
-        },
+        }
     }
 
 

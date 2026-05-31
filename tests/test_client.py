@@ -47,7 +47,7 @@ def test_default_construction_uses_load_secrets(mocker: MockerFixture) -> None:
             },
             'tmc': {
                 'client_id': 'X'
-            },
+            }
         },
         'roadside': {
             'x_source': {
@@ -403,7 +403,7 @@ async def test_get_release_notes_two_step(async_client: AsyncFordPassClient,
         _make_response(json_body={'mmotaAlertsDetails': [{
             'releaseNotesUrl': 'https://x'
         }]}),
-        _make_response(json_body={'response': 'Notes body'}),
+        _make_response(json_body={'response': 'Notes body'})
     ]
     notes = await async_client.get_release_notes(_VIN)
     assert notes is not None
@@ -441,7 +441,7 @@ async def test_get_preferred_dealer_via_garage(async_client: AsyncFordPassClient
         _make_response(json_body={
             'paCode': 'P00001',
             'dealerName': 'Test Dealer'
-        }),
+        })
     ]
     result = await async_client.get_preferred_dealer(_VIN)
     assert result is not None
@@ -462,8 +462,7 @@ async def test_get_preferred_dealer_hydration_failed(async_client: AsyncFordPass
         _make_response(json_body=[{
             'vin': _VIN,
             'preferredDealer': 'P00001'
-        }]),
-        no_content,
+        }]), no_content
     ]
     result = await async_client.get_preferred_dealer(_VIN)
     assert result == {'paCode': 'P00001'}
