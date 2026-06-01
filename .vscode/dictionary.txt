@@ -48,6 +48,7 @@ coro
 countrycode
 coveragerc
 coverallsapp
+crcc
 ctypes
 cuiaba
 cvin
@@ -264,6 +265,7 @@ vins
 virtualenv
 vpfi
 winamac
+windshield
 wiswa
 wiswa's
 worktree
