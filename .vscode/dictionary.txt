@@ -69,6 +69,7 @@ efate
 eirunepe
 elif
 enderbury
+enrollment
 esac
 esbenp
 esbonio
@@ -95,6 +96,7 @@ gallegos
 genindex
 getschedules
 globaltoc
+gmfi
 godthab
 hermosillo
 hovd
@@ -258,6 +260,7 @@ vers
 vevay
 vins
 virtualenv
+vpfi
 winamac
 wiswa
 wiswa's
@@ -269,3 +272,5 @@ yapf
 yapfignore
 yarnrc
 zaporozhye
+zonelightingactivation
+zonelightingzone
