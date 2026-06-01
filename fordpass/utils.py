@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .typing.alerts import AlertsResponse
     from .typing.common import CompassDirection, GPSPosition
     from .typing.departure import DepartureScheduleDay
+    from .typing.rcc import RCCPreference
     from .typing.telemetry import DepartureSchedule, MetricEntry
     from .typing.vehicle import GarageVehicle
 
@@ -25,10 +26,11 @@ The ``metrics`` sub-object of a telemetry response (the shape on
 :meta hide-value:
 """
 
-__all__ = ('MetricsBlock', 'extract_departure_schedule_days', 'extract_fuel', 'extract_odometer',
+__all__ = ('MetricsBlock', 'decode_rcc_temperature', 'encode_rcc_temperature',
+           'extract_departure_schedule_days', 'extract_fuel', 'extract_odometer',
            'extract_oil_life', 'extract_position', 'find_next_departure',
            'find_preferred_dealer_code', 'is_list_like', 'is_washer_fluid_low',
-           'scalar_metric_value', 'walk_mapping')
+           'merge_rcc_preferences', 'scalar_metric_value', 'walk_mapping')
 
 
 def scalar_metric_value(entry: MetricEntry | Sequence[MetricEntry] | None) -> Any:
@@ -378,3 +380,79 @@ def extract_departure_schedule_days(metrics: MetricsBlock) -> list[DepartureSche
             group['schedules'].append(_departure_slot_from_telemetry(slot, weekly, location_id))
     return cast('list[DepartureScheduleDay]',
                 [by_day[day] for day in _DEPARTURE_DAY_ORDER if day in by_day])
+
+
+def encode_rcc_temperature(celsius: float) -> str:
+    """
+    Encode a Celsius temperature in the RCC ``XX_Y`` wire format.
+
+    The Remote Climate Control profile stores ``SetPointTemp_Rq`` as ``"<int>_<dec>"`` with a single
+    fractional digit, so ``22.0`` becomes ``"22_0"`` and ``22.5`` becomes ``"22_5"``.
+
+    Parameters
+    ----------
+    celsius : float
+        The target temperature in degrees Celsius.
+
+    Returns
+    -------
+    str
+        The value in ``XX_Y`` form.
+    """
+    return f'{celsius:.1f}'.replace('.', '_')
+
+
+def decode_rcc_temperature(value: str) -> float:
+    """
+    Decode an RCC ``XX_Y`` temperature string into a float (degrees Celsius).
+
+    Parameters
+    ----------
+    value : str
+        A temperature in ``"<int>_<dec>"`` form, for example ``"22_0"``.
+
+    Returns
+    -------
+    float
+        The temperature in degrees Celsius (raises :py:class:`ValueError` on a malformed input).
+    """
+    return float(value.replace('_', '.'))
+
+
+def merge_rcc_preferences(current: Sequence[RCCPreference],
+                          updates: Mapping[str, str]) -> list[RCCPreference]:
+    """
+    Merge a sparse set of ``updates`` over an existing RCC preference list.
+
+    Replaces the ``preferenceValue`` of any entry whose ``preferenceType`` appears in ``updates``,
+    preserving the original order and leaving every other entry untouched. Keys in ``updates`` that
+    are absent from ``current`` are appended in sorted order, so a caller can introduce a preference
+    the saved profile lacks. The input is never mutated.
+
+    Parameters
+    ----------
+    current : Sequence[RCCPreference]
+        The currently-published preference pairs (from a prior RCC read).
+    updates : Mapping[str, str]
+        Sparse ``{preferenceType: preferenceValue}`` overrides to apply.
+
+    Returns
+    -------
+    list[RCCPreference]
+        A new list with ``updates`` merged in.
+    """
+    seen: set[str] = set()
+    result: list[RCCPreference] = []
+    for pref in current:
+        key = pref.get('preferenceType', '')
+        if key in updates:
+            seen.add(key)
+            result.append(cast('RCCPreference', {**pref, 'preferenceValue': updates[key]}))
+        else:
+            result.append(cast('RCCPreference', dict(pref)))
+    result.extend(
+        cast('RCCPreference', {
+            'preferenceType': key,
+            'preferenceValue': updates[key]
+        }) for key in sorted(updates) if key not in seen)
+    return result

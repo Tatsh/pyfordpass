@@ -35,6 +35,7 @@ from .api_config import load_api_config
 from .config import DEFAULT_IMPERSONATE, load_config
 from .sansio import FordPassClient
 from .typing.lighting import ZONE_LIGHT_OFF
+from .typing.rcc import RCC_PREFERENCE_KEYS
 from .utils import (
     extract_departure_schedule_days,
     extract_fuel,
@@ -44,6 +45,7 @@ from .utils import (
     find_next_departure,
     find_preferred_dealer_code,
     is_washer_fluid_low,
+    merge_rcc_preferences,
 )
 
 if TYPE_CHECKING:
@@ -69,6 +71,7 @@ if TYPE_CHECKING:
     from .typing.lighting import ZoneLightZone
     from .typing.messages import MessagesResponse
     from .typing.profile import ProfileResponse, SaveProfileFields
+    from .typing.rcc import RCCPreferenceKey, RCCProfile
     from .typing.release import ReleaseNotesResponse
     from .typing.roadside import IDNameListResponse, RoadsideActiveResponse
     from .typing.schedule import ScheduleEntry, SchedulesResponse
@@ -86,6 +89,15 @@ Seconds to wait after turning the zone lighting on before selecting a zone.
 
 Mirrors ha-fordpass: when the lights start from off, the activation must settle before a
 mode change is accepted.
+
+:meta hide-value:
+"""
+
+_RCC_STATE_FLAG_ON = 'On'
+"""
+Default ``crccStateFlag`` envelope value for a Remote Climate Control write.
+
+ha-fordpass hardcodes ``'On'`` (``fordpass_handler.py``); callers can override it per write.
 
 :meta hide-value:
 """
@@ -1831,6 +1843,69 @@ class AsyncFordPassClient:  # noqa: PLR0904
             The parsed Guard Mode response.
         """
         return cast('GuardModeResponse', await self._send_json(self.core.delete_guard_mode(vin)))
+
+    async def get_remote_climate(self, vin: str) -> RCCProfile:
+        """
+        Read the saved Remote Climate Control profile for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RCCProfile
+            The parsed RCC profile; ``rccUserProfiles`` is empty or absent when no profile exists.
+        """
+        return cast('RCCProfile', await self._send_json(self.core.get_remote_climate(vin)))
+
+    async def set_remote_climate(self,
+                                 vin: str,
+                                 *,
+                                 updates: Mapping[RCCPreferenceKey, str],
+                                 state_flag: str | None = None) -> bool:
+        """
+        Merge ``updates`` over the current RCC profile and write the result back.
+
+        Reads the current profile once, applies the sparse ``updates`` in memory (so a caller need
+        only send the keys they want to change), then issues a single ``PUT``. The endpoint replies
+        with ``{"status": 200}`` and no command id, so success is fire-and-forget: re-read with
+        :py:meth:`get_remote_climate` to confirm the vehicle applied it.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        updates : Mapping[RCCPreferenceKey, str]
+            Sparse ``{preferenceType: preferenceValue}`` overrides to apply.
+        state_flag : str | None
+            Override for the ``crccStateFlag`` envelope value; defaults to ``'On'``.
+
+        Returns
+        -------
+        bool
+            ``True`` when the server accepted the write (HTTP success and a non-error ``status``).
+
+        Raises
+        ------
+        ValueError
+            If ``updates`` contains a key absent from
+            :py:data:`fordpass.typing.rcc.RCC_PREFERENCE_KEYS`.
+        """
+        if unknown := set(updates) - set(RCC_PREFERENCE_KEYS):
+            msg = f'Unknown RCC preference key(s): {", ".join(sorted(unknown))}.'
+            raise ValueError(msg)
+        current = await self.get_remote_climate(vin)
+        merged = merge_rcc_preferences(
+            current.get('rccUserProfiles') or [], cast('Mapping[str, str]', updates))
+        result = await self._send_json(
+            self.core.set_remote_climate(vin,
+                                         state_flag=state_flag or _RCC_STATE_FLAG_ON,
+                                         user_preferences=merged))
+        if isinstance(result, dict):
+            return result.get('status') == HTTPStatus.OK
+        return True
 
     async def turn_zone_lights_on(self, vin: str) -> niquests.Response:
         """

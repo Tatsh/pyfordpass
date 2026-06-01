@@ -83,6 +83,14 @@ from fordpass.typing.profile import (
     ProfileUnitsOfMeasure,
     SaveProfileFields,
 )
+from fordpass.typing.rcc import (
+    RCC_PREFERENCE_KEYS,
+    RCCPreference,
+    RCCPreferenceKey,
+    RCCProfile,
+    RCCSeatLevel,
+    RCCToggle,
+)
 from fordpass.typing.release import ReleaseNotesResponse
 from fordpass.typing.roadside import IDNameEntry, IDNameListResponse, RoadsideActiveResponse
 from fordpass.typing.schedule import ScheduleEntry, SchedulesEnvelope, SchedulesResponse
@@ -110,6 +118,7 @@ from fordpass.typing.vehicle import (
 )
 
 __all__ = (
+    'RCC_PREFERENCE_KEYS',
     'ZONE_LIGHT_OFF',
     'APIConfig',
     'APIConfigAuth',
@@ -173,6 +182,11 @@ __all__ = (
     'ProfilePhoneNumbers',
     'ProfileResponse',
     'ProfileUnitsOfMeasure',
+    'RCCPreference',
+    'RCCPreferenceKey',
+    'RCCProfile',
+    'RCCSeatLevel',
+    'RCCToggle',
     'RecallItem',
     'ReleaseNotesResponse',
     'RoadsideActiveResponse',

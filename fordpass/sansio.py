@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from .typing.common import CountryHeaderCasing, DistanceUnit
     from .typing.departure import DepartureScheduleDay
     from .typing.profile import SaveProfileFields
+    from .typing.rcc import RCCPreference
 
 # Nothing in this module reads disk, env, or the network at import time. The
 # :py:class:`FordPassClient` constructor receives a :py:class:`APIConfig` bundle which the caller
@@ -2277,6 +2278,66 @@ class FordPassClient:  # noqa: PLR0904
                            url=f'{host}/api/gmfi/v1/session',
                            headers=self._mps_headers(x_vin=vin),
                            data=None)
+
+    def get_remote_climate(self, vin: str) -> RequestDict:
+        """
+        Build the request that reads the saved Remote Climate Control profile for ``vin``.
+
+        ha-fordpass uses a ``POST`` for this status read (with a ``{"vin": <vin>}`` body) rather
+        than the ``GET`` the path implies; this mirrors that exactly.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``POST /api/rcc/profile/status`` call.
+        """
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='POST',
+                           url=f'{host}/api/rcc/profile/status',
+                           headers={
+                               **self._ford_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({'vin': vin}))
+
+    def set_remote_climate(self, vin: str, *, state_flag: str,
+                           user_preferences: Sequence[RCCPreference]) -> RequestDict:
+        """
+        Build the request that replaces the Remote Climate Control profile for ``vin``.
+
+        The wire format is a full replace: ``user_preferences`` is the complete list of pairs to
+        publish. The ``PUT`` response carries only ``{"status": 200}`` with no command id, so the
+        write is fire-and-forget - confirm it with a subsequent :py:meth:`get_remote_climate` read.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        state_flag : str
+            The ``crccStateFlag`` envelope value (ha-fordpass hardcodes ``'On'``).
+        user_preferences : Sequence[RCCPreference]
+            The complete preference list to publish.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``PUT /api/rcc/profile/update`` call.
+        """
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='PUT',
+                           url=f'{host}/api/rcc/profile/update',
+                           headers={
+                               **self._ford_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({
+                               'crccStateFlag': state_flag,
+                               'userPreferences': list(user_preferences),
+                               'vin': vin
+                           }))
 
     def turn_zone_lights_on(self, vin: str) -> RequestDict:
         """

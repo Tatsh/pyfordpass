@@ -30,6 +30,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `delete-by-day`, with matching `AsyncFordPassClient` methods, sans-I/O builders for the
   `enableDepartureTimes` / `disableDepartureTimes` / `updateDepartureTimes` beta TMC commands, and
   the `DepartureScheduleDay` / `DepartureScheduleSlot` / `TimeOfDay` types.
+- Remote Climate Control support: a `fordpass climate` command group (`show`, `set`) backed by the
+  Ford vehicle API, with `AsyncFordPassClient.get_remote_climate` and a sparse-merge
+  `set_remote_climate`, sans-I/O builders for the `rcc/profile/status` read and `rcc/profile/update`
+  write, `encode_rcc_temperature` / `decode_rcc_temperature` / `merge_rcc_preferences` helpers, and
+  the `RCCPreference` / `RCCProfile` / `RCCPreferenceKey` / `RCCSeatLevel` / `RCCToggle` types.
 
 ## [0.0.1] - 2026-05-31
 

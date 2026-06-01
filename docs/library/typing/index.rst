@@ -27,6 +27,7 @@ Submodules
    lighting
    messages
    profile
+   rcc
    release
    roadside
    schedule

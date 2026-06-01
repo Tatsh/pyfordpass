@@ -799,6 +799,158 @@ Arguments
 .B VIN
 Optional argument
 .UNINDENT
+.SS climate
+.sp
+Remote Climate Control profile (Ford vehicle API).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass climate [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS set
+.sp
+Update one or more remote climate settings (sparse merge).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass climate set [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-temp <temp>
+Target cabin temperature in your configured unit.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-heated\-windshield <heated_windshield>
+Heated windshield on or off.
+.INDENT 7.0
+.TP
+.B Options
+off | on
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-rear\-defrost <rear_defrost>
+Rear defrost on or off.
+.INDENT 7.0
+.TP
+.B Options
+off | on
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-heated\-steering\-wheel <heated_steering_wheel>
+Heated steering wheel on or off.
+.INDENT 7.0
+.TP
+.B Options
+off | on
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-seat\-lf <seat_lf>
+Left\-front climate seat level.
+.INDENT 7.0
+.TP
+.B Options
+off | low | medium | high
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-seat\-lr <seat_lr>
+Left\-rear climate seat level.
+.INDENT 7.0
+.TP
+.B Options
+off | low | medium | high
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-seat\-rf <seat_rf>
+Right\-front climate seat level.
+.INDENT 7.0
+.TP
+.B Options
+off | low | medium | high
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-seat\-rr <seat_rr>
+Right\-rear climate seat level.
+.INDENT 7.0
+.TP
+.B Options
+off | low | medium | high
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS show
+.sp
+Show the saved remote climate profile.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass climate show [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
 .SS config
 .sp
 Inspect and edit the user configuration (\fBconfig.toml\fP).

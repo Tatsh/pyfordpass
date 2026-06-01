@@ -194,9 +194,10 @@ def mock_command_client(mocker: MockerFixture) -> MagicMock:
     mocker.patch('fordpass.commands.utils.ensure_signed_in', new_callable=AsyncMock)
     mocker.patch('fordpass.commands.utils.persist_tokens')
     mocker.patch('fordpass.commands.utils.run_async', side_effect=asyncio.run)
-    command_modules = ('alerts', 'auth', 'charge', 'dealer', 'departure', 'drivers', 'guard',
-                       'lights', 'messages', 'ota', 'ppo', 'precondition', 'profile', 'remote',
-                       'roadside', 'schedule', 'service', 'telemetry', 'trailer', 'vehicle')
+    command_modules = ('alerts', 'auth', 'charge', 'climate', 'dealer', 'departure', 'drivers',
+                       'guard', 'lights', 'messages', 'ota', 'ppo', 'precondition', 'profile',
+                       'remote', 'roadside', 'schedule', 'service', 'telemetry', 'trailer',
+                       'vehicle')
     for mod in command_modules:
         mocker.patch(f'fordpass.commands.{mod}.make_client', return_value=client, create=True)
         mocker.patch(f'fordpass.commands.{mod}.ensure_signed_in',

@@ -203,6 +203,29 @@ fordpass lights zone VIN front # Light one zone: all|front|rear|driver|passenger
 currently off, selecting a zone turns them on first, waits for the activation to settle, and then
 applies the zone.
 
+## Remote Climate Control
+
+On supported models, `fordpass climate` reads and writes the saved Remote Climate Control profile
+(heated seats, defrost, heated steering wheel, and target cabin temperature):
+
+```shell
+fordpass climate show VIN                 # Decoded profile table (temperature in your unit).
+fordpass climate set VIN --temp 22.0      # Set the target temperature.
+fordpass climate set VIN --rear-defrost on --seat-lf medium
+```
+
+`climate set` is a sparse merge: it reads the current profile once, applies only the flags you
+passed, and writes the full profile back. Available flags:
+
+- `--temp` - target cabin temperature in your configured unit (Fahrenheit in the US locale,
+  Celsius elsewhere).
+- `--heated-windshield`, `--rear-defrost`, `--heated-steering-wheel` - each `off` or `on`.
+- `--seat-lf`, `--seat-lr`, `--seat-rf`, `--seat-rr` - left/right front/rear climate seats, each
+  `off`, `low`, `medium`, or `high`.
+
+Both subcommands support `--json`. The write is fire-and-forget: the endpoint returns no command
+id, so re-run `climate show` to confirm the vehicle applied the change.
+
 ## Experimental commands
 
 The following command groups are ported from `ha-fordpass`, whose author flags them as

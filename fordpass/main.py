@@ -9,6 +9,7 @@ from .commands.alerts import alerts
 from .commands.api_config import api_config
 from .commands.auth import auth
 from .commands.charge import charge
+from .commands.climate import climate
 from .commands.config import config
 from .commands.dealer import dealer
 from .commands.departure import departure
@@ -42,6 +43,7 @@ fordpass.add_command(alerts)
 fordpass.add_command(api_config)
 fordpass.add_command(auth)
 fordpass.add_command(charge)
+fordpass.add_command(climate)
 fordpass.add_command(config)
 fordpass.add_command(dealer)
 fordpass.add_command(departure)
