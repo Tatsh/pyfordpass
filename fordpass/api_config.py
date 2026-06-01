@@ -32,6 +32,7 @@ DEFAULT_API_CONFIG: APIConfig = {
     'hosts': {
         'foundational': 'https://api.foundational.ford.com',
         'login': 'https://login.ford.com',
+        'mps': 'https://api.mps.ford.com',
         'tmc': 'https://api.autonomic.ai',
         'tmc_accounts': 'https://accounts.autonomic.ai',
         'vehicle': 'https://api.vehicle.ford.com'

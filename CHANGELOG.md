@@ -15,6 +15,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `target`, `times`, `status`, and `logs`), with matching `AsyncFordPassClient` methods and
   sans-I/O request builders for the global-charge TMC commands and the electrification
   energy-transfer endpoints.
+- Guard Mode support: a `fordpass guard` command group (`status`, `enable`, `disable`) backed by
+  the Ford MPS API (single HTTP call, no polling), with a new `mps` host constant and the
+  `GuardModeResponse` type.
+- Zone-lighting support: a `fordpass lights` command group (`on`, `off`, `zone`) backed by the
+  Ford MPS API, including the two-step "turn on then select zone" flow in
+  `AsyncFordPassClient.set_zone_lighting` and a `ZoneLightZone` type.
+- Experimental Autonomic TMC commands ported from `ha-fordpass` (flagged unverified upstream):
+  `fordpass trailer check` (`on`, `off`), `fordpass precondition` (`start`, `extend`, `stop`), and
+  `fordpass ppo` (`refresh`, `stream`, `cancel`), plus a `honk_and_flash` client convenience alias
+  over `startPanicCue`.
 
 ## [0.0.1] - 2026-05-31
 

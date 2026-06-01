@@ -121,6 +121,64 @@ omitted):
 fordpass charge target VIN --location-id LOCATION_ID --data - < profile.json
 ```
 
+## Guard Mode
+
+On supported models, `fordpass guard` reads and toggles the Guard Mode session. These calls go to
+the Ford MPS API rather than the telemetry plane, so they are a single HTTP request each (no
+polling):
+
+```shell
+fordpass guard status VIN  # Show the current Guard Mode session state.
+fordpass guard enable VIN  # Enable Guard Mode.
+fordpass guard disable VIN # Disable Guard Mode.
+```
+
+Each subcommand supports `--json`. The response carries a `returnCode` (`200` on success) and a
+`returnMessage`; a disable can legitimately report code `300` with "Enrollment is still in
+progress."
+
+## Zone lighting
+
+For vehicles with zone lighting, `fordpass lights` controls the exterior lighting zones:
+
+```shell
+fordpass lights on VIN         # Turn the zone lighting on.
+fordpass lights off VIN        # Turn the zone lighting off.
+fordpass lights zone VIN front # Light one zone: all|front|rear|driver|passenger|off.
+```
+
+`lights zone` accepts `all`, `front`, `rear`, `driver`, `passenger`, and `off`. When the lights are
+currently off, selecting a zone turns them on first, waits for the activation to settle, and then
+applies the zone.
+
+## Experimental commands
+
+The following command groups are ported from `ha-fordpass`, whose author flags them as
+**unverified** - they ship here as experimental and may return an error for your vehicle.
+
+`fordpass trailer check` flashes the trailer lights to verify a connection:
+
+```shell
+fordpass trailer check on VIN  # Flash the trailer lights.
+fordpass trailer check off VIN # Stop an active trailer-light check.
+```
+
+`fordpass precondition` controls cabin preconditioning, independent of remote start:
+
+```shell
+fordpass precondition start VIN  # Start cabin preconditioning.
+fordpass precondition extend VIN # Extend an active session.
+fordpass precondition stop VIN   # Stop an active session.
+```
+
+`fordpass ppo` triggers a Programmable Parameter Override refresh:
+
+```shell
+fordpass ppo refresh VIN                                    # One-shot refresh.
+fordpass ppo stream VIN --frequency-min 3 --duration-min 10 # Continuous refresh.
+fordpass ppo cancel VIN                                     # Cancel a continuous refresh.
+```
+
 ## Configuration
 
 `pyfordpass` has two sets of optional settings, each managed with its own subcommand rather than

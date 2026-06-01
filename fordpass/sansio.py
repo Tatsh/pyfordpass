@@ -298,6 +298,28 @@ class FordPassClient:  # noqa: PLR0904
         h.update(extras)
         return h
 
+    def _mps_headers(self, *, x_vin: str | None = None) -> dict[str, str]:
+        """
+        Build the header dictionary for ``api.mps.ford.com`` endpoints.
+
+        The MPS host authenticates with the same CAT ``auth-token`` bundle as the rest of the
+        Ford plane, so this delegates to :py:meth:`_ford_headers`. Guard Mode additionally requires
+        the VIN in a proper-case ``X-Vin`` header (distinct from the lowercase ``vin`` header the
+        electrification endpoints use); zone lighting omits it and carries the VIN in the body
+        instead.
+
+        Parameters
+        ----------
+        x_vin : str | None
+            VIN to place in the ``X-Vin`` header. Omitted when ``None``.
+
+        Returns
+        -------
+        dict[str, str]
+            The Ford-plane headers, plus ``X-Vin`` when ``x_vin`` is given.
+        """
+        return self._ford_headers(extra_headers={'X-Vin': x_vin} if x_vin is not None else None)
+
     @staticmethod
     def _json_body(obj: Any) -> str:
         """
@@ -1873,3 +1895,388 @@ class FordPassClient:  # noqa: PLR0904
                                **self._ford_headers(), 'content-type': 'application/json'
                            },
                            data=self._json_body(body))
+
+    def start_trailer_light_check(self, vin: str) -> RequestDict:
+        """
+        Build the request that flashes the trailer lights to verify the connection.
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the
+        trailer-light commands as unverified - they may return an error for your vehicle.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``startTrailerLightCheck`` TMC command.
+        """
+        return self._tmc_command(vin, 'startTrailerLightCheck')
+
+    def stop_trailer_light_check(self, vin: str) -> RequestDict:
+        """
+        Build the request that stops an active trailer-light check.
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the
+        trailer-light commands as unverified - they may return an error for your vehicle.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``stopTrailerLightCheck`` TMC command.
+        """
+        return self._tmc_command(vin, 'stopTrailerLightCheck')
+
+    def start_on_demand_preconditioning(self,
+                                        vin: str,
+                                        *,
+                                        duration: int = 0,
+                                        setting: int = 2) -> RequestDict:
+        """
+        Build the request that starts cabin preconditioning (independent of remote start).
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the
+        preconditioning commands as unverified - they may return an error for your vehicle. The
+        meaning of ``setting`` (``vehiclePreconditionSetting``) is opaque upstream; ``2`` is the
+        value ha-fordpass sends to start.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration : int
+            Value for ``preconditioningDuration`` (ha-fordpass sends ``0``).
+        setting : int
+            Value for ``vehiclePreconditionSetting`` (ha-fordpass sends ``2`` to start).
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``startOnDemandPreconditioning`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'startOnDemandPreconditioning',
+                                 properties={
+                                     'preconditioningDuration': duration,
+                                     'vehiclePreconditionSetting': setting
+                                 },
+                                 beta=True,
+                                 version='1')
+
+    def extend_on_demand_preconditioning(self,
+                                         vin: str,
+                                         *,
+                                         duration: int = 0,
+                                         setting: int = 2) -> RequestDict:
+        """
+        Build the request that extends an active preconditioning session.
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the
+        preconditioning commands as unverified - they may return an error for your vehicle.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration : int
+            Value for ``preconditioningDuration`` (ha-fordpass sends ``0``).
+        setting : int
+            Value for ``vehiclePreconditionSetting`` (ha-fordpass sends ``2`` to extend).
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``extendOnDemandPreconditioning`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'extendOnDemandPreconditioning',
+                                 properties={
+                                     'preconditioningDuration': duration,
+                                     'vehiclePreconditionSetting': setting
+                                 },
+                                 beta=True,
+                                 version='1')
+
+    def stop_on_demand_preconditioning(self,
+                                       vin: str,
+                                       *,
+                                       duration: int = 0,
+                                       setting: int = 1) -> RequestDict:
+        """
+        Build the request that stops an active preconditioning session.
+
+        Unlike the start / extend variants this command omits the ``version`` key from the body
+        (ha-fordpass does not pass a ``data_version`` for the stop command), so the beta endpoint
+        is hit without a command-schema version. Experimental: the wire format is taken from
+        ha-fordpass, whose author flags the preconditioning commands as unverified.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration : int
+            Value for ``preconditioningDuration`` (ha-fordpass sends ``0``).
+        setting : int
+            Value for ``vehiclePreconditionSetting`` (ha-fordpass sends ``1`` to stop).
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``stopOnDemandPreconditioning`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'stopOnDemandPreconditioning',
+                                 properties={
+                                     'preconditioningDuration': duration,
+                                     'vehiclePreconditionSetting': setting
+                                 },
+                                 beta=True)
+
+    def ppo_refresh(self, vin: str) -> RequestDict:
+        """
+        Build the request that triggers a one-shot Programmable Parameter Override refresh.
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the PPO
+        commands as unverified - they may return an error for your vehicle.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``ppoRefresh`` beta TMC command.
+        """
+        return self._tmc_command(vin, 'ppoRefresh', beta=True, version='1.0.0')
+
+    def ppo_refresh_continuous(self,
+                               vin: str,
+                               *,
+                               frequency_min: int = 3,
+                               duration_min: int = 10) -> RequestDict:
+        """
+        Build the request that starts a continuous Programmable Parameter Override refresh.
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the PPO
+        commands as unverified - they may return an error for your vehicle.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        frequency_min : int
+            Refresh frequency in minutes for the ``frequencyAndDuration`` payload.
+        duration_min : int
+            Total duration in minutes for the ``frequencyAndDuration`` payload.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``ppoRefreshContinuous`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'ppoRefreshContinuous',
+                                 properties={
+                                     'frequencyAndDuration': {
+                                         'frequency': frequency_min,
+                                         'duration': duration_min
+                                     }
+                                 },
+                                 beta=True,
+                                 version='1.0.0')
+
+    def ppo_refresh_cancel(self, vin: str) -> RequestDict:
+        """
+        Build the request that cancels a continuous Programmable Parameter Override refresh.
+
+        Experimental: the wire format is taken from ha-fordpass, whose author flags the PPO
+        commands as unverified - they may return an error for your vehicle.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``ppoRefreshContinuousCancel`` beta TMC command.
+        """
+        return self._tmc_command(
+            vin,
+            'ppoRefreshContinuousCancel',
+            properties={'frequencyAndDuration': {
+                'frequency': 0,
+                'duration': 0
+            }},
+            beta=True,
+            version='1.0.0')
+
+    def honk_and_flash(self, vin: str, *, duration_s: int = 3) -> RequestDict:
+        """
+        Build a honk-and-flash request (convenience alias over :py:meth:`panic_alarm`).
+
+        Produces the same ``startPanicCue`` wire body as :py:meth:`panic_alarm`; provided for
+        callers who prefer the honk-and-flash name. ha-fordpass uses durations of ``1`` (short),
+        ``3`` (default), and ``5`` (long).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration_s : int
+            How long, in seconds, to keep the cue active.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``startPanicCue`` TMC command.
+        """
+        return self.panic_alarm(vin, duration_s)
+
+    def get_guard_mode(self, vin: str) -> RequestDict:
+        """
+        Build the request that reads the Guard Mode session state for ``vin``.
+
+        Guard Mode lives on the Ford MPS host (not the TMC plane) and travels the VIN in a
+        proper-case ``X-Vin`` header.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``GET .../api/gmfi/v1/session`` call.
+        """
+        host = self._api_config['hosts']['mps']
+        return RequestDict(method='GET',
+                           url=f'{host}/api/gmfi/v1/session',
+                           headers=self._mps_headers(x_vin=vin),
+                           data=None)
+
+    def set_guard_mode(self, vin: str) -> RequestDict:
+        """
+        Build the request that enables Guard Mode for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``PUT .../api/gmfi/v1/session`` call.
+        """
+        host = self._api_config['hosts']['mps']
+        return RequestDict(method='PUT',
+                           url=f'{host}/api/gmfi/v1/session',
+                           headers=self._mps_headers(x_vin=vin),
+                           data=None)
+
+    def delete_guard_mode(self, vin: str) -> RequestDict:
+        """
+        Build the request that disables Guard Mode for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``DELETE .../api/gmfi/v1/session`` call.
+        """
+        host = self._api_config['hosts']['mps']
+        return RequestDict(method='DELETE',
+                           url=f'{host}/api/gmfi/v1/session',
+                           headers=self._mps_headers(x_vin=vin),
+                           data=None)
+
+    def turn_zone_lights_on(self, vin: str) -> RequestDict:
+        """
+        Build the request that turns the zone lighting on for ``vin``.
+
+        Zone lighting lives on the Ford MPS host under ``/vehicles/vpfi`` (no ``/api`` prefix) and
+        carries the VIN in the JSON body rather than a header.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``PUT .../vehicles/vpfi/zonelightingactivation`` call.
+        """
+        host = self._api_config['hosts']['mps']
+        return RequestDict(method='PUT',
+                           url=f'{host}/vehicles/vpfi/zonelightingactivation',
+                           headers={
+                               **self._mps_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({'vin': vin}))
+
+    def turn_zone_lights_off(self, vin: str) -> RequestDict:
+        """
+        Build the request that turns the zone lighting off for ``vin``.
+
+        This ``DELETE`` deliberately carries a JSON body (``{"vin": <vin>}``) - unusual for a
+        ``DELETE`` and easy to drop if a transport strips ``DELETE`` bodies.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``DELETE .../vehicles/vpfi/zonelightingactivation`` call.
+        """
+        host = self._api_config['hosts']['mps']
+        return RequestDict(method='DELETE',
+                           url=f'{host}/vehicles/vpfi/zonelightingactivation',
+                           headers={
+                               **self._mps_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({'vin': vin}))
+
+    def set_zone_lights_mode(self, vin: str, *, zone: str) -> RequestDict:
+        """
+        Build the request that selects which zone(s) the lighting illuminates for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        zone : str
+            The wire zone value (see :py:data:`fordpass.typing.lighting.ZoneLightZone`): ``'0'``
+            all, ``'1'`` front, ``'2'`` rear, ``'3'`` driver, ``'4'`` passenger.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``PUT .../vehicles/vpfi/{zone}/zonelightingzone`` call.
+        """
+        host = self._api_config['hosts']['mps']
+        return RequestDict(method='PUT',
+                           url=f'{host}/vehicles/vpfi/{zone}/zonelightingzone',
+                           headers={
+                               **self._mps_headers(), 'content-type': 'application/json'
+                           },
+                           data=self._json_body({'vin': vin}))

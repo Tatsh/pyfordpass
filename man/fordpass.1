@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "FORDPASS" "1" "May 31, 2026" "0.0.1" "pyfordpass"
+.TH "FORDPASS" "1" "Jun 01, 2026" "0.0.1" "pyfordpass"
 .SH NAME
 fordpass \- FordPass client and CLI
 .sp
@@ -503,6 +503,302 @@ Enable debug level logging.
 .B \-\-json
 Emit machine\-readable JSON instead of a pretty table.
 .UNINDENT
+.SS charge
+.sp
+EV charging control and status.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS cancel
+.sp
+Cancel an active charge session.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge cancel [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS logs
+.sp
+Show recent energy\-transfer logs.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge logs [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-max\-records <max_records>
+Maximum number of log records to fetch.
+.INDENT 7.0
+.TP
+.B Default
+\fB20\fP
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS pause
+.sp
+Pause an active charge session.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge pause [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS set
+.sp
+Update a single charge setting (KEY VALUE).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge set [OPTIONS] [VIN] {autoChargePortUnlock|chargeMode|globalCur
+                    rentLimit|globalDCPowerLimit|globalDCTargetSoc|globalReser
+                    veSoc|globalTargetSoc} VALUE
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B KEY
+Required argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B VALUE
+Required argument
+.UNINDENT
+.SS start
+.sp
+Start a charge session.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge start [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f, \-\-force
+Send the command even if the vehicle reports Battery Saver mode.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS status
+.sp
+Show the live energy\-transfer status.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge status [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS target
+.sp
+Set the preferred\-charge\-times profile for a location.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge target [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-location\-id <location_id>
+Charge\-location id. Defaults to \fIlocation.id\fP from \-\-data.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-data <data_>
+\fBRequired\fP Preferred\-charge\-times JSON body (\(aq\-\(aq reads standard input).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS times
+.sp
+Show the preferred\-charge\-times profile.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass charge times [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
 .SS config
 .sp
 Inspect and edit the user configuration (\fBconfig.toml\fP).
@@ -829,6 +1125,214 @@ Arguments
 .B VIN
 Optional argument
 .UNINDENT
+.SS guard
+.sp
+Guard Mode status and control (Ford MPS API).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass guard [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS disable
+.sp
+Disable Guard Mode.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass guard disable [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS enable
+.sp
+Enable Guard Mode.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass guard enable [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS status
+.sp
+Show the current Guard Mode session state.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass guard status [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-json
+Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS lights
+.sp
+Zone\-lighting control (Ford MPS API).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass lights [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS off
+.sp
+Turn the zone lighting off.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass lights off [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS on
+.sp
+Turn the zone lighting on.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass lights on [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS zone
+.sp
+Select the lit zone: all, front, rear, driver, passenger, or off.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass lights zone [OPTIONS] [VIN] {all|front|rear|driver|passenger|off}
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B ZONE
+Required argument
+.UNINDENT
 .SS messages
 .sp
 In\-app message center.
@@ -1113,6 +1617,214 @@ Enable debug level logging.
 .TP
 .B \-\-json
 Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS ppo
+.sp
+Programmable Parameter Override refresh (experimental).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass ppo [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS cancel
+.sp
+Cancel a continuous PPO refresh. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass ppo cancel [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS refresh
+.sp
+Trigger a one\-shot PPO refresh. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass ppo refresh [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS stream
+.sp
+Start a continuous PPO refresh. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass ppo stream [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-frequency\-min <frequency_min>
+Refresh frequency in minutes.
+.INDENT 7.0
+.TP
+.B Default
+\fB3\fP
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-duration\-min <duration_min>
+Total duration in minutes.
+.INDENT 7.0
+.TP
+.B Default
+\fB10\fP
+.UNINDENT
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS precondition
+.sp
+Cabin preconditioning (experimental).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass precondition [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS extend
+.sp
+Extend an active preconditioning session. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass precondition extend [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS start
+.sp
+Start cabin preconditioning. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass precondition start [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS stop
+.sp
+Stop an active preconditioning session. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass precondition stop [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
 .UNINDENT
 .sp
 Arguments
@@ -2202,6 +2914,86 @@ kilometers | kilometres | km | mi | miles
 .TP
 .B \-\-json
 Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS trailer
+.sp
+Trailer functions.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass trailer [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS check
+.sp
+Trailer light check (experimental).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass trailer check [OPTIONS] COMMAND [ARGS]...
+.EE
+.UNINDENT
+.UNINDENT
+.SS off
+.sp
+Stop an active trailer\-light check. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass trailer check off [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS on
+.sp
+Flash the trailer lights to verify the connection. (Experimental.)
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass trailer check on [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
 .UNINDENT
 .sp
 Arguments

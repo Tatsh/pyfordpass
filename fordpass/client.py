@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, cast
+import asyncio
 import contextlib
 import json as _json
 import uuid
@@ -33,6 +34,7 @@ import niquests
 from .api_config import load_api_config
 from .config import DEFAULT_IMPERSONATE, load_config
 from .sansio import FordPassClient
+from .typing.lighting import ZONE_LIGHT_OFF
 from .utils import (
     extract_fuel,
     extract_odometer,
@@ -61,6 +63,8 @@ if TYPE_CHECKING:
         EnergyTransferStatusResponse,
         PreferredChargeTimesResponse,
     )
+    from .typing.guard import GuardModeResponse
+    from .typing.lighting import ZoneLightZone
     from .typing.messages import MessagesResponse
     from .typing.profile import ProfileResponse, SaveProfileFields
     from .typing.release import ReleaseNotesResponse
@@ -73,6 +77,16 @@ if TYPE_CHECKING:
     )
     from .typing.telemetry import DepartureSchedule, TelemetryResponse, TirePressureEntry
     from .typing.vehicle import GarageVehicle
+
+_ZONE_LIGHT_ON_SETTLE_S = 5
+"""
+Seconds to wait after turning the zone lighting on before selecting a zone.
+
+Mirrors ha-fordpass: when the lights start from off, the activation must settle before a
+mode change is accepted.
+
+:meta hide-value:
+"""
 
 
 class AsyncFordPassClient:  # noqa: PLR0904
@@ -1471,6 +1485,327 @@ class AsyncFordPassClient:  # noqa: PLR0904
                                         inviter_first_name=inviter_first_name,
                                         vehicle_display_name=vehicle_display_name,
                                         brand=brand)))
+
+    async def start_trailer_light_check(self, vin: str) -> niquests.Response:
+        """
+        Flash the trailer lights of ``vin`` to verify the connection (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC command endpoint.
+        """
+        return await self._send(self.core.start_trailer_light_check(vin))
+
+    async def stop_trailer_light_check(self, vin: str) -> niquests.Response:
+        """
+        Stop an active trailer-light check for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC command endpoint.
+        """
+        return await self._send(self.core.stop_trailer_light_check(vin))
+
+    async def start_on_demand_preconditioning(self,
+                                              vin: str,
+                                              *,
+                                              duration: int = 0,
+                                              setting: int = 2) -> niquests.Response:
+        """
+        Start cabin preconditioning for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration : int
+            Value for ``preconditioningDuration``.
+        setting : int
+            Value for ``vehiclePreconditionSetting`` (``2`` to start).
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(
+            self.core.start_on_demand_preconditioning(vin, duration=duration, setting=setting))
+
+    async def extend_on_demand_preconditioning(self,
+                                               vin: str,
+                                               *,
+                                               duration: int = 0,
+                                               setting: int = 2) -> niquests.Response:
+        """
+        Extend an active preconditioning session for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration : int
+            Value for ``preconditioningDuration``.
+        setting : int
+            Value for ``vehiclePreconditionSetting`` (``2`` to extend).
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(
+            self.core.extend_on_demand_preconditioning(vin, duration=duration, setting=setting))
+
+    async def stop_on_demand_preconditioning(self,
+                                             vin: str,
+                                             *,
+                                             duration: int = 0,
+                                             setting: int = 1) -> niquests.Response:
+        """
+        Stop an active preconditioning session for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration : int
+            Value for ``preconditioningDuration``.
+        setting : int
+            Value for ``vehiclePreconditionSetting`` (``1`` to stop).
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(
+            self.core.stop_on_demand_preconditioning(vin, duration=duration, setting=setting))
+
+    async def ppo_refresh(self, vin: str) -> niquests.Response:
+        """
+        Trigger a one-shot Programmable Parameter Override refresh for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.ppo_refresh(vin))
+
+    async def ppo_refresh_continuous(self,
+                                     vin: str,
+                                     *,
+                                     frequency_min: int = 3,
+                                     duration_min: int = 10) -> niquests.Response:
+        """
+        Start a continuous Programmable Parameter Override refresh for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        frequency_min : int
+            Refresh frequency in minutes.
+        duration_min : int
+            Total duration in minutes.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(
+            self.core.ppo_refresh_continuous(vin,
+                                             frequency_min=frequency_min,
+                                             duration_min=duration_min))
+
+    async def ppo_refresh_cancel(self, vin: str) -> niquests.Response:
+        """
+        Cancel a continuous Programmable Parameter Override refresh for ``vin`` (experimental).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.ppo_refresh_cancel(vin))
+
+    async def honk_and_flash(self, vin: str, *, duration_s: int = 3) -> niquests.Response:
+        """
+        Sound the horn and flash the lights of ``vin`` (alias for :py:meth:`panic_alarm`).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        duration_s : int
+            How long, in seconds, to keep the cue active.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC command endpoint.
+        """
+        return await self._send(self.core.honk_and_flash(vin, duration_s=duration_s))
+
+    async def get_guard_mode(self, vin: str) -> GuardModeResponse:
+        """
+        Read the Guard Mode session state for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        GuardModeResponse
+            The parsed Guard Mode response.
+        """
+        return cast('GuardModeResponse', await self._send_json(self.core.get_guard_mode(vin)))
+
+    async def set_guard_mode(self, vin: str) -> GuardModeResponse:
+        """
+        Enable Guard Mode for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        GuardModeResponse
+            The parsed Guard Mode response.
+        """
+        return cast('GuardModeResponse', await self._send_json(self.core.set_guard_mode(vin)))
+
+    async def delete_guard_mode(self, vin: str) -> GuardModeResponse:
+        """
+        Disable Guard Mode for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        GuardModeResponse
+            The parsed Guard Mode response.
+        """
+        return cast('GuardModeResponse', await self._send_json(self.core.delete_guard_mode(vin)))
+
+    async def turn_zone_lights_on(self, vin: str) -> niquests.Response:
+        """
+        Turn the zone lighting on for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the MPS zone-lighting endpoint.
+        """
+        return await self._send(self.core.turn_zone_lights_on(vin))
+
+    async def turn_zone_lights_off(self, vin: str) -> niquests.Response:
+        """
+        Turn the zone lighting off for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the MPS zone-lighting endpoint.
+        """
+        return await self._send(self.core.turn_zone_lights_off(vin))
+
+    async def set_zone_lights_mode(self, vin: str, *, zone: str) -> niquests.Response:
+        """
+        Select which zone(s) the lighting illuminates for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        zone : str
+            The wire zone value (see :py:data:`fordpass.typing.lighting.ZoneLightZone`).
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the MPS zone-lighting endpoint.
+        """
+        return await self._send(self.core.set_zone_lights_mode(vin, zone=zone))
+
+    async def set_zone_lighting(self,
+                                vin: str,
+                                target: ZoneLightZone,
+                                *,
+                                current: str | None = None) -> niquests.Response | None:
+        """
+        Set the zone lighting to ``target``, turning the lights on first when required.
+
+        Mirrors the ha-fordpass two-step flow: a request for the ``off`` sentinel turns the lights
+        off; otherwise, if ``current`` reports the lights are currently off, they are turned on and
+        allowed to settle before the zone is selected. When ``current`` already equals ``target``
+        no request is sent.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        target : ZoneLightZone
+            The desired wire zone value, or the ``off`` sentinel.
+        current : str | None
+            The currently selected zone value if known. ``None`` assumes the lights are on, so the
+            zone is selected directly.
+
+        Returns
+        -------
+        niquests.Response | None
+            The HTTP response from the final request, or ``None`` when ``current`` already matches
+            ``target`` and no request was sent.
+        """
+        if target == ZONE_LIGHT_OFF:
+            return await self.turn_zone_lights_off(vin)
+        if current is not None:
+            if str(current) == str(target):
+                return None
+            if str(current) == ZONE_LIGHT_OFF:
+                await self.turn_zone_lights_on(vin)
+                await asyncio.sleep(_ZONE_LIGHT_ON_SETTLE_S)
+        return await self.set_zone_lights_mode(vin, zone=str(target))
 
     async def aclose(self) -> None:
         """Release both the niquests session and the curl-cffi auth session."""

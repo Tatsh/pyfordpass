@@ -22,6 +22,8 @@ Submodules
    dealer
    drivers
    electrification
+   guard
+   lighting
    messages
    profile
    release

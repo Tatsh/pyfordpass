@@ -56,6 +56,8 @@ class APIConfigHosts(TypedDict):
     """Base URL for the Foundational service (CAT mint, profile, message centre)."""
     login: str
     """Base URL for the Azure AD B2C login tenant."""
+    mps: str
+    """Base URL for the Ford MPS service (Guard Mode, zone lighting)."""
     tmc: str
     """Base URL for the TMC control plane (commands + telemetry)."""
     tmc_accounts: str
