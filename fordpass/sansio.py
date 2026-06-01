@@ -64,6 +64,74 @@ class RequestDict(TypedDict):
     url: str
 
 
+_ELECTRIFICATION_PREFIX = '/api/electrification/experiences/v2'
+"""
+URL path prefix for Ford's "electrification experiences" v2 endpoints.
+
+These live on the ``vehicle`` host and authenticate with the CAT token (``auth-token`` header),
+unlike the TMC-plane charge commands.
+
+:meta hide-value:
+"""
+
+_CHARGE_SOC_KEYS = ('globalDCTargetSoc', 'globalReserveSoc', 'globalTargetSoc')
+"""
+The three ``chargeSettings`` state-of-charge keys that move together below the sync floor.
+
+:meta hide-value:
+"""
+
+_CHARGE_SOC_SYNC_FLOOR = 80
+"""
+State-of-charge threshold below which all three :data:`_CHARGE_SOC_KEYS` move together.
+
+Below this floor Ford only persists multiples of ten (50, 60, 70) and refuses a sub-80 target on
+only one of the three values, so the triggering value is rounded down to the nearest ten and
+copied to all three keys.
+
+:meta hide-value:
+"""
+
+_CHARGE_SOC_ROUNDING = 10
+"""
+Granularity sub-floor state-of-charge values are rounded down to.
+
+:meta hide-value:
+"""
+
+
+def _apply_charge_soc_rule(settings: Mapping[str, object]) -> dict[str, object]:
+    """
+    Return ``settings`` with the below-floor state-of-charge rule applied.
+
+    When any of :data:`_CHARGE_SOC_KEYS` is an integer below :data:`_CHARGE_SOC_SYNC_FLOOR`, the
+    first such value is rounded down to the nearest :data:`_CHARGE_SOC_ROUNDING` and copied to all
+    three keys, mirroring the official app. Booleans are ignored (``bool`` is a subclass of
+    ``int``). All other keys pass through untouched.
+
+    Parameters
+    ----------
+    settings : Mapping[str, object]
+        The raw ``chargeSettings`` mapping.
+
+    Returns
+    -------
+    dict[str, object]
+        A new mapping with the rule applied; the input is not mutated.
+    """
+    result = dict(settings)
+    for key in _CHARGE_SOC_KEYS:
+        value = result.get(key)
+        if not isinstance(value, int) or isinstance(value, bool):
+            continue
+        if value < _CHARGE_SOC_SYNC_FLOOR:
+            rounded = value // _CHARGE_SOC_ROUNDING * _CHARGE_SOC_ROUNDING
+            for sync_key in _CHARGE_SOC_KEYS:
+                result[sync_key] = rounded
+            break
+    return result
+
+
 class FordPassClient:  # noqa: PLR0904
     """
     Sans-I/O FordPass protocol client.
@@ -442,7 +510,8 @@ class FordPassClient:  # noqa: PLR0904
                      properties: Mapping[str, object] | None = None,
                      wake_up: bool = True,
                      beta: bool = False,
-                     version: str | None = None) -> RequestDict:
+                     version: str | None = None,
+                     omit_properties: bool = False) -> RequestDict:
         """
         Build a TMC ``POST /commands`` request for ``vin``.
 
@@ -453,13 +522,17 @@ class FordPassClient:  # noqa: PLR0904
         type_ : str
             The command identifier (for example ``remoteStart``, ``lock``).
         properties : Mapping[str, object] | None
-            Optional command payload merged under the ``properties`` key.
+            Optional command payload merged under the ``properties`` key. Ignored when
+            ``omit_properties`` is ``True``.
         wake_up : bool
             Whether to wake the TCU before delivering the command.
         beta : bool
             If ``True``, route the request through the ``/v1beta`` endpoint.
         version : str | None
             Optional command-schema version (required by some beta commands).
+        omit_properties : bool
+            When ``True``, leave the ``properties`` key out of the body entirely rather than
+            sending ``{}``. The beta global-charge commands reject the empty-object form.
 
         Returns
         -------
@@ -467,12 +540,12 @@ class FordPassClient:  # noqa: PLR0904
             Descriptor for the TMC ``POST /commands`` call.
         """
         path = '/v1beta/command' if beta else '/v1/command'
-        body: dict[str, Any] = {
-            'properties': properties or {},
-            'tags': {},
-            'type': type_,
-            'wakeUp': wake_up
-        }
+        body: dict[str, Any] = {}
+        if not omit_properties:
+            body['properties'] = properties or {}
+        body['tags'] = {}
+        body['type'] = type_
+        body['wakeUp'] = wake_up
         if version is not None:
             body['version'] = version
         return RequestDict(method='POST',
@@ -664,6 +737,197 @@ class FordPassClient:  # noqa: PLR0904
                                  },
                                  beta=True,
                                  version='1.0.0')
+
+    def start_global_charge(self, vin: str) -> RequestDict:
+        """
+        Build the request that starts an EV charge session for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``startGlobalChargeCommand`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'startGlobalChargeCommand',
+                                 beta=True,
+                                 version='1.0.1',
+                                 omit_properties=True)
+
+    def cancel_global_charge(self, vin: str) -> RequestDict:
+        """
+        Build the request that cancels an active EV charge session for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``cancelGlobalChargeCommand`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'cancelGlobalChargeCommand',
+                                 beta=True,
+                                 version='1.0.1',
+                                 omit_properties=True)
+
+    def pause_global_charge(self, vin: str) -> RequestDict:
+        """
+        Build the request that pauses an active EV charge session for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``pauseGlobalChargeCommand`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'pauseGlobalChargeCommand',
+                                 beta=True,
+                                 version='1.0.1',
+                                 omit_properties=True)
+
+    def update_charge_settings(self, vin: str, *, settings: Mapping[str, object]) -> RequestDict:
+        """
+        Build the request that updates EV charge settings for ``vin``.
+
+        The ``settings`` mapping is sent under ``properties.chargeSettings``. Recognised keys are
+        listed by :py:class:`fordpass.typing.electrification.ChargeSettings`. The below-floor
+        state-of-charge synchronisation rule (see :py:func:`_apply_charge_soc_rule`) is applied
+        before serialisation.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        settings : Mapping[str, object]
+            The ``chargeSettings`` payload (for example ``{'chargeMode': 'CHARGE_NOW'}``).
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``updateChargeSettingsCommand`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'updateChargeSettingsCommand',
+                                 properties={'chargeSettings': _apply_charge_soc_rule(settings)},
+                                 beta=True,
+                                 version='1.0.1')
+
+    def get_preferred_charge_times(self, vin: str) -> RequestDict:
+        """
+        Build the request that reads the preferred-charge-times profile for ``vin``.
+
+        The VIN travels in a lowercase ``vin`` header rather than the URL.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``GET .../vehicles/preferred-charge-times`` call.
+        """
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='GET',
+                           url=f'{host}{_ELECTRIFICATION_PREFIX}/vehicles/preferred-charge-times',
+                           headers=self._ford_headers(extra_headers={'vin': vin}),
+                           data=None)
+
+    def set_preferred_charge_times(self, vin: str, *, location_id: str,
+                                   body: Mapping[str, object]) -> RequestDict:
+        """
+        Build the request that writes a preferred-charge-times profile for one location.
+
+        The VIN travels in a lowercase ``vin`` header; the location identifier is taken as-is and
+        placed in the URL path. The ``body`` is forwarded verbatim - its shape varies by region and
+        firmware, so the caller owns it.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        location_id : str
+            Identifier of the charge location (typically ``body['location']['id']``).
+        body : Mapping[str, object]
+            The preferred-charge-times request payload, forwarded verbatim.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``POST .../preferred-charge-times/locations/{location_id}`` call.
+        """
+        host = self._api_config['hosts']['vehicle']
+        quoted = urllib.parse.quote(location_id)
+        return RequestDict(method='POST',
+                           url=(f'{host}{_ELECTRIFICATION_PREFIX}/vehicles/preferred-charge-times/'
+                                f'locations/{quoted}'),
+                           headers={
+                               **self._ford_headers(extra_headers={'vin': vin}), 'content-type':
+                                   'application/json'
+                           },
+                           data=self._json_body(dict(body)))
+
+    def get_energy_transfer_status(self, vin: str) -> RequestDict:
+        """
+        Build the request that reads the live energy-transfer status for ``vin``.
+
+        Only valid while the vehicle is at a known charge location; the response may be empty
+        otherwise. The VIN travels in a ``deviceId`` header (not ``vin``).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``GET .../devices/energy-transfer-status`` call.
+        """
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='GET',
+                           url=f'{host}{_ELECTRIFICATION_PREFIX}/devices/energy-transfer-status',
+                           headers=self._ford_headers(extra_headers={'deviceId': vin}),
+                           data=None)
+
+    def get_energy_transfer_logs(self, vin: str, *, max_records: int = 20) -> RequestDict:
+        """
+        Build the request that reads recent energy-transfer logs for ``vin``.
+
+        The VIN travels in a ``deviceId`` header (not ``vin``).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        max_records : int
+            Maximum number of log records to request (the official app sends ``20``).
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``GET .../devices/energy-transfer-logs`` call.
+        """
+        host = self._api_config['hosts']['vehicle']
+        return RequestDict(method='GET',
+                           url=(f'{host}{_ELECTRIFICATION_PREFIX}/devices/'
+                                f'energy-transfer-logs?maxRecords={max_records}'),
+                           headers=self._ford_headers(extra_headers={'deviceId': vin}),
+                           data=None)
 
     def query_telemetry(self, vin: str, metrics: Iterable[str] | None = None) -> RequestDict:
         """

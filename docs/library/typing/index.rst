@@ -21,6 +21,7 @@ Submodules
    config
    dealer
    drivers
+   electrification
    messages
    profile
    release

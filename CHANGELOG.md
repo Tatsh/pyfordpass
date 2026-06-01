@@ -9,6 +9,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Added
+
+- EV/PHEV charging support: a `fordpass charge` command group (`start`, `cancel`, `pause`, `set`,
+  `target`, `times`, `status`, and `logs`), with matching `AsyncFordPassClient` methods and
+  sans-I/O request builders for the global-charge TMC commands and the electrification
+  energy-transfer endpoints.
+
 ## [0.0.1] - 2026-05-31
 
 First version.

@@ -56,6 +56,11 @@ if TYPE_CHECKING:
     from .typing.common import DistanceUnit, GPSPosition
     from .typing.dealer import DealerResponse
     from .typing.drivers import DriversCountResponse, DriversListResponse, InviteResponse
+    from .typing.electrification import (
+        EnergyTransferLogsResponse,
+        EnergyTransferStatusResponse,
+        PreferredChargeTimesResponse,
+    )
     from .typing.messages import MessagesResponse
     from .typing.profile import ProfileResponse, SaveProfileFields
     from .typing.release import ReleaseNotesResponse
@@ -570,6 +575,155 @@ class AsyncFordPassClient:  # noqa: PLR0904
             self.core.set_asu_schedule(vin,
                                        day_schedules=day_schedules,
                                        activation_setting=activation_setting))
+
+    async def start_global_charge(self, vin: str) -> niquests.Response:
+        """
+        Start an EV charge session for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.start_global_charge(vin))
+
+    async def cancel_global_charge(self, vin: str) -> niquests.Response:
+        """
+        Cancel an active EV charge session for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.cancel_global_charge(vin))
+
+    async def pause_global_charge(self, vin: str) -> niquests.Response:
+        """
+        Pause an active EV charge session for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.pause_global_charge(vin))
+
+    async def update_charge_settings(self, vin: str, *,
+                                     settings: Mapping[str, object]) -> niquests.Response:
+        """
+        Update EV charge settings for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        settings : Mapping[str, object]
+            The ``chargeSettings`` payload; see
+            :py:class:`fordpass.typing.electrification.ChargeSettings` for recognised keys.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.update_charge_settings(vin, settings=settings))
+
+    async def get_preferred_charge_times(self, vin: str) -> PreferredChargeTimesResponse:
+        """
+        Fetch the preferred-charge-times profile for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        PreferredChargeTimesResponse
+            The parsed preferred-charge-times response.
+        """
+        return cast('PreferredChargeTimesResponse', await self._send_json(
+            self.core.get_preferred_charge_times(vin)))
+
+    async def set_preferred_charge_times(
+            self, vin: str, *, location_id: str,
+            body: Mapping[str, object]) -> PreferredChargeTimesResponse | None:
+        """
+        Write a preferred-charge-times profile for one location of ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        location_id : str
+            Identifier of the charge location.
+        body : Mapping[str, object]
+            The preferred-charge-times request payload, forwarded verbatim.
+
+        Returns
+        -------
+        PreferredChargeTimesResponse | None
+            The parsed server response, or ``None`` if the call returns 204.
+        """
+        return cast(
+            'PreferredChargeTimesResponse | None', await self._send_json(
+                self.core.set_preferred_charge_times(vin, location_id=location_id, body=body)))
+
+    async def get_energy_transfer_status(self, vin: str) -> EnergyTransferStatusResponse | None:
+        """
+        Fetch the live energy-transfer status for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        EnergyTransferStatusResponse | None
+            The parsed status response, or ``None`` when the vehicle is not at a charge location.
+        """
+        return cast('EnergyTransferStatusResponse | None', await self._send_json(
+            self.core.get_energy_transfer_status(vin)))
+
+    async def get_energy_transfer_logs(self,
+                                       vin: str,
+                                       *,
+                                       max_records: int = 20) -> EnergyTransferLogsResponse:
+        """
+        Fetch recent energy-transfer logs for ``vin``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        max_records : int
+            Maximum number of log records to request.
+
+        Returns
+        -------
+        EnergyTransferLogsResponse
+            The parsed logs response.
+        """
+        return cast(
+            'EnergyTransferLogsResponse', await self._send_json(
+                self.core.get_energy_transfer_logs(vin, max_records=max_records)))
 
     async def query_telemetry(self,
                               vin: str,

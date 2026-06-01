@@ -92,6 +92,35 @@ fordpass remote start VIN # Remote-start command.
 Every subcommand supports `--help` and most data-returning subcommands support `--json` for
 machine-readable output.
 
+## Charging (EV/PHEV)
+
+For electric and plug-in-hybrid vehicles, `fordpass charge` controls charging and reads charge
+state:
+
+```shell
+fordpass charge start VIN              # Start a charge session.
+fordpass charge pause VIN              # Pause an active session.
+fordpass charge cancel VIN             # Cancel an active session.
+fordpass charge set VIN globalTargetSoc 80   # Update one charge setting.
+fordpass charge set VIN chargeMode CHARGE_NOW
+fordpass charge times VIN              # Show the preferred-charge-times profile.
+fordpass charge status VIN             # Live energy-transfer status (only at a charge location).
+fordpass charge logs VIN --max-records 20    # Recent energy-transfer logs.
+```
+
+`charge set` accepts `autoChargePortUnlock`, `chargeMode`, `globalCurrentLimit`,
+`globalDCPowerLimit`, `globalDCTargetSoc`, `globalReserveSoc`, and `globalTargetSoc`. Ford only
+persists state-of-charge targets below 80% in multiples of ten, so a sub-80 value is rounded down
+to the nearest ten and applied to all three state-of-charge keys at once.
+
+To write a full preferred-charge-times profile, pass the JSON body with `--data` (use `-` to read
+it from standard input; the location id is taken from `location.id` when `--location-id` is
+omitted):
+
+```shell
+fordpass charge target VIN --location-id LOCATION_ID --data - < profile.json
+```
+
 ## Configuration
 
 `pyfordpass` has two sets of optional settings, each managed with its own subcommand rather than
