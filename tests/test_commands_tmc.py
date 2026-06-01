@@ -49,12 +49,12 @@ def test_precondition_start_extend(core_client: FordPassClient, method: str, typ
     }
 
 
-def test_precondition_stop_omits_version(core_client: FordPassClient) -> None:
+def test_precondition_stop_version(core_client: FordPassClient) -> None:
     req = core_client.stop_on_demand_preconditioning(_VIN)
     assert '/v1beta/command/' in req['url']
     body = _body(req)
     assert body['type'] == 'stopOnDemandPreconditioning'
-    assert 'version' not in body
+    assert body['version'] == '1.0.0'
     assert body['properties'] == {'preconditioningDuration': 0, 'vehiclePreconditionSetting': 1}
 
 

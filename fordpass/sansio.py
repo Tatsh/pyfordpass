@@ -2012,9 +2012,9 @@ class FordPassClient:  # noqa: PLR0904
         """
         Build the request that stops an active preconditioning session.
 
-        Unlike the start / extend variants this command omits the ``version`` key from the body
-        (ha-fordpass does not pass a ``data_version`` for the stop command), so the beta endpoint
-        is hit without a command-schema version. Experimental: the wire format is taken from
+        Unlike the start / extend variants (which send ``version`` ``'1'``), the stop command sends
+        ``version`` ``'1.0.0'`` - mirroring ha-fordpass, where the stop call inherits the helper's
+        default schema version on the beta endpoint. Experimental: the wire format is taken from
         ha-fordpass, whose author flags the preconditioning commands as unverified.
 
         Parameters
@@ -2037,7 +2037,8 @@ class FordPassClient:  # noqa: PLR0904
                                      'preconditioningDuration': duration,
                                      'vehiclePreconditionSetting': setting
                                  },
-                                 beta=True)
+                                 beta=True,
+                                 version='1.0.0')
 
     def ppo_refresh(self, vin: str) -> RequestDict:
         """
