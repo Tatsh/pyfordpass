@@ -36,6 +36,7 @@ cffi
 chagos
 chita
 choibalsan
+chrg
 codeset
 codesign
 colorlog
@@ -180,6 +181,7 @@ plistlib
 ponape
 pontianak
 powertrain
+prcond
 preapproved
 predraft
 prodvers
