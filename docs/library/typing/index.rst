@@ -20,6 +20,7 @@ Submodules
    common
    config
    dealer
+   departure
    drivers
    electrification
    guard

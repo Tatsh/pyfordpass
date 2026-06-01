@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeGuard, cast
 if TYPE_CHECKING:
     from .typing.alerts import AlertsResponse
     from .typing.common import CompassDirection, GPSPosition
+    from .typing.departure import DepartureScheduleDay
     from .typing.telemetry import DepartureSchedule, MetricEntry
     from .typing.vehicle import GarageVehicle
 
@@ -24,9 +25,10 @@ The ``metrics`` sub-object of a telemetry response (the shape on
 :meta hide-value:
 """
 
-__all__ = ('MetricsBlock', 'extract_fuel', 'extract_odometer', 'extract_oil_life',
-           'extract_position', 'find_next_departure', 'find_preferred_dealer_code', 'is_list_like',
-           'is_washer_fluid_low', 'scalar_metric_value', 'walk_mapping')
+__all__ = ('MetricsBlock', 'extract_departure_schedule_days', 'extract_fuel', 'extract_odometer',
+           'extract_oil_life', 'extract_position', 'find_next_departure',
+           'find_preferred_dealer_code', 'is_list_like', 'is_washer_fluid_low',
+           'scalar_metric_value', 'walk_mapping')
 
 
 def scalar_metric_value(entry: MetricEntry | Sequence[MetricEntry] | None) -> Any:
@@ -270,3 +272,109 @@ def find_next_departure(metrics: MetricsBlock) -> DepartureSchedule | None:
             if s.get('scheduleId') == next_id_str:
                 return cast('DepartureSchedule', s)
     return None
+
+
+_DEPARTURE_DAY_ORDER: tuple[str, ...] = ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY',
+                                         'SATURDAY', 'SUNDAY')
+"""
+Canonical Monday-to-Sunday ordering for departure-schedule day groups.
+
+:meta hide-value:
+"""
+
+
+def _parse_time_of_day(value: Any) -> dict[str, int]:
+    """
+    Convert a telemetry ``"HH:MM"`` time string into a ``{hours, minutes}`` mapping.
+
+    Parameters
+    ----------
+    value : Any
+        The ``timeOfDay`` value from the telemetry tree.
+
+    Returns
+    -------
+    dict[str, int]
+        The parsed time, defaulting to midnight (``{'hours': 0, 'minutes': 0}``) when the input is
+        missing or malformed.
+    """
+    if isinstance(value, str):
+        hours, _, minutes = value.partition(':')
+        if hours.isdigit() and minutes.isdigit():
+            return {'hours': int(hours), 'minutes': int(minutes)}
+    return {'hours': 0, 'minutes': 0}
+
+
+def _departure_slot_from_telemetry(slot: Mapping[str, Any], weekly: Mapping[str, Any],
+                                   location_id: str) -> dict[str, Any]:
+    """
+    Convert one telemetry departure slot into the ``updateDepartureTimes`` write shape.
+
+    Field paths follow ha-fordpass: ``scheduleStatus`` and ``scheduleId`` sit on the slot,
+    ``timeOfDay`` lives under ``schedule.weeklySchedule``, and the precondition temperature comes
+    from ``oemData.chrg_go_t_prcond_d_stat.stringValue``.
+
+    Parameters
+    ----------
+    slot : Mapping[str, Any]
+        One entry from a location's ``departureSchedules`` list.
+    weekly : Mapping[str, Any]
+        The slot's ``schedule.weeklySchedule`` sub-object.
+    location_id : str
+        The owning location's identifier, passed through unchanged.
+
+    Returns
+    -------
+    dict[str, Any]
+        The slot in write shape.
+    """
+    schedule_id = slot.get('scheduleId')
+    if isinstance(schedule_id, str) and schedule_id.isdigit():
+        schedule_id = int(schedule_id)
+    temperature = walk_mapping(slot, 'oemData', 'chrg_go_t_prcond_d_stat', 'stringValue')
+    status = slot.get('scheduleStatus')
+    return {
+        'locationId': location_id,
+        'preconditionTemperature': temperature.upper() if isinstance(temperature, str) else 'OFF',
+        'scheduleId': schedule_id,
+        'scheduleStatus': status.upper() if isinstance(status, str) else 'OFF',
+        'timeOfDay': _parse_time_of_day(weekly.get('timeOfDay'))
+    }
+
+
+def extract_departure_schedule_days(metrics: MetricsBlock) -> list[DepartureScheduleDay]:
+    """
+    Rebuild the ``updateDepartureTimes`` write shape from a telemetry metrics block.
+
+    Walks ``xevDepartureSchedules.value.departureLocations[*].departureSchedules[*]``, converting
+    each slot and grouping them by upper-case day name in Monday-to-Sunday order. EV/PHEV only -
+    ICE vehicles never populate the parent metric, so the result is empty for them.
+
+    Parameters
+    ----------
+    metrics : MetricsBlock
+        The ``metrics`` sub-object of a telemetry response.
+
+    Returns
+    -------
+    list[DepartureScheduleDay]
+        One entry per day that has at least one slot, ordered Monday to Sunday.
+    """
+    tree = scalar_metric_value(metrics.get('xevDepartureSchedules'))
+    if not isinstance(tree, Mapping):
+        return []
+    by_day: dict[str, dict[str, Any]] = {}
+    for loc in tree.get('departureLocations', []) or []:
+        if not isinstance(loc, Mapping):
+            continue
+        location_id = str(loc.get('locationId', ''))
+        for slot in loc.get('departureSchedules', []) or []:
+            weekly = walk_mapping(slot, 'schedule', 'weeklySchedule')
+            day = weekly.get('dayOfWeek') if isinstance(weekly, Mapping) else None
+            if not isinstance(day, str):
+                continue
+            day = day.upper()
+            group = by_day.setdefault(day, {'dayOfWeek': day, 'schedules': []})
+            group['schedules'].append(_departure_slot_from_telemetry(slot, weekly, location_id))
+    return cast('list[DepartureScheduleDay]',
+                [by_day[day] for day in _DEPARTURE_DAY_ORDER if day in by_day])

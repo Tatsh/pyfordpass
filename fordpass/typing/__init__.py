@@ -47,6 +47,14 @@ from fordpass.typing.config import (
     VehicleConfig,
 )
 from fordpass.typing.dealer import DealerResponse
+from fordpass.typing.departure import (
+    DepartureDayOfWeek,
+    DepartureScheduleDay,
+    DepartureScheduleSlot,
+    PreconditionTemperature,
+    ScheduleStatus,
+    TimeOfDay,
+)
 from fordpass.typing.drivers import (
     DriverEntry,
     DriversCountResponse,
@@ -127,7 +135,10 @@ __all__ = (
     'Config',
     'CountryHeaderCasing',
     'DealerResponse',
+    'DepartureDayOfWeek',
     'DepartureSchedule',
+    'DepartureScheduleDay',
+    'DepartureScheduleSlot',
     'DistanceUnit',
     'DriverEntry',
     'DriversCountResponse',
@@ -151,6 +162,7 @@ __all__ = (
     'MetricValue',
     'OutputConfig',
     'OutputFormat',
+    'PreconditionTemperature',
     'PreferredChargeTimesResponse',
     'ProfileAddress',
     'ProfileCountry',
@@ -166,6 +178,7 @@ __all__ = (
     'RoadsideActiveResponse',
     'SaveProfileFields',
     'ScheduleEntry',
+    'ScheduleStatus',
     'SchedulesEnvelope',
     'SchedulesResponse',
     'ServiceActionDetail',
@@ -174,6 +187,7 @@ __all__ = (
     'TMCTokenResponse',
     'TelemetryResponse',
     'TemperatureUnit',
+    'TimeOfDay',
     'TirePressureEntry',
     'TokenType',
     'UnitsConfig',

@@ -25,6 +25,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `fordpass trailer check` (`on`, `off`), `fordpass precondition` (`start`, `extend`, `stop`), and
   `fordpass ppo` (`refresh`, `stream`, `cancel`), plus a `honk_and_flash` client convenience alias
   over `startPanicCue`.
+- Departure-schedule write side: `fordpass departure` gains `enable`, `disable`, `update`
+  (`--from-json` or repeatable `--add DAY@HH:MM:loc=...,id=...` slots), `delete-by-id`, and
+  `delete-by-day`, with matching `AsyncFordPassClient` methods, sans-I/O builders for the
+  `enableDepartureTimes` / `disableDepartureTimes` / `updateDepartureTimes` beta TMC commands, and
+  the `DepartureScheduleDay` / `DepartureScheduleSlot` / `TimeOfDay` types.
 
 ## [0.0.1] - 2026-05-31
 

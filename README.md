@@ -121,6 +121,58 @@ omitted):
 fordpass charge target VIN --location-id LOCATION_ID --data - < profile.json
 ```
 
+## Departure schedules (EV/PHEV)
+
+For electric and plug-in-hybrid vehicles, `fordpass departure` reads and writes the departure-time
+schedules (the timed pre-conditioning / charge-ready windows):
+
+```shell
+fordpass departure next VIN     # Show the next-upcoming departure.
+fordpass departure enable VIN   # Enable the departure-time schedules.
+fordpass departure disable VIN  # Disable all departure-time schedules.
+```
+
+The wire protocol has no partial update: `update` replaces the **complete** schedule list. Provide
+it either as a JSON array with `--from-json` (use `-` to read it from standard input) or as one or
+more `--add` slots (mutually exclusive with `--from-json`):
+
+```shell
+fordpass departure update VIN --from-json profile.json
+fordpass departure update VIN --from-json - < profile.json
+fordpass departure update VIN \
+  --add 'MON@07:30:loc=LOCATION_ID,id=1,temp=MEDIUM,status=ON' \
+  --add 'FRI@06:15:loc=LOCATION_ID,id=2'
+```
+
+Each `--add` slot is `DAY@HH:MM:loc=<id>,id=<int>,temp=OFF|LOW|MEDIUM|HIGH,status=ON|OFF`, where
+`temp` defaults to `OFF`, `status` defaults to `ON`, and `loc`/`id` are required. The JSON array
+matches the body Ford expects:
+
+```json
+[
+  {
+    "dayOfWeek": "MONDAY",
+    "schedules": [
+      {
+        "locationId": "LOCATION_ID",
+        "preconditionTemperature": "MEDIUM",
+        "scheduleId": 1,
+        "scheduleStatus": "ON",
+        "timeOfDay": { "hours": 7, "minutes": 30 }
+      }
+    ]
+  }
+]
+```
+
+The two `delete` subcommands are read-modify-write helpers that fetch the current schedule, drop the
+matching parts, and write the remainder back:
+
+```shell
+fordpass departure delete-by-id VIN 1 3   # Drop slots by scheduleId.
+fordpass departure delete-by-day VIN mon,fri  # Drop whole-day groups.
+```
+
 ## Guard Mode
 
 On supported models, `fordpass guard` reads and toggles the Guard Mode session. These calls go to

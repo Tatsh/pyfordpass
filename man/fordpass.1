@@ -974,6 +974,124 @@ fordpass departure [OPTIONS] COMMAND [ARGS]...
 .EE
 .UNINDENT
 .UNINDENT
+.SS delete\-by\-day
+.sp
+Remove whole\-day departure groups (for example \fImon,wed,fri\fP).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass departure delete\-by\-day [OPTIONS] [VIN] DAYS
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B DAYS
+Required argument
+.UNINDENT
+.SS delete\-by\-id
+.sp
+Remove departure slots by scheduleId (VIN first, then one or more IDs).
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass departure delete\-by\-id [OPTIONS] [VIN] IDS...
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.INDENT 0.0
+.TP
+.B IDS
+Required argument(s)
+.UNINDENT
+.SS disable
+.sp
+Disable all departure\-time schedules.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass departure disable [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS enable
+.sp
+Enable the departure\-time schedules.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass departure enable [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
 .SS next
 .sp
 Show the next\-upcoming departure schedule entry.
@@ -998,6 +1116,43 @@ Enable debug level logging.
 .TP
 .B \-\-json
 Emit machine\-readable JSON instead of a pretty table.
+.UNINDENT
+.sp
+Arguments
+.INDENT 0.0
+.TP
+.B VIN
+Optional argument
+.UNINDENT
+.SS update
+.sp
+Replace the full departure\-time schedule list.
+.sp
+Usage
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+fordpass departure update [OPTIONS] [VIN]
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Options
+.INDENT 0.0
+.TP
+.B \-d, \-\-debug
+Enable debug level logging.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-from\-json <from_json>
+Read the full departureSchedules array from a JSON file (\fI\-\fP for stdin).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-add <DAY@HH:MM:loc=...,id=...>
+Add one slot. Repeatable. Mutually exclusive with \-\-from\-json.
 .UNINDENT
 .sp
 Arguments
@@ -1640,7 +1795,7 @@ fordpass ppo [OPTIONS] COMMAND [ARGS]...
 .UNINDENT
 .SS cancel
 .sp
-Cancel a continuous PPO refresh. (Experimental.)
+Cancel a continuous PPO refresh (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -1667,7 +1822,7 @@ Optional argument
 .UNINDENT
 .SS refresh
 .sp
-Trigger a one\-shot PPO refresh. (Experimental.)
+Trigger a one\-shot PPO refresh (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -1694,7 +1849,7 @@ Optional argument
 .UNINDENT
 .SS stream
 .sp
-Start a continuous PPO refresh. (Experimental.)
+Start a continuous PPO refresh (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -1754,7 +1909,7 @@ fordpass precondition [OPTIONS] COMMAND [ARGS]...
 .UNINDENT
 .SS extend
 .sp
-Extend an active preconditioning session. (Experimental.)
+Extend an active preconditioning session (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -1781,7 +1936,7 @@ Optional argument
 .UNINDENT
 .SS start
 .sp
-Start cabin preconditioning. (Experimental.)
+Start cabin preconditioning (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -1808,7 +1963,7 @@ Optional argument
 .UNINDENT
 .SS stop
 .sp
-Stop an active preconditioning session. (Experimental.)
+Stop an active preconditioning session (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -2950,7 +3105,7 @@ fordpass trailer check [OPTIONS] COMMAND [ARGS]...
 .UNINDENT
 .SS off
 .sp
-Stop an active trailer\-light check. (Experimental.)
+Stop an active trailer\-light check (experimental).
 .sp
 Usage
 .INDENT 0.0
@@ -2977,7 +3132,7 @@ Optional argument
 .UNINDENT
 .SS on
 .sp
-Flash the trailer lights to verify the connection. (Experimental.)
+Flash the trailer lights to verify the connection (experimental).
 .sp
 Usage
 .INDENT 0.0

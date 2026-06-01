@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
     from .typing.api_config import APIConfig
     from .typing.common import CountryHeaderCasing, DistanceUnit
+    from .typing.departure import DepartureScheduleDay
     from .typing.profile import SaveProfileFields
 
 # Nothing in this module reads disk, env, or the network at import time. The
@@ -2143,6 +2144,76 @@ class FordPassClient:  # noqa: PLR0904
             Descriptor for the ``startPanicCue`` TMC command.
         """
         return self.panic_alarm(vin, duration_s)
+
+    def enable_departure_times(self, vin: str) -> RequestDict:
+        """
+        Build the request that enables the departure-time schedules for ``vin``.
+
+        The bare command type ``enableDepartureTimes`` (no ``Command`` suffix) and the empty
+        ``properties`` body mirror ha-fordpass; the suffixed form proposed in its PR-205 is not what
+        the real API expects.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``enableDepartureTimes`` beta TMC command.
+        """
+        return self._tmc_command(vin, 'enableDepartureTimes', beta=True, version='1')
+
+    def disable_departure_times(self, vin: str) -> RequestDict:
+        """
+        Build the request that disables all departure-time schedules for ``vin``.
+
+        Sends the bare ``disableDepartureTimes`` type with an empty ``properties`` body and
+        ``version`` ``'1'``, matching the form ha-fordpass uses today (its commented-out
+        ``data_version="2"`` variant is deliberately not reproduced).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``disableDepartureTimes`` beta TMC command.
+        """
+        return self._tmc_command(vin, 'disableDepartureTimes', beta=True, version='1')
+
+    def update_departure_times(self, vin: str, *,
+                               schedules: Sequence[DepartureScheduleDay]) -> RequestDict:
+        """
+        Build the request that replaces the full departure-time schedule list for ``vin``.
+
+        There is no partial update on the wire: ``schedules`` must be the complete list of day
+        groups. The ``isDepartureTimeEnabled`` property is sent as the boolean ``True`` (not the
+        string ``'true'``), matching ha-fordpass.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        schedules : Sequence[DepartureScheduleDay]
+            The complete list of per-day schedule groups to install.
+
+        Returns
+        -------
+        RequestDict
+            Descriptor for the ``updateDepartureTimes`` beta TMC command.
+        """
+        return self._tmc_command(vin,
+                                 'updateDepartureTimes',
+                                 properties={
+                                     'departureSchedules': list(schedules),
+                                     'isDepartureTimeEnabled': True
+                                 },
+                                 beta=True,
+                                 version='1')
 
     def get_guard_mode(self, vin: str) -> RequestDict:
         """

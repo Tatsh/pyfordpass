@@ -36,6 +36,7 @@ from .config import DEFAULT_IMPERSONATE, load_config
 from .sansio import FordPassClient
 from .typing.lighting import ZONE_LIGHT_OFF
 from .utils import (
+    extract_departure_schedule_days,
     extract_fuel,
     extract_odometer,
     extract_oil_life,
@@ -57,6 +58,7 @@ if TYPE_CHECKING:
     from .typing.commands import AckResponse
     from .typing.common import DistanceUnit, GPSPosition
     from .typing.dealer import DealerResponse
+    from .typing.departure import DepartureScheduleDay
     from .typing.drivers import DriversCountResponse, DriversListResponse, InviteResponse
     from .typing.electrification import (
         EnergyTransferLogsResponse,
@@ -862,6 +864,118 @@ class AsyncFordPassClient:  # noqa: PLR0904
         """
         data = await self._send_json(self.core.get_next_departure(vin))
         return find_next_departure(data.get('metrics') or {})
+
+    async def enable_departure_times(self, vin: str) -> niquests.Response:
+        """
+        Enable the departure-time schedules for ``vin`` (EV/PHEV only).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.enable_departure_times(vin))
+
+    async def disable_departure_times(self, vin: str) -> niquests.Response:
+        """
+        Disable all departure-time schedules for ``vin`` (EV/PHEV only).
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.disable_departure_times(vin))
+
+    async def update_departure_times(
+            self, vin: str, *, schedules: Sequence[DepartureScheduleDay]) -> niquests.Response:
+        """
+        Replace the full departure-time schedule list for ``vin`` (EV/PHEV only).
+
+        ``schedules`` must be the complete list of per-day groups; the wire protocol has no partial
+        update.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        schedules : Sequence[DepartureScheduleDay]
+            The complete list of per-day schedule groups to install.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the TMC beta command endpoint.
+        """
+        return await self._send(self.core.update_departure_times(vin, schedules=schedules))
+
+    async def delete_departure_schedules_by_ids(self, vin: str,
+                                                ids: Iterable[int]) -> niquests.Response:
+        """
+        Remove departure slots whose ``scheduleId`` is in ``ids`` (read-modify-write).
+
+        Reads the current schedule tree from telemetry, drops the matching slots (and any day group
+        left empty), then writes the remaining list back with ``updateDepartureTimes``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        ids : Iterable[int]
+            Schedule identifiers to remove.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the ``updateDepartureTimes`` call.
+        """
+        data = await self._send_json(self.core.get_next_departure(vin))
+        drop = set(ids)
+        remaining: list[DepartureScheduleDay] = []
+        for day in extract_departure_schedule_days(data.get('metrics') or {}):
+            kept = [slot for slot in day['schedules'] if slot['scheduleId'] not in drop]
+            if kept:
+                remaining.append({'dayOfWeek': day['dayOfWeek'], 'schedules': kept})
+        return await self.update_departure_times(vin, schedules=remaining)
+
+    async def delete_departure_schedules_by_days(self, vin: str,
+                                                 days: Iterable[str]) -> niquests.Response:
+        """
+        Remove whole-day departure groups for the named ``days`` (read-modify-write).
+
+        Reads the current schedule tree from telemetry, drops every group whose ``dayOfWeek`` is in
+        ``days`` (compared case-insensitively), then writes the remainder back with
+        ``updateDepartureTimes``.
+
+        Parameters
+        ----------
+        vin : str
+            The target vehicle VIN.
+        days : Iterable[str]
+            Day names to remove (for example ``'MONDAY'``); matched case-insensitively.
+
+        Returns
+        -------
+        niquests.Response
+            The raw HTTP response from the ``updateDepartureTimes`` call.
+        """
+        data = await self._send_json(self.core.get_next_departure(vin))
+        drop = {day.upper() for day in days}
+        remaining = [
+            day for day in extract_departure_schedule_days(data.get('metrics') or {})
+            if day['dayOfWeek'] not in drop
+        ]
+        return await self.update_departure_times(vin, schedules=remaining)
 
     async def list_remote_start_schedules(self, vin: str) -> SchedulesResponse:
         """
