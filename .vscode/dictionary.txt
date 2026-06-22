@@ -100,6 +100,7 @@ getschedules
 globaltoc
 gmfi
 godthab
+handoff
 hermosillo
 hovd
 hoverxref
@@ -229,6 +230,7 @@ srednekolymsk
 srsm
 startschedule
 startschedules
+statusline
 syft
 syowa
 tatsh
