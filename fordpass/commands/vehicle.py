@@ -58,7 +58,7 @@ def _garage_vehicles(
     if is_list_like(garage):
         return list(cast('Sequence[GarageVehicle]', garage))
     if isinstance(garage, Mapping):
-        vs = garage.get('vehicles')  # ty: ignore[invalid-argument-type]
+        vs = garage.get('vehicles')
         if is_list_like(vs):
             return list(cast('Sequence[GarageVehicle]', vs))
     return []

@@ -49,7 +49,7 @@ def scalar_metric_value(entry: MetricEntry | Sequence[MetricEntry] | None) -> An
         when ``entry`` is missing or a list-shaped metric (no scalar value to extract).
     """
     if isinstance(entry, Mapping):
-        return entry.get('value')  # ty: ignore[invalid-argument-type]
+        return entry.get('value')
     return None
 
 
@@ -153,7 +153,7 @@ def extract_position(metrics: MetricsBlock) -> GPSPosition | None:
     if (compass := scalar_metric_value(metrics.get('compassDirection'))) is not None:
         result['compass'] = cast('CompassDirection', str(compass))
     if isinstance(position_entry, Mapping):  # pragma: no branch
-        update_time = position_entry.get('updateTime')  # ty: ignore[invalid-argument-type]
+        update_time = position_entry.get('updateTime')
         if update_time is not None:
             result['update_time'] = str(update_time)
     return result
@@ -234,7 +234,7 @@ def find_preferred_dealer_code(garage: Sequence[GarageVehicle]
     if is_list_like(garage):
         entries = cast('Sequence[GarageVehicle]', garage)
     elif isinstance(garage, Mapping):
-        inner = garage.get('vehicles')  # ty: ignore[invalid-argument-type]
+        inner = garage.get('vehicles')
         entries = cast('Sequence[GarageVehicle]', inner) if is_list_like(inner) else []
     else:
         entries = []

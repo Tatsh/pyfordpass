@@ -95,14 +95,14 @@ def _extract_schedules(
         return list(cast('Sequence[ScheduleEntry]', resp))
     if not isinstance(resp, Mapping):
         return []
-    container = resp.get('startSchedule')  # ty: ignore[invalid-argument-type]
+    container = resp.get('startSchedule')
     if isinstance(container, Mapping):
-        values = container.get('$values')  # ty: ignore[invalid-argument-type]
+        values = container.get('$values')
         if is_list_like(values):
             return list(cast('Sequence[ScheduleEntry]', values))
     if is_list_like(container):
         return list(cast('Sequence[ScheduleEntry]', container))
-    fallback = resp.get('schedules')  # ty: ignore[invalid-argument-type]
+    fallback = resp.get('schedules')
     if is_list_like(fallback):
         return list(cast('Sequence[ScheduleEntry]', fallback))
     return []
