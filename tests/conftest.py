@@ -30,7 +30,7 @@ if os.getenv('_PYTEST_RAISE', '0') != '0':  # pragma no cover
         raise excinfo.value
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def recover_stale_process_cwd(request: pytest.FixtureRequest) -> None:
     """
     Recover when the process cwd was removed mid-session.
@@ -51,13 +51,13 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def clear_module_caches() -> None:
     """Reset `@functools.cache`-decorated public loaders between tests."""
     load_api_config.cache_clear()
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def isolate_platform_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Redirect every `platformdirs`-derived path at a per-test tmp_path subtree.
 
