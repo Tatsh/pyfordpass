@@ -185,7 +185,7 @@ class AsyncFordPassClient:  # noqa: PLR0904
     @property
     def tmc(self) -> str | None:
         """
-        Return the TMC bearer.
+        TMC bearer.
 
         Returns
         -------
