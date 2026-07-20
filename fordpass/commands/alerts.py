@@ -93,7 +93,7 @@ async def alerts_history(client: AsyncFordPassClient, _ctx: click.Context, vin: 
 @with_client
 async def alerts_washer(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                         as_json: bool) -> None:
-    """Washer-fluid status."""  # noqa: DOC501
+    """Washer-fluid status."""  # ruff:ignore[docstring-missing-exception]
     low = await client.is_washer_fluid_low(vin)
     if should_emit_json(as_json):
         dump_json({'low': low})

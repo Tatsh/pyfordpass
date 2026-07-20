@@ -20,7 +20,7 @@ import re
 import secrets
 import string
 import urllib.parse
-import webbrowser  # noqa: F401
+import webbrowser  # ruff:ignore[unused-import]
 
 from bascom import setup_logging
 from fordpass.client import AsyncFordPassClient
@@ -114,7 +114,7 @@ def install_loop(loop: asyncio.AbstractEventLoop) -> None:
         The loop returned by :func:`asyncio.get_running_loop` from inside
         :func:`fordpass.commands.main`.
     """
-    global _LOOP  # noqa: PLW0603
+    global _LOOP  # ruff:ignore[global-statement]
     _LOOP = loop
 
 
@@ -677,7 +677,7 @@ Reusable ``--json`` flag decorator paired with :py:func:`should_emit_json`.
 """
 
 
-def should_emit_json(as_json: bool) -> bool:  # noqa: FBT001
+def should_emit_json(as_json: bool) -> bool:  # ruff:ignore[boolean-type-hint-positional-argument]
     """
     Decide whether a multi-value command should emit JSON.
 

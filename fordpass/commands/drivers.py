@@ -86,7 +86,7 @@ async def drivers_count(client: AsyncFordPassClient, _ctx: click.Context, vin: s
 @with_client
 async def drivers_invite(client: AsyncFordPassClient, _ctx: click.Context, vin: str, email: str,
                          inviter: str, vehicle_name: str) -> None:
-    """Send a secondary-driver invite by email."""  # noqa: DOC501
+    """Send a secondary-driver invite by email."""  # ruff:ignore[docstring-missing-exception]
     res = await client.invite_driver(vin,
                                      secondary_email=email,
                                      inviter_first_name=inviter,

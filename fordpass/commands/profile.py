@@ -92,7 +92,7 @@ def _flatten_section(block: Any) -> list[tuple[str, str]]:
 @with_client
 async def profile_update(client: AsyncFordPassClient, _ctx: click.Context,
                          field: tuple[str, ...]) -> None:
-    """Partial-update account info."""  # noqa: DOC501
+    """Partial-update account info."""  # ruff:ignore[docstring-missing-exception]
     payload: dict[str, dict[str, Any]] = {}
     for f in field:
         key, _, val = f.partition('=')
