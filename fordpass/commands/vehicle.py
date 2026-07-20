@@ -209,7 +209,7 @@ def _render_kv_table(title: str, rows: list[tuple[str, str]]) -> Table:
 @with_client
 async def vehicle_show(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                        as_json: bool) -> None:
-    """Show details for one vehicle from your garage."""  # noqa: DOC501
+    """Show details for one vehicle from your garage."""  # ruff:ignore[docstring-missing-exception]
     target = next((v for v in _garage_vehicles(await client.list_garage()) if v.get('vin') == vin),
                   None)
     if target is None:

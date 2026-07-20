@@ -235,7 +235,7 @@ async def charge_set(client: AsyncFordPassClient, _ctx: click.Context, vin: str,
 @with_client
 async def charge_target(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                         location_id: str | None, data_: str, as_json: bool) -> None:
-    """Set the preferred-charge-times profile for a location."""  # noqa: DOC501
+    """Set the preferred-charge-times profile for a location."""  # ruff:ignore[docstring-missing-exception]
     body = _load_json_body(data_)
     resolved = location_id or _extract_location_id(body)
     if not resolved:

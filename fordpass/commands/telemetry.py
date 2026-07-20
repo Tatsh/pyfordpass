@@ -762,7 +762,7 @@ def _google_maps_url(lat: float, lon: float) -> str:
 @with_client
 async def telemetry_position(client: AsyncFordPassClient, _ctx: click.Context, vin: str, *,
                              open_maps: bool, maps_uri: bool, as_json: bool) -> None:
-    """Show the vehicle's last known GPS position."""  # noqa: DOC501
+    """Show the vehicle's last known GPS position."""  # ruff:ignore[docstring-missing-exception]
     position = await client.get_position(vin)
     if maps_uri:
         if position is None:

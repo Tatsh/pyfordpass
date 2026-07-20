@@ -41,7 +41,7 @@ def config_set(key: str, value: str) -> None:
 @debug_option
 @click.argument('key')
 def config_delete(key: str) -> None:
-    """Delete KEY (a dotted path) from the configuration."""  # noqa: DOC501
+    """Delete KEY (a dotted path) from the configuration."""  # ruff:ignore[docstring-missing-exception]
     try:
         delete_toml_key(CONFIG_FILE, key)
     except KeyError as exc:

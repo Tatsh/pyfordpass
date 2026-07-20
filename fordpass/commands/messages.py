@@ -77,7 +77,7 @@ async def messages_list(client: AsyncFordPassClient, _ctx: click.Context, *, as_
 @with_client
 async def messages_show(client: AsyncFordPassClient, _ctx: click.Context, message_id: int, *,
                         as_json: bool) -> None:
-    """Show the full body of one inbox message by ID."""  # noqa: DOC501
+    """Show the full body of one inbox message by ID."""  # ruff:ignore[docstring-missing-exception]
     resp = await client.get_messages()
     result = resp.get('result') if isinstance(resp, Mapping) else None
     items = (result.get('messages') if isinstance(result, Mapping) else None) or []

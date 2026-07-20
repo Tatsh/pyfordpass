@@ -41,7 +41,7 @@ def api_config_set(key: str, value: str) -> None:
 @debug_option
 @click.argument('key')
 def api_config_delete(key: str) -> None:
-    """Delete KEY (a dotted path) from the API constants override."""  # noqa: DOC501
+    """Delete KEY (a dotted path) from the API constants override."""  # ruff:ignore[docstring-missing-exception]
     try:
         delete_toml_key(API_CONFIG_FILE, key)
     except KeyError as exc:

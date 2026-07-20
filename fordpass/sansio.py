@@ -134,7 +134,7 @@ def _apply_charge_soc_rule(settings: Mapping[str, object]) -> dict[str, object]:
     return result
 
 
-class FordPassClient:  # noqa: PLR0904
+class FordPassClient:  # ruff:ignore[too-many-public-methods]
     """
     Sans-I/O FordPass protocol client.
 

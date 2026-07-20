@@ -103,7 +103,7 @@ ha-fordpass hardcodes ``'On'`` (``fordpass_handler.py``); callers can override i
 """
 
 
-class AsyncFordPassClient:  # noqa: PLR0904
+class AsyncFordPassClient:  # ruff:ignore[too-many-public-methods]
     """Async FordPass client (niquests for data, curl-cffi for auth)."""
     def __init__(self,
                  *,
