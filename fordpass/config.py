@@ -265,7 +265,7 @@ def resolve_output_format(*, cli_json: bool = False) -> OutputFormat:
         return 'json'
     env = (os.environ.get(OUTPUT_ENV_VAR) or '').strip().lower()
     if env in {'json', 'pretty'}:
-        return cast('OutputFormat', env)
+        return cast('OutputFormat', env)  # ty: ignore[redundant-cast]
     cfg_fmt = (load_config().get('output') or {}).get('format')
     if cfg_fmt in {'json', 'pretty'}:
         return cfg_fmt

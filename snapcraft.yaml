@@ -20,9 +20,7 @@ parts:
     plugin: 'python'
     python-packages:
       - '.'
-    source: 'https://github.com/Tatsh/pyfordpass'
-    source-tag: 'v0.0.1'
-    source-type: 'git'
+    source: '.'
     stage-packages: []
 platforms:
   amd64:

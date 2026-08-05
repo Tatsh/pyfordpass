@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
 from unittest.mock import AsyncMock, MagicMock
 import asyncio
+import inspect
 import json
 import os
 
@@ -188,7 +189,7 @@ def mock_command_client(mocker: MockerFixture) -> MagicMock:
     client.locale = 'en-US'
     client.country = 'USA'
     for name, attr in vars(AsyncFordPassClient).items():
-        if not name.startswith('_') and asyncio.iscoroutinefunction(attr):
+        if not name.startswith('_') and inspect.iscoroutinefunction(attr):
             setattr(client, name, AsyncMock(return_value=None))
     mocker.patch('fordpass.commands.utils.make_client', return_value=client)
     mocker.patch('fordpass.commands.utils.ensure_signed_in', new_callable=AsyncMock)
