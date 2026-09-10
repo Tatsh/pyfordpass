@@ -5,13 +5,15 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 import json
 
-from fordpass.client import AsyncFordPassClient
 import pytest
+
+from fordpass.client import AsyncFordPassClient
 
 if TYPE_CHECKING:
 
-    from fordpass.typing import APIConfig
     from pytest_mock import MockerFixture
+
+    from fordpass.typing import APIConfig
 
 _VIN = '1FAHP00000A000000'
 

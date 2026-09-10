@@ -5,14 +5,16 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 import json
 
-from fordpass.main import fordpass
 import pytest
+
+from fordpass.main import fordpass
 
 if TYPE_CHECKING:
     from click.testing import CliRunner
+    from pytest_mock import MockerFixture
+
     from fordpass.client import AsyncFordPassClient
     from fordpass.sansio import FordPassClient
-    from pytest_mock import MockerFixture
 
 _VIN = '1FAHP00000A000000'
 

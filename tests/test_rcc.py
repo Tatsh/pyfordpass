@@ -4,18 +4,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 import json
 
+import pytest
+
 from fordpass.main import fordpass
 from fordpass.utils import (
     decode_rcc_temperature,
     encode_rcc_temperature,
     merge_rcc_preferences,
 )
-import pytest
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from click.testing import CliRunner
+
     from fordpass.client import AsyncFordPassClient
     from fordpass.sansio import FordPassClient
     from fordpass.typing.rcc import RCCPreference, RCCPreferenceKey

@@ -10,14 +10,16 @@ import json
 import os
 
 from click.testing import CliRunner
+import pytest
+
 from fordpass.api_config import load_api_config
 from fordpass.client import AsyncFordPassClient
 from fordpass.sansio import FordPassClient
-import pytest
 
 if TYPE_CHECKING:
-    from fordpass.typing import APIConfig
     from pytest_mock import MockerFixture
+
+    from fordpass.typing import APIConfig
 
 if os.getenv('_PYTEST_RAISE', '0') != '0':  # pragma no cover
 

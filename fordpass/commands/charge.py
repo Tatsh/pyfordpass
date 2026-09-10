@@ -6,9 +6,10 @@ from typing import TYPE_CHECKING, cast, get_args
 import json
 import sys
 
-from fordpass.typing.electrification import ChargeMode
 from rich.table import Table
 import click
+
+from fordpass.typing.electrification import ChargeMode
 
 from .utils import (
     ack,

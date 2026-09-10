@@ -7,10 +7,11 @@ import re
 import urllib.parse
 import webbrowser
 
-from fordpass.config import KM_TO_MI, KPA_TO_PSI, load_config
-from fordpass.utils import is_list_like
 from rich.table import Table
 import click
+
+from fordpass.config import KM_TO_MI, KPA_TO_PSI, load_config
+from fordpass.utils import is_list_like
 
 from .utils import (
     console,

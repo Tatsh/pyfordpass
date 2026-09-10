@@ -1,8 +1,9 @@
 """API configuration: inspect and edit the API constants override file."""
 from __future__ import annotations
 
-from fordpass.api_config import API_CONFIG_FILE, load_api_config
 import click
+
+from fordpass.api_config import API_CONFIG_FILE, load_api_config
 
 from .utils import (
     debug_option,

@@ -1,8 +1,9 @@
 """Config: inspect and edit the user configuration file."""
 from __future__ import annotations
 
-from fordpass.config import CONFIG_FILE, effective_config
 import click
+
+from fordpass.config import CONFIG_FILE, effective_config
 
 from .utils import (
     debug_option,

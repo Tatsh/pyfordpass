@@ -7,9 +7,10 @@ from typing import TYPE_CHECKING, Any, cast
 import json
 import sys
 
-from fordpass.utils import is_list_like
 from rich.table import Table
 import click
+
+from fordpass.utils import is_list_like
 
 from .utils import (
     ack,

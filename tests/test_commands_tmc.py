@@ -5,11 +5,13 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 import json
 
-from fordpass.main import fordpass
 import pytest
+
+from fordpass.main import fordpass
 
 if TYPE_CHECKING:
     from click.testing import CliRunner
+
     from fordpass.client import AsyncFordPassClient
     from fordpass.sansio import FordPassClient, RequestDict
 

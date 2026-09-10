@@ -5,12 +5,14 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 import json
 
+import pytest
+
 from fordpass.main import fordpass
 from fordpass.utils import extract_departure_schedule_days
-import pytest
 
 if TYPE_CHECKING:
     from click.testing import CliRunner
+
     from fordpass.client import AsyncFordPassClient
     from fordpass.sansio import FordPassClient, RequestDict
     from fordpass.typing.departure import DepartureScheduleDay

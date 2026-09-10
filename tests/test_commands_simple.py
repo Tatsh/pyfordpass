@@ -4,8 +4,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-from fordpass.main import fordpass
 import pytest
+
+from fordpass.main import fordpass
 
 if TYPE_CHECKING:
     from click.testing import CliRunner

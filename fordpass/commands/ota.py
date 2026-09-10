@@ -4,9 +4,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from fordpass.utils import is_list_like, walk_mapping
 from rich.table import Table
 import click
+
+from fordpass.utils import is_list_like, walk_mapping
 
 from .utils import (
     ack,

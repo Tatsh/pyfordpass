@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, cast
 
+import pytest
+
 from fordpass.utils import (
     MetricsBlock,
     extract_fuel,
@@ -15,7 +17,6 @@ from fordpass.utils import (
     scalar_metric_value,
     walk_mapping,
 )
-import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence

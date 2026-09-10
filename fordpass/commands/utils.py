@@ -23,14 +23,15 @@ import urllib.parse
 import webbrowser  # ruff:ignore[unused-import]
 
 from bascom import setup_logging
-from fordpass.client import AsyncFordPassClient
-from fordpass.config import CONFIG_FILE, load_config, resolve_output_format
-from fordpass.timezone_map import FORD_ZONE_BY_IANA
-from fordpass.utils import scalar_metric_value, walk_mapping
 from platformdirs import user_state_dir
 from rich.console import Console
 import click
 import tomlkit
+
+from fordpass.client import AsyncFordPassClient
+from fordpass.config import CONFIG_FILE, load_config, resolve_output_format
+from fordpass.timezone_map import FORD_ZONE_BY_IANA
+from fordpass.utils import scalar_metric_value, walk_mapping
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Coroutine, Iterable

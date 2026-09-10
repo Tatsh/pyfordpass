@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING, Any, cast
 import copy
 import functools
 
-from fordpass.config import CONFIG_DIR
 import tomlkit
+
+from fordpass.config import CONFIG_DIR
 
 if TYPE_CHECKING:
     from .typing.api_config import APIConfig

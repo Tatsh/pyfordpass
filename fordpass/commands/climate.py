@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fordpass.config import load_config
-from fordpass.utils import decode_rcc_temperature, encode_rcc_temperature
 from rich.table import Table
 import click
+
+from fordpass.config import load_config
+from fordpass.utils import decode_rcc_temperature, encode_rcc_temperature
 
 from .utils import (
     console,

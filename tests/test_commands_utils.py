@@ -9,6 +9,9 @@ import asyncio
 import json
 import threading
 
+import click
+import pytest
+
 from fordpass.commands.utils import (
     Readiness,
     assert_ready_or_abort,
@@ -34,8 +37,6 @@ from fordpass.commands.utils import (
     validate_vin,
 )
 from fordpass.main import fordpass
-import click
-import pytest
 
 if TYPE_CHECKING:
     from pathlib import Path

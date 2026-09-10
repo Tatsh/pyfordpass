@@ -4,8 +4,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import json
 
-from fordpass.sansio import FordPassClient
 import pytest
+
+from fordpass.sansio import FordPassClient
 
 if TYPE_CHECKING:
     from fordpass.typing import APIConfig

@@ -3,13 +3,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fordpass.main import fordpass
 import pytest
+
+from fordpass.main import fordpass
 
 if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from click.testing import CliRunner
+
     from fordpass.client import AsyncFordPassClient
     from fordpass.sansio import FordPassClient
 

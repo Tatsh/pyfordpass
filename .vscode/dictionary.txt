@@ -4,7 +4,6 @@ almaty
 amain
 anadyr
 anchore
-Ångström
 appauthor
 appdir
 appimage
@@ -43,7 +42,6 @@ colorlog
 commitizen
 comoro
 conftest
-cooldown
 coro
 countrycode
 coveragerc
@@ -71,6 +69,7 @@ efate
 eirunepe
 elif
 enderbury
+endswith
 enrollment
 esac
 esbenp
@@ -161,10 +160,14 @@ ngsdn
 nhtsa
 nipigon
 niquests
+noone
+noqa
 norecursedirs
 notarytool
 novokuznetsk
+nullglob
 numpy
+numpydoc
 ojinaga
 okhttp
 omsk
@@ -182,6 +185,7 @@ platformdirs
 plistlib
 ponape
 pontianak
+popen
 powertrain
 prcond
 preapproved
@@ -212,6 +216,7 @@ sablon
 salta
 sansio
 santarem
+sbclaude
 schemafile
 scoresbysund
 sdist
@@ -219,6 +224,7 @@ secho
 setattr
 shellcheck
 shellformat
+shopt
 signtool
 simferopol
 snapcore
@@ -281,3 +287,4 @@ zaporozhye
 zizmor
 zonelightingactivation
 zonelightingzone
+Ångström
