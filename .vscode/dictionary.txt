@@ -276,7 +276,6 @@ windshield
 winget
 wiswa
 wiswa's
-worktree
 xapi
 xcrun
 yakutat
