@@ -1,5 +1,12 @@
+concurrency:
+  cancel-in-progress: true
+  group: '${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}'
 jobs:
   cleanup:
+    name: 'Cleanup'
+    permissions:
+      actions: 'write'
+      contents: 'read'
     runs-on: 'ubuntu-latest'
     steps:
       - uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
@@ -21,6 +28,4 @@ name: 'Cleanup'
   schedule:
     - cron: '0 */12 * * *'
   workflow_dispatch: {}
-permissions:
-  actions: 'write'
-  contents: 'read'
+permissions: {}
