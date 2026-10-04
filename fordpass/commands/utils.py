@@ -7,7 +7,7 @@ the remote-command readiness gate.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -825,7 +825,7 @@ def format_iso_datetime(iso: object) -> str:
     except ValueError:
         return iso
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt.astimezone().strftime('%Y-%m-%d %H:%M')
 
 

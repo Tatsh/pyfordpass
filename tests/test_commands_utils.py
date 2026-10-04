@@ -1,7 +1,7 @@
 """Tests for the public helpers in fordpass.commands.utils."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import AsyncMock, MagicMock
 from zoneinfo import ZoneInfoNotFoundError
@@ -157,7 +157,7 @@ def test_parse_user_datetime_iso_full() -> None:
 
 def test_parse_user_datetime_with_z() -> None:
     dt = parse_user_datetime('2026-05-30T07:00:00Z')
-    assert dt.tzinfo == timezone.utc
+    assert dt.tzinfo == UTC
 
 
 def test_parse_user_datetime_naive_attaches_local_tz() -> None:
@@ -238,22 +238,22 @@ def test_parse_user_timezone_iana_no_ford_code() -> None:
 
 
 def test_format_ford_request_date_morning() -> None:
-    dt = datetime(2026, 5, 28, 1, 50, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 28, 1, 50, 0, tzinfo=UTC)
     assert format_ford_request_date(dt) == '5-28-2026 1:50:00 AM'
 
 
 def test_format_ford_request_date_afternoon() -> None:
-    dt = datetime(2026, 5, 28, 13, 50, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 28, 13, 50, 0, tzinfo=UTC)
     assert format_ford_request_date(dt) == '5-28-2026 1:50:00 PM'
 
 
 def test_format_ford_request_date_midnight() -> None:
-    dt = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
     assert format_ford_request_date(dt) == '1-1-2026 12:00:00 AM'
 
 
 def test_format_ford_request_date_noon() -> None:
-    dt = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
     assert format_ford_request_date(dt) == '1-1-2026 12:00:00 PM'
 
 

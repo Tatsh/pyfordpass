@@ -21,14 +21,13 @@ Usage::
 from __future__ import annotations
 
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 import asyncio
 import contextlib
 import json as _json
 import uuid
 
 from curl_cffi.requests import AsyncSession as CurlAsyncSession
-from typing_extensions import Self
 import niquests
 
 from .api_config import load_api_config
