@@ -36,6 +36,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   write, `encode_rcc_temperature` / `decode_rcc_temperature` / `merge_rcc_preferences` helpers, and
   the `RCCPreference` / `RCCProfile` / `RCCPreferenceKey` / `RCCSeatLevel` / `RCCToggle` types.
 
+### Removed
+
+- Support for Python 3.10. Python 3.11 or later is now required.
+
 ## [0.0.1] - 2026-05-31
 
 First version.
