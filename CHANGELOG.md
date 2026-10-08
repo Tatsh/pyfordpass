@@ -9,28 +9,30 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+## [0.1.0] - 2026-10-08
+
 ### Added
 
-- EV/PHEV charging support: a `fordpass charge` command group (`start`, `cancel`, `pause`, `set`,
-  `target`, `times`, `status`, and `logs`), with matching `AsyncFordPassClient` methods and
+- A `fordpass charge` command group (`start`, `cancel`, `pause`, `set`, `target`, `times`,
+  `status`, and `logs`) for EV/PHEV charging, with matching `AsyncFordPassClient` methods and
   sans-I/O request builders for the global-charge TMC commands and the electrification
   energy-transfer endpoints.
-- Guard Mode support: a `fordpass guard` command group (`status`, `enable`, `disable`) backed by
+- A `fordpass guard` command group (`status`, `enable`, and `disable`) for Guard Mode, backed by
   the Ford MPS API (single HTTP call, no polling), with a new `mps` host constant and the
   `GuardModeResponse` type.
-- Zone-lighting support: a `fordpass lights` command group (`on`, `off`, `zone`) backed by the
-  Ford MPS API, including the two-step "turn on then select zone" flow in
+- A `fordpass lights` command group (`on`, `off`, and `zone`) for zone lighting, backed by the Ford
+  MPS API, including the two-step 'turn on then select zone' flow in
   `AsyncFordPassClient.set_zone_lighting` and a `ZoneLightZone` type.
 - Experimental Autonomic TMC commands ported from `ha-fordpass` (flagged unverified upstream):
-  `fordpass trailer check` (`on`, `off`), `fordpass precondition` (`start`, `extend`, `stop`), and
-  `fordpass ppo` (`refresh`, `stream`, `cancel`), plus a `honk_and_flash` client convenience alias
-  over `startPanicCue`.
-- Departure-schedule write side: `fordpass departure` gains `enable`, `disable`, `update`
-  (`--from-json` or repeatable `--add DAY@HH:MM:loc=...,id=...` slots), `delete-by-id`, and
-  `delete-by-day`, with matching `AsyncFordPassClient` methods, sans-I/O builders for the
+  `fordpass trailer check` (`on` and `off`), `fordpass precondition` (`start`, `extend`, and
+  `stop`), and `fordpass ppo` (`refresh`, `stream`, and `cancel`), plus a `honk_and_flash` client
+  convenience alias over `startPanicCue`.
+- Write subcommands for `fordpass departure` (`enable`, `disable`, `update` with `--from-json` or
+  repeatable `--add DAY@HH:MM:loc=...,id=...` slots, `delete-by-id`, and `delete-by-day`), with
+  matching `AsyncFordPassClient` methods, sans-I/O builders for the
   `enableDepartureTimes` / `disableDepartureTimes` / `updateDepartureTimes` beta TMC commands, and
   the `DepartureScheduleDay` / `DepartureScheduleSlot` / `TimeOfDay` types.
-- Remote Climate Control support: a `fordpass climate` command group (`show`, `set`) backed by the
+- A `fordpass climate` command group (`show` and `set`) for Remote Climate Control, backed by the
   Ford vehicle API, with `AsyncFordPassClient.get_remote_climate` and a sparse-merge
   `set_remote_climate`, sans-I/O builders for the `rcc/profile/status` read and `rcc/profile/update`
   write, `encode_rcc_temperature` / `decode_rcc_temperature` / `merge_rcc_preferences` helpers, and
@@ -51,5 +53,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 First version.
 
-[unreleased]: https://github.com/Tatsh/pyfordpass/compare/v0.0.1...HEAD
+[unreleased]: https://github.com/Tatsh/pyfordpass/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Tatsh/pyfordpass/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/Tatsh/pyfordpass/releases/tag/v0.0.1
