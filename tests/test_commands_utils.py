@@ -94,6 +94,10 @@ def test_validate_vin_rejects_check_digit() -> None:
         validate_vin(_NULL_CTX, _NULL_PARAM, '1FA12345678901234')
 
 
+def test_validate_vin_accepts_non_north_american_without_check_digit() -> None:
+    assert validate_vin(_NULL_CTX, _NULL_PARAM, 'mna00000000000000') == 'MNA00000000000000'
+
+
 def test_should_emit_json_true_when_flag_set(mocker: MockerFixture) -> None:
     assert should_emit_json(as_json=True) is True
 

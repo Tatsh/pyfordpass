@@ -504,10 +504,9 @@ def ack(resp: niquests.Response, name: str) -> None:
     click.secho(f'{name} accepted (status {resp.status_code}).', fg='green')
 
 
-_VIN_RE = re.compile(r'^[A-HJ-NPR-Z0-9][FL][A-HJ-NPR-Z0-9]{15}$')
+_VIN_RE = re.compile(r'^[A-HJ-NPR-Z0-9]{17}$')
 """
-ISO 3779 VIN charset: 17 alphanumerics (no ``I`` / ``O`` / ``Q``), with the constraint that
-position 2 must be ``F`` (Ford) or ``L`` (Lincoln).
+ISO 3779 VIN charset: 17 alphanumerics (no ``I`` / ``O`` / ``Q``).
 
 :meta hide-value:
 """
@@ -553,6 +552,13 @@ Position weights for the VIN check-digit algorithm (position 9 is the check itse
 :meta hide-value:
 """
 
+_VIN_NORTH_AMERICA = frozenset('12345')
+"""
+First VIN characters assigned to North America, where the check digit is mandatory.
+
+:meta hide-value:
+"""
+
 _VIN_CHECK_REMAINDER_X = 10
 """
 Position-9 remainder value that maps to the literal ``'X'`` rather than a digit.
@@ -592,18 +598,19 @@ def validate_vin(_ctx: click.Context, _param: click.Parameter, value: str | None
     Raises
     ------
     click.BadParameter
-        If the VIN is not 17 chars, contains illegal characters, or fails the ISO 3779 check-digit
-        verification (rare manufacturer exemptions excepted).
+        If the VIN is not 17 chars, contains illegal characters, or is a North American VIN that
+        fails the ISO 3779 check-digit verification.
     """
     if value is None:
         return None
     vin = value.strip().upper()
     if not _VIN_RE.match(vin):
-        msg = (f'{value!r} is not a valid Ford/Lincoln VIN - expected 17 alphanumeric characters '
-               f'with no I, O, or Q, and position 2 must be F (Ford) or L (Lincoln).')
+        msg = (f'{value!r} is not a valid VIN - expected 17 alphanumeric characters with no I, '
+               'O, or Q.')
         raise click.BadParameter(msg)
-    expected = _vin_check_digit(vin)
-    if vin[8] != expected:
+    # The check digit is only mandatory for vehicles built for North America (WMI 1 to 5).
+    # Elsewhere position 9 may be any character.
+    if vin[0] in _VIN_NORTH_AMERICA and vin[8] != (expected := _vin_check_digit(vin)):
         msg = (f'{vin} failed the VIN check-digit verification (position 9 is {vin[8]!r}, '
                f'expected {expected!r}). Double-check the VIN was copied correctly.')
         raise click.BadParameter(msg)
@@ -616,7 +623,8 @@ def _resolve_vin(ctx: click.Context, param: click.Parameter, value: str | None) 
 
     Both the CLI value and the configured default are run through :py:func:`validate_vin`, which
     enforces the ISO 3779 structure (17 alphanumerics minus ``I`` / ``O`` / ``Q``) plus the
-    check-digit verification - so we never send a request we know the gateway will reject.
+    check-digit verification for North American VINs - so we never send a request we know the
+    gateway will reject.
 
     Parameters
     ----------

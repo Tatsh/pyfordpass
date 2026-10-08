@@ -36,6 +36,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   write, `encode_rcc_temperature` / `decode_rcc_temperature` / `merge_rcc_preferences` helpers, and
   the `RCCPreference` / `RCCProfile` / `RCCPreferenceKey` / `RCCSeatLevel` / `RCCToggle` types.
 
+### Fixed
+
+- VIN validation no longer rejects Ford vehicles built outside North America (for example
+  Thai-built models sold in Australia with a VIN starting `MN`). The second character is no longer
+  restricted to `F` or `L`, and the check digit is verified only for North American VINs (first
+  character `1` to `5`) ([#86](https://github.com/Tatsh/pyfordpass/issues/86)).
+
 ### Removed
 
 - Support for Python 3.10. Python 3.11 or later is now required.
