@@ -129,6 +129,7 @@ launchable
 lextudio
 libera
 libjsonnet
+librsvg
 libsonnet
 licenseplate
 lindeman
@@ -212,6 +213,7 @@ ripgreprc
 roadsideassistancena
 rothera
 rstcheck
+rsvg
 sablon
 salta
 sansio
