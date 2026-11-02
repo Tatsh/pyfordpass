@@ -447,12 +447,11 @@ def merge_rcc_preferences(current: Sequence[RCCPreference],
         key = pref.get('preferenceType', '')
         if key in updates:
             seen.add(key)
-            result.append(cast('RCCPreference', {**pref, 'preferenceValue': updates[key]}))
+            result.append({**pref, 'preferenceValue': updates[key]})
         else:
             result.append(cast('RCCPreference', dict(pref)))
-    result.extend(
-        cast('RCCPreference', {
-            'preferenceType': key,
-            'preferenceValue': updates[key]
-        }) for key in sorted(updates) if key not in seen)
+    result.extend({
+        'preferenceType': key,
+        'preferenceValue': updates[key]
+    } for key in sorted(updates) if key not in seen)
     return result

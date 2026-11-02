@@ -1464,7 +1464,7 @@ class AsyncFordPassClient:  # ruff:ignore[too-many-public-methods]
             return None
         hydrated = await self.get_dealer_by_pa_code(pa_code)
         if hydrated is None:
-            return cast('DealerResponse', {'paCode': pa_code})
+            return {'paCode': pa_code}
         return hydrated
 
     async def get_roadside_symptoms(self, *, is_bev: bool = False) -> IDNameListResponse:

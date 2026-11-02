@@ -245,7 +245,7 @@ def _load_schedules_from_json(path: Path) -> list[DepartureScheduleDay]:
         msg = ('--from-json must be a departureSchedules array, or an object with a '
                '`departureSchedules` array.')
         raise click.BadParameter(msg)
-    return cast('list[DepartureScheduleDay]', list(parsed))
+    return list(parsed)
 
 
 def _resolve_update_input(from_json: Path | None, adds: tuple[str,

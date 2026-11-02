@@ -53,7 +53,7 @@ async def test_set_zone_lighting_off(async_client: AsyncFordPassClient,
 async def test_set_zone_lighting_from_off_turns_on_then_sets(async_client: AsyncFordPassClient,
                                                              fake_session: MagicMock,
                                                              mocker: MockerFixture) -> None:
-    sleep = mocker.patch('fordpass.client.asyncio.sleep')
+    sleep = mocker.patch('fordpass.client.asyncio', sleep=mocker.AsyncMock()).sleep
     await async_client.set_zone_lighting(_VIN, '1', current='off')
     assert fake_session.request.await_count == 2
     methods = [c.kwargs['method'] for c in fake_session.request.await_args_list]
